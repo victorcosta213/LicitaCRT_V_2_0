@@ -1,0 +1,17 @@
+/* Melhorias visuais da tabela/toolbar */
+.table thead th { position: sticky; top: 0; z-index: 1; }
+.table tbody tr:hover { background: #fafbfd; }
+.toolbar { gap: .5rem; }
+.badge.round { border-radius: 999px; padding: .35rem .6rem; font-weight: 600; }
+.w-420 { max-width: 420px; }
+
+
+/* Fluxograma */
+.flow-wrap { overflow-x: auto; padding: .5rem 0; }
+.flow { display: flex; align-items: center; gap: 1.25rem; }
+.flow-step { display: flex; align-items: center; position: relative; }
+.flow-step .dot { width: 12px; height: 12px; border-radius: 50%; background: #0d6efd; }
+.flow-step .line { width: 60px; height: 2px; background: #cbd5e1; margin: 0 .25rem; }
+.flow-step .label { margin-left: .5rem; white-space: nowrap; }
+.flow-step .label .name { font-weight: 600; }
+.flow-step .label .date { font-size: .85em; color: #6c757d; }

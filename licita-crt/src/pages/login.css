@@ -1,0 +1,61 @@
+/* Fundo com gradiente + shapes animadas */
+.login-bg {
+  min-height: 100vh;
+  position: relative;
+  padding: 2rem 1rem;
+  background: radial-gradient(1200px 600px at -10% -10%, #e7f1ff 0%, transparent 60%),
+              radial-gradient(1000px 800px at 110% 10%, #ffe9f0 0%, transparent 60%),
+              var(--bs-body-bg);
+}
+
+.shape {
+  position: absolute; border-radius: 50%; filter: blur(40px); opacity: .45;
+  animation: float 12s ease-in-out infinite;
+}
+.shape.s1 { width: 220px; height: 220px; background: #b6d3ff; top: -40px; left: -40px; }
+.shape.s2 { width: 260px; height: 260px; background: #ffd1dc; bottom: -60px; right: -60px; animation-delay: 2s; }
+.shape.s3 { width: 160px; height: 160px; background: #d9f7e8; bottom: 10%; left: 20%; animation-delay: 4s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) }
+  50%      { transform: translateY(-12px) }
+}
+
+/* Card de login com duas colunas */
+.login-card {
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  backdrop-filter: blur(6px);
+  background: rgba(var(--bs-body-bg-rgb), .7);
+}
+
+@media (min-width: 768px) {
+  .login-card { grid-template-columns: 1.1fr 1fr; }
+}
+
+.login-hero {
+  padding: 2rem;
+  background: linear-gradient(120deg, rgba(13,110,253,.08), rgba(0,0,0,0) 40%),
+              linear-gradient(180deg, rgba(13,110,253,.06), rgba(255,255,255,.0));
+}
+
+.brand .logo { font-weight: 800; font-size: 1.25rem; letter-spacing: .4px; }
+.hero-svg { width: 100%; height: auto; }
+
+.login-form { background: var(--bs-body-bg); }
+
+/* Campos */
+.input-group .input-group-text { background: transparent; }
+
+/* Dark mode ajustes */
+:root[data-bs-theme="dark"] .login-bg {
+  background: radial-gradient(1200px 600px at -10% -10%, #0b2b53 0%, transparent 60%),
+              radial-gradient(1000px 800px at 110% 10%, #3b1220 0%, transparent 60%),
+              var(--bs-body-bg);
+}
+:root[data-bs-theme="dark"] .login-hero {
+  background: linear-gradient(120deg, rgba(13,110,253,.15), rgba(0,0,0,0) 40%),
+              linear-gradient(180deg, rgba(13,110,253,.12), rgba(255,255,255,.0));
+}

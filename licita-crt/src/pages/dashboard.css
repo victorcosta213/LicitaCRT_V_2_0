@@ -1,0 +1,19 @@
+.kpi-card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--bs-body-bg);
+}
+.kpi-title { font-size: .95rem; color: var(--bs-secondary-color); }
+.kpi-value { font-size: 2rem; font-weight: 800; line-height: 1.1; margin-top: .25rem; }
+.kpi-hint { font-size: .85rem; color: var(--bs-secondary-color); }
+
+.chart-card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  padding: .75rem;
+  background: var(--bs-body-bg);
+  min-height: 340px;
+  display: flex; align-items: center; justify-content: center;
+}
+.chart-card canvas { max-height: 320px; }
