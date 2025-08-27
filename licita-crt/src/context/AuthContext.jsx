@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { auth } from '../services/firebase'
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'firebase/auth'
-import { getUserRole } from '../services/users'   // <-- NOVO
+import { getUserRole } from '../services/users'   
 
 const AuthCtx = createContext()
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
-  const [role, setRole] = useState(null)         // <-- NOVO
+  const [role, setRole] = useState(null)         
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

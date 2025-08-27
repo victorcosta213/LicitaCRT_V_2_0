@@ -1,0 +1,119 @@
+/* === FILTROS (offcanvas) === */
+.offcanvas .form-label { 
+  font-weight: 600; 
+}
+.offcanvas .form-text { 
+  font-size: .85rem; 
+  color: var(--bs-secondary-color); 
+}
+.offcanvas .form-select, 
+.offcanvas .form-control {
+  border-radius: .75rem;
+}
+.offcanvas .btn { 
+  border-radius: .75rem; 
+}
+
+/* separador suave entre grupos (opcional) */
+.offcanvas-body .vstack > div:not(:last-child) {
+  position: relative;
+}
+.offcanvas-body .vstack > div:not(:last-child)::after {
+  content: "";
+  display: block;
+  height: 1px;
+  background: var(--bs-border-color);
+  opacity: .5;
+  margin: .75rem 0 0;
+}
+
+/* === CHIPS DE FILTRO ATIVOS === */
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin: .5rem 0 1rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .35rem .6rem;
+  border: 1px solid var(--bs-border-color);
+  background: rgba(13,110,253,.06);
+  color: var(--bs-body-color);
+  border-radius: 999px;
+  font-size: .85rem;
+  line-height: 1;
+  transition: background .2s ease, border-color .2s ease;
+}
+.chip:hover {
+  background: rgba(13,110,253,.1);
+  border-color: rgba(13,110,253,.35);
+}
+.chip .chip-key {
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+}
+.chip .chip-val {
+  font-weight: 600;
+}
+.chip .chip-close {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--bs-secondary-color);
+  display: inline-flex;
+  align-items: center;
+}
+.chip .chip-close:hover { 
+  color: var(--bs-danger); 
+}
+
+/* versão "data" (de/até) com ícone calendário */
+.chip--date {
+  background: rgba(25,135,84,.08);
+  border-color: rgba(25,135,84,.25);
+}
+.chip--date:hover {
+  background: rgba(25,135,84,.12);
+  border-color: rgba(25,135,84,.45);
+}
+
+/* === LISTA/TABELA: pequenos toques === */
+.table thead th { 
+  position: sticky; 
+  top: 0; 
+  z-index: 1; 
+}
+.table tbody tr { 
+  transition: background .15s ease; 
+}
+.table tbody tr:hover { 
+  background: #fafbfd; 
+}
+:root[data-bs-theme="dark"] .table tbody tr:hover {
+  background: rgba(255,255,255,.03);
+}
+
+/* toolbar: inputs mais "macios" */
+.toolbar .input-group .form-control,
+.toolbar .btn { 
+  border-radius: .75rem; 
+}
+
+/* badge arredondado (caso não tenha) */
+.badge.round { 
+  border-radius: 999px; 
+  padding: .35rem .6rem; 
+  font-weight: 600; 
+}
+
+/* responsivo: chips empilham com respiro */
+@media (max-width: 576px) {
+  .filter-chips { gap: .4rem; }
+  .chip { font-size: .8rem; }
+}

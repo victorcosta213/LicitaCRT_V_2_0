@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import './styles/index.css'
 import './styles/layout.css'
+import './styles/ui-extras.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 
 

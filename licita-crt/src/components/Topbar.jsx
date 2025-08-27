@@ -4,25 +4,40 @@ import { useAuth } from '../context/AuthContext'
 
 export default function Topbar() {
   const { user, role, logout } = useAuth()
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
-  const [query, setQuery] = useState('')
 
+  // tema claro/escuro
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
   useEffect(() => {
     document.documentElement.setAttribute('data-bs-theme', theme)
     localStorage.setItem('theme', theme)
   }, [theme])
 
-  // (Opcional) dispara um evento global de busca quando o usuário pressiona Enter
-  function submitSearch(e) {
-    if (e.key === 'Enter') {
+  // busca global
+  const [query, setQuery] = useState('')
+  // dispara evento ao digitar (com debounce)
+  useEffect(() => {
+    const t = setTimeout(() => {
       const ev = new CustomEvent('global-search', { detail: { query } })
       window.dispatchEvent(ev)
-    }
+    }, 400) // debounce 400ms
+    return () => clearTimeout(t)
+  }, [query])
+
+  function submitSearch(e) {
+    e?.preventDefault?.()
+    const ev = new CustomEvent('global-search', { detail: { query } })
+    window.dispatchEvent(ev)
+  }
+
+  function clearSearch() {
+    setQuery('')
+    const ev = new CustomEvent('global-search', { detail: { query: '' } })
+    window.dispatchEvent(ev)
   }
 
   return (
     <header className="app-topbar d-flex align-items-center justify-content-between">
-      {/* esquerda: botão da sidebar (mobile) + busca */}
+      {/* esquerda: menu mobile + busca */}
       <div className="d-flex align-items-center gap-2">
         <button
           className="btn btn-outline-secondary d-lg-none"
@@ -33,16 +48,25 @@ export default function Topbar() {
           <i className="bi bi-list" />
         </button>
 
-        <div className="d-none d-md-flex align-items-center topbar-search">
+        <form className="d-none d-md-flex align-items-center topbar-search" onSubmit={submitSearch}>
           <i className="bi bi-search" />
           <input
             className="form-control"
-            placeholder="Buscar no sistema… (Enter)"
+            placeholder="Buscar no sistema…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={submitSearch}
           />
-        </div>
+          {query && (
+            <button
+              type="button"
+              className="btn btn-sm btn-link text-secondary"
+              title="Limpar"
+              onClick={clearSearch}
+            >
+              <i className="bi bi-x-lg" />
+            </button>
+          )}
+        </form>
       </div>
 
       {/* direita: tema + usuário */}

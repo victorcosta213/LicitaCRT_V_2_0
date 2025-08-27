@@ -20,7 +20,7 @@ export default function App() {
 
         {/* Área autenticada com Layout (sidebar+topbar) */}
         <Route element={<Private><Layout /></Private>}>
-          <Route path="/" element={<Navigate to="/controle" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/controle" element={<Controle />} />
           <Route path="/dashboard" element={<Dashboard />} />
         </Route>

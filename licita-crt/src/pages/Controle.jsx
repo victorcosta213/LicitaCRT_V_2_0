@@ -23,6 +23,18 @@ const emptyForm = {
   anexoPath: ''
 }
 
+// --- Opções vindas do projeto antigo (TXT) ---
+const OPT_ETAPA = ['Aberto','Em análise','Concluído','Suspenso','Revogado']
+const OPT_TIPO  = ['Inexigibilidade','Dispensa','Pregão','Concorrência','Pronto Pagamento']
+const OPT_PRIOR = ['Crítico','Não Crítico','Estratégico','Alavancavel']
+const OPT_FASE_ATUAL = [
+  'ETP','DFD','Termo de Referência','Análise Jurídica','Planejamento do Edital',
+  'Sessão Pública','Habilitação e Recursos','Homologação','Assinatura de Contrato',
+  'Termo de Abertura','Ofício de Dotação Orçamentária',
+  'Pesquisa e Formalização de Preços','Parecer Jurídico','Autorização de Contratação Direta'
+]
+const OPT_STATUS_PRAZO = ['Em dia','Quase vencendo','Atrasado']
+
 export default function Controle() {
   const { isAdmin } = useAuth()
 
@@ -31,9 +43,19 @@ export default function Controle() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // filtros/busca
+  // filtros/busca (com persistência)
   const [busca, setBusca] = useState('')
-  const [filtro, setFiltro] = useState({ etapa: '', prioridade: '', tipo: '' })
+  const [filtro, setFiltro] = useState(() => {
+    try {
+      const raw = localStorage.getItem('controle.filters')
+      return raw ? JSON.parse(raw) : { etapa:'', prioridade:'', tipo:'', faseAtual:'', statusPrazo:'', de:'', ate:'' }
+    } catch {
+      return { etapa:'', prioridade:'', tipo:'', faseAtual:'', statusPrazo:'', de:'', ate:'' }
+    }
+  })
+  useEffect(() => {
+    localStorage.setItem('controle.filters', JSON.stringify(filtro))
+  }, [filtro])
 
   // formulário (novo/editar)
   const [form, setForm] = useState(emptyForm)
@@ -61,18 +83,36 @@ export default function Controle() {
       setLoading(false)
     }
   }
-
   useEffect(() => { load() }, [])
 
   // view filtrada
   const view = rows.filter(r => {
-    const okBusca = !busca ||
-      (r.numero || '').toLowerCase().includes(busca.toLowerCase()) ||
-      (r.objeto || '').toLowerCase().includes(busca.toLowerCase())
-    const okEtapa = !filtro.etapa || r.etapa === filtro.etapa
-    const okPrior = !filtro.prioridade || r.prioridade === filtro.prioridade
-    const okTipo = !filtro.tipo || r.tipo === filtro.tipo
-    return okBusca && okEtapa && okPrior && okTipo
+    const txt = (r.numero || '') + ' ' + (r.objeto || '')
+    const okBusca = !busca || txt.toLowerCase().includes(busca.toLowerCase())
+
+    const okEtapa = !filtro.etapa || (r.etapa || r.statusGeral || '') === filtro.etapa
+    const okPrior = !filtro.prioridade || (r.prioridade || '') === filtro.prioridade
+    const okTipo  = !filtro.tipo || (r.tipo || '') === filtro.tipo
+    const okFase  = !filtro.faseAtual || (r.faseAtual || '') === filtro.faseAtual
+
+    // Status de prazo (usa computeStatus(prazo))
+    const stPrazo = computeStatus(r.prazo).label // 'Em dia' | 'Quase vencendo' | 'Atrasado' | '—'
+    const okPrazo = !filtro.statusPrazo || stPrazo === filtro.statusPrazo
+
+    // Período (dataInicioProcesso ou createdAt)
+    const toDate = (d) => d?.toDate?.() ?? (d ? new Date(d) : null)
+    const baseDate = toDate(r.dataInicioProcesso) || toDate(r.createdAt) || null
+
+    let okPeriodo = true
+    if ((filtro.de || filtro.ate) && baseDate) {
+      const ymd = (d) => d.toISOString().slice(0,10)
+      if (filtro.de  && ymd(baseDate) < filtro.de) okPeriodo = false
+      if (filtro.ate && ymd(baseDate) > filtro.ate) okPeriodo = false
+    } else if ((filtro.de || filtro.ate) && !baseDate) {
+      okPeriodo = false
+    }
+
+    return okBusca && okEtapa && okPrior && okTipo && okFase && okPrazo && okPeriodo
   })
 
   // helpers
@@ -280,11 +320,11 @@ export default function Controle() {
                     <tr key={r.id} onClick={(ev)=>onRowClick(r, ev)} style={{cursor:'pointer'}}>
                       <td>{r.numero}</td>
                       <td className="text-truncate" style={{maxWidth:420}} title={r.objeto}>{r.objeto}</td>
-                      <td>{r.etapa || '—'}</td>
+                      <td>{r.etapa || r.statusGeral || '—'}</td>
                       <td>{r.tipo || '—'}</td>
                       <td>
                         {r.prioridade
-                          ? <span className={`badge round text-bg-${r.prioridade === 'Critico' ? 'danger' : 'secondary'}`}>{r.prioridade}</span>
+                          ? <span className={`badge round text-bg-${r.prioridade === 'Crítico' || r.prioridade === 'Critico' ? 'danger' : 'secondary'}`}>{r.prioridade}</span>
                           : '—'}
                       </td>
                       <td>
@@ -326,30 +366,92 @@ export default function Controle() {
         </div>
         <div className="offcanvas-body">
           <div className="vstack gap-3">
+            {/* Etapa */}
             <div>
               <label className="form-label">Etapa</label>
-              <select className="form-select" value={filtro.etapa} onChange={(e)=>setFiltro(s=>({...s, etapa: e.target.value}))}>
+              <select className="form-select"
+                value={filtro.etapa}
+                onChange={(e)=>setFiltro(s=>({...s, etapa: e.target.value}))}>
                 <option value="">Todas</option>
-                <option value="Planejamento">Planejamento</option>
-                <option value="Analise">Análise</option>
-                <option value="Contratacao">Contratação</option>
+                {OPT_ETAPA.map(op => <option key={op} value={op}>{op}</option>)}
               </select>
             </div>
+
+            {/* Tipo de Licitação */}
+            <div>
+              <label className="form-label">Tipo de Licitação</label>
+              <select className="form-select"
+                value={filtro.tipo}
+                onChange={(e)=>setFiltro(s=>({...s, tipo: e.target.value}))}>
+                <option value="">Todos</option>
+                {OPT_TIPO.map(op => <option key={op} value={op}>{op}</option>)}
+              </select>
+            </div>
+
+            {/* Prioridade */}
             <div>
               <label className="form-label">Prioridade</label>
-              <select className="form-select" value={filtro.prioridade} onChange={(e)=>setFiltro(s=>({...s, prioridade: e.target.value}))}>
+              <select className="form-select"
+                value={filtro.prioridade}
+                onChange={(e)=>setFiltro(s=>({...s, prioridade: e.target.value}))}>
                 <option value="">Todas</option>
-                <option value="Critico">Crítico</option>
-                <option value="NaoCritico">Não crítico</option>
+                {OPT_PRIOR.map(op => <option key={op} value={op}>{op}</option>)}
               </select>
             </div>
+
+            {/* Fase Atual */}
             <div>
-              <label className="form-label">Tipo</label>
-              <input className="form-control" placeholder="Ex.: Pregão, Dispensa…" value={filtro.tipo} onChange={(e)=>setFiltro(s=>({...s, tipo: e.target.value}))}/>
+              <label className="form-label">Fase Atual</label>
+              <select className="form-select"
+                value={filtro.faseAtual}
+                onChange={(e)=>setFiltro(s=>({...s, faseAtual: e.target.value}))}>
+                <option value="">Todas</option>
+                {OPT_FASE_ATUAL.map(op => <option key={op} value={op}>{op}</option>)}
+              </select>
             </div>
-            <button className="btn btn-outline-secondary" onClick={()=>setFiltro({etapa:'', prioridade:'', tipo:''})}>
-              Limpar filtros
-            </button>
+
+            {/* Status de Prazo */}
+            <div>
+              <label className="form-label">Status de Prazo</label>
+              <select className="form-select"
+                value={filtro.statusPrazo}
+                onChange={(e)=>setFiltro(s=>({...s, statusPrazo: e.target.value}))}>
+                <option value="">Todos</option>
+                {OPT_STATUS_PRAZO.map(op => <option key={op} value={op}>{op}</option>)}
+              </select>
+              <div className="form-text">
+                Calculado a partir de <code>prazo</code> (Em dia / Quase vencendo / Atrasado)
+              </div>
+            </div>
+
+            {/* Período */}
+            <div className="row g-2">
+              <div className="col-6">
+                <label className="form-label">De</label>
+                <input className="form-control" type="date"
+                  value={filtro.de}
+                  onChange={(e)=>setFiltro(s=>({...s, de: e.target.value}))}/>
+              </div>
+              <div className="col-6">
+                <label className="form-label">Até</label>
+                <input className="form-control" type="date"
+                  value={filtro.ate}
+                  onChange={(e)=>setFiltro(s=>({...s, ate: e.target.value}))}/>
+              </div>
+              <div className="form-text">
+                Usa <code>dataInicioProcesso</code> (ou <code>createdAt</code> como fallback) quando disponível.
+              </div>
+            </div>
+
+            <div className="d-flex gap-2">
+              <button className="btn btn-outline-secondary"
+                onClick={()=>setFiltro({ etapa:'', prioridade:'', tipo:'', faseAtual:'', statusPrazo:'', de:'', ate:'' })}>
+                Limpar filtros
+              </button>
+              <button className="btn btn-light" data-bs-dismiss="offcanvas">
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -377,21 +479,21 @@ export default function Controle() {
                     <label className="form-label">Etapa</label>
                     <select className="form-select" name="etapa" value={form.etapa} onChange={onChange}>
                       <option value="">Selecione</option>
-                      <option value="Planejamento">Planejamento</option>
-                      <option value="Analise">Análise</option>
-                      <option value="Contratacao">Contratação</option>
+                      {OPT_ETAPA.map(op => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Tipo</label>
-                    <input className="form-control" name="tipo" value={form.tipo} onChange={onChange} />
+                    <select className="form-select" name="tipo" value={form.tipo} onChange={onChange}>
+                      <option value="">Selecione</option>
+                      {OPT_TIPO.map(op => <option key={op} value={op}>{op}</option>)}
+                    </select>
                   </div>
                   <div className="col-md-4">
                     <label className="form-label">Prioridade</label>
                     <select className="form-select" name="prioridade" value={form.prioridade} onChange={onChange}>
                       <option value="">Selecione</option>
-                      <option value="Critico">Crítico</option>
-                      <option value="NaoCritico">Não crítico</option>
+                      {OPT_PRIOR.map(op => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
                   <div className="col-md-4">
@@ -446,7 +548,7 @@ export default function Controle() {
                     <div className="col-md-3">
                       <div className="p-3 border rounded-3">
                         <div className="text-secondary small">Etapa</div>
-                        <div className="fw-semibold">{detail.etapa || '—'}</div>
+                        <div className="fw-semibold">{detail.etapa || detail.statusGeral || '—'}</div>
                       </div>
                     </div>
                     <div className="col-md-3">
