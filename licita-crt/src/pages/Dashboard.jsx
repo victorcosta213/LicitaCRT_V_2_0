@@ -53,9 +53,57 @@ const rgba = (hex, a = 0.7) => {
 }
 const colorCycle = (labels) => labels.map((_, i) => COLORS[i % COLORS.length])
 
+// === NOVO: extrair ano/mês a partir do número do processo (formato AAAA.MM.xxx) ===
+function monthFromNumero(numero) {
+  if (!numero) return null
+  const s = String(numero).trim()
+  // casa padrão "2025.06.062" → year=2025, month=06
+  let m = s.match(/^(\d{4})\D+(\d{2})/)
+  if (!m) {
+    // fallback tolerante: 4 dígitos + separador + 2 dígitos
+    m = s.match(/(\d{4})\D+(\d{2})/)
+  }
+  if (!m) return null
+  const year = Number(m[1])
+  const month = Number(m[2])
+  if (!year || !month || month < 1 || month > 12) return null
+  return new Date(year, month - 1, 1) // sempre dia 1
+}
+const ymKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+const ymLabel = (key) => {
+  const [y, m] = key.split('-'); return `${m}/${y}`
+}
+function rangeMonthsKeys(start, end) {
+  // start/end são strings "YYYY-MM" ou null
+  let a, b
+  try { a = start ? new Date(Number(start.slice(0,4)), Number(start.slice(5,7))-1, 1) : null } catch {}
+  try { b = end   ? new Date(Number(end.slice(0,4)), Number(end.slice(5,7))-1, 1)   : null } catch {}
+  if (!a || !b) return null
+  const out = []
+  const cur = new Date(a.getFullYear(), a.getMonth(), 1)
+  while (cur <= b) {
+    out.push(ymKey(cur))
+    cur.setMonth(cur.getMonth() + 1)
+  }
+  return out
+}
+
 export default function Dashboard() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // === NOVO: filtro por período (mês/ano) ===
+  const [periodo, setPeriodo] = useState(() => {
+    try {
+      const raw = localStorage.getItem('dashboard.periodo')
+      return raw ? JSON.parse(raw) : { de: '', ate: '' } // strings YYYY-MM (input type="month")
+    } catch {
+      return { de: '', ate: '' }
+    }
+  })
+  useEffect(() => {
+    localStorage.setItem('dashboard.periodo', JSON.stringify(periodo))
+  }, [periodo])
 
   useEffect(() => {
     (async () => {
@@ -69,7 +117,7 @@ export default function Dashboard() {
     })()
   }, [])
 
-  // --- Helpers
+  // --- Helpers já existentes
   const toDate = (d) => {
     if (!d) return null
     const dt = d?.toDate?.() ?? new Date(d)
@@ -81,8 +129,63 @@ export default function Dashboard() {
     return ['concluído', 'concluido', 'suspenso', 'revogado', 'fechado'].includes(e)
   }
   const isOpen = (p) => !isClosed(p)
+  const norm = (s) => (s || '').toString().trim()
 
-  // Status por prazo (lógica enxuta)
+  // --- Base de data para o período: prioriza número do processo
+  function baseMonthDate(p) {
+    // 1) extrai de numero (AAAA.MM.xxx)
+    const fromNum = monthFromNumero(p?.numero)
+    if (fromNum) return fromNum
+    // 2) fallback: campos de data caso existam
+    return toDate(p.dataInicioProcesso) || toDate(p.createdAt) || null
+  }
+  function baseMonthKey(p) {
+    const d = baseMonthDate(p)
+    return d ? ymKey(d) : null
+  }
+
+  // === APLICAR FILTRO DE PERÍODO ===
+  const filtered = useMemo(() => {
+    if (!periodo.de && !periodo.ate) return rows
+    const deKey = periodo.de || null
+    const ateKey = periodo.ate || null
+    return rows.filter(p => {
+      const key = baseMonthKey(p)
+      if (!key) return false
+      if (deKey && key < deKey) return false
+      if (ateKey && key > ateKey) return false
+      return true
+    })
+  }, [rows, periodo])
+
+  // --- KPIs (no período)
+  const kpis = useMemo(() => {
+    const total = filtered.length
+    const abertos = filtered.filter(isOpen).length
+    const fechados = filtered.filter(isClosed).length
+    return { total, solicitados: total, abertos, fechados }
+  }, [filtered])
+
+  // --- Distribuições (no período)
+  const countBy = (arr, pick) => {
+    const m = new Map()
+    for (const x of arr) {
+      const k = pick(x) || '—'
+      m.set(k, (m.get(k) || 0) + 1)
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1])
+  }
+
+  const prioridadeKey = (s) => {
+    const t = norm(s).toLowerCase()
+    if (['critico', 'crítico'].includes(t)) return 'Crítico'
+    if (['naocritico', 'não crítico', 'nao critico', 'não critico'].includes(t)) return 'Não Crítico'
+    if (t.includes('estrat')) return 'Estratégico'
+    if (t.includes('alavanc')) return 'Alavancável'
+    return s || '—'
+  }
+
+  // Status de prazo (lógica resumida)
   function faseBucket(p) {
     const start = toDate(p.dataInicioFase)
     const prazo = Number(p.prazoFase) || null
@@ -93,59 +196,38 @@ export default function Dashboard() {
     return 'Em dia'
   }
 
-  const norm = (s) => (s || '').toString().trim()
-  const prioridadeKey = (s) => {
-    const t = norm(s).toLowerCase()
-    if (['critico', 'crítico'].includes(t)) return 'Crítico'
-    if (['naocritico', 'não crítico', 'nao critico', 'não critico'].includes(t)) return 'Não Crítico'
-    if (t.includes('estrat')) return 'Estratégico'
-    if (t.includes('alavanc')) return 'Alavancável'
-    return s || '—'
-  }
-
-  // --- KPIs
-  const kpis = useMemo(() => {
-    const total = rows.length
-    const abertos = rows.filter(isOpen).length
-    const fechados = rows.filter(isClosed).length
-    const solicitados = total
-    return { total, solicitados, abertos, fechados }
-  }, [rows])
-
-  // --- Distribuições
-  const countBy = (arr, pick) => {
-    const m = new Map()
-    for (const x of arr) {
-      const k = pick(x) || '—'
-      m.set(k, (m.get(k) || 0) + 1)
-    }
-    return [...m.entries()].sort((a, b) => b[1] - a[1])
-  }
-
-  const distTipos = useMemo(() => countBy(rows, p => norm(p.tipo)), [rows])
-  const distPrioridade = useMemo(() => countBy(rows, p => prioridadeKey(p.prioridade)), [rows])
-  const distEtapas = useMemo(() => {
+  const distTipos       = useMemo(() => countBy(filtered, p => norm(p.tipo)), [filtered])
+  const distPrioridade  = useMemo(() => countBy(filtered, p => prioridadeKey(p.prioridade)), [filtered])
+  const distEtapas      = useMemo(() => {
     const order = ['Aberto', 'Em análise', 'Concluído', 'Suspenso', 'Revogado', '—']
     const counts = new Map(order.map(x => [x, 0]))
-    for (const p of rows) {
+    for (const p of filtered) {
       const e = etapaOf(p) || '—'
       counts.set(e, (counts.get(e) ?? 0) + 1)
     }
     return order.map(k => [k, counts.get(k) ?? 0])
-  }, [rows])
-  const distPrazo = useMemo(() => countBy(rows, faseBucket), [rows])
+  }, [filtered])
+  const distPrazo       = useMemo(() => countBy(filtered, faseBucket), [filtered])
 
-  // Série mensal (novos)
+  // === Série mensal: "abertos por mês" com base no número do processo ===
   const serieMes = useMemo(() => {
     const map = new Map()
     for (const p of rows) {
-      const d = toDate(p.dataInicioProcesso) || toDate(p.createdAt) || null
+      const d = baseMonthDate(p)
       if (!d) continue
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const key = ymKey(d)
       map.set(key, (map.get(key) || 0) + 1)
     }
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-  }, [rows])
+
+    // Se houver filtro, restringe aos meses do intervalo
+    let keys
+    if (periodo.de && periodo.ate) {
+      keys = rangeMonthsKeys(periodo.de, periodo.ate) || []
+    } else {
+      keys = [...map.keys()].sort((a, b) => a.localeCompare(b))
+    }
+    return keys.map(k => [k, map.get(k) || 0])
+  }, [rows, periodo])
 
   // Labels/values utils
   const labels = (pairs) => pairs.map(([k]) => k)
@@ -191,21 +273,54 @@ export default function Dashboard() {
     <div className="container py-3">
       <div className="row g-3">
         <div className="col-12">
-          <h1 className="h5 mb-0">Dashboard</h1>
-          <p className="text-secondary">Visão geral dos processos.</p>
-        </div>
+          <h1 className="h5 mb-1">Dashboard</h1>
+          <p className="text-secondary mb-2">Visão geral dos processos. O período usa o <b>número do processo</b> (AAAA.MM.xxx) para identificar ano/mês.</p>
 
-        {/* KPIs */}
-        <div className="col-12">
-          <div className="row g-3">
-            <CardKPIs title="Solicitados (Total)" value={kpis.solicitados} hint="Total de processos cadastrados" loading={loading}/>
-            <CardKPIs title="Abertos" value={kpis.abertos} hint="Etapas: Aberto / Em análise" loading={loading}/>
-            <CardKPIs title="Fechados" value={kpis.fechados} hint="Concluído / Suspenso / Revogado" loading={loading}/>
-            <CardKPIs title="Tipos distintos" value={new Set(rows.map(r=>norm(r.tipo))).size} hint="Quantidade de categorias de tipo" loading={loading}/>
+          {/* === Filtro de período (mês/ano) === */}
+          <div className="d-flex flex-wrap align-items-end gap-2 mb-3">
+            <div>
+              <label className="form-label mb-1">De (mês/ano)</label>
+              <input
+                type="month"
+                className="form-control"
+                value={periodo.de}
+                onChange={(e) => setPeriodo(s => ({ ...s, de: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="form-label mb-1">Até (mês/ano)</label>
+              <input
+                type="month"
+                className="form-control"
+                value={periodo.ate}
+                onChange={(e) => setPeriodo(s => ({ ...s, ate: e.target.value }))}
+              />
+            </div>
+            <div className="ms-auto d-flex gap-2">
+              <button className="btn btn-outline-secondary" onClick={() => {
+                // último 12 meses
+                const now = new Date()
+                const end = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
+                const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+                const start = `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}`
+                setPeriodo({ de: start, ate: end })
+              }}>Últimos 12 meses</button>
+              <button className="btn btn-light" onClick={() => setPeriodo({ de: '', ate: '' })}>Limpar</button>
+            </div>
           </div>
         </div>
 
-        {/* Linha 1: Tipos + Urgência */}
+        {/* KPIs (no período) */}
+        <div className="col-12">
+          <div className="row g-3">
+            <CardKPIs title="Solicitados (Período)" value={kpis.solicitados} hint="Total no intervalo" loading={loading}/>
+            <CardKPIs title="Abertos" value={kpis.abertos} hint="Aberto / Em análise" loading={loading}/>
+            <CardKPIs title="Fechados" value={kpis.fechados} hint="Concluído / Suspenso / Revogado" loading={loading}/>
+            <CardKPIs title="Tipos distintos" value={new Set(filtered.map(r=>norm(r.tipo))).size} hint="Categorias no período" loading={loading}/>
+          </div>
+        </div>
+
+        {/* Linha 1: Tipos + Urgência (no período) */}
         <div className="col-12 col-lg-6">
           <div className="chart-card">
             <Doughnut
@@ -218,7 +333,7 @@ export default function Dashboard() {
                   borderWidth: 1,
                 }]
               }}
-              options={optsDonut('Distribuição por Tipo')}
+              options={optsDonut('Distribuição por Tipo (período)')}
             />
           </div>
         </div>
@@ -234,53 +349,21 @@ export default function Dashboard() {
                   borderWidth: 1,
                 }]
               }}
-              options={optsBar('Urgência (Prioridade)')}
+              options={optsBar('Urgência (Prioridade) — período')}
             />
           </div>
         </div>
 
-        {/* Linha 2: Etapas + Prazo */}
-        <div className="col-12 col-lg-6">
-          <div className="chart-card">
-            <Bar
-              data={{
-                labels: labels(distEtapas),
-                datasets: [{
-                  data: values(distEtapas),
-                  backgroundColor: labels(distEtapas).map(l => rgba(ETAPA_COLOR[l] || '#6c757d', 0.75)),
-                  borderColor: labels(distEtapas).map(l => ETAPA_COLOR[l] || '#6c757d'),
-                  borderWidth: 1,
-                }]
-              }}
-              options={optsBar('Status / Etapas')}
-            />
-          </div>
-        </div>
-        <div className="col-12 col-lg-6">
-          <div className="chart-card">
-            <Doughnut
-              data={{
-                labels: labels(distPrazo),
-                datasets: [{
-                  data: values(distPrazo),
-                  backgroundColor: labels(distPrazo).map(l => rgba(PRAZO_COLOR[l] || '#6c757d', 0.85)),
-                  borderColor: labels(distPrazo).map(l => PRAZO_COLOR[l] || '#6c757d'),
-                  borderWidth: 1,
-                }]
-              }}
-              options={optsDonut('Prazo da Fase (Em dia / Quase / Atrasado)')}
-            />
-          </div>
-        </div>
+      
 
-        {/* Linha 3: Série mensal */}
+        {/* Linha 3: Série mensal (Abertos por mês a partir do número) */}
         <div className="col-12">
           <div className="chart-card">
             <Line
               data={{
-                labels: serieMes.map(([k]) => k),
+                labels: serieMes.map(([k]) => ymLabel(k)),
                 datasets: [{
-                  label: 'Solicitados',
+                  label: 'Abertos por mês',
                   data: serieMes.map(([, v]) => v),
                   borderColor: '#0d6efd',
                   backgroundColor: rgba('#0d6efd', 0.15),
@@ -290,7 +373,7 @@ export default function Dashboard() {
                   borderWidth: 2,
                 }]
               }}
-              options={optsLine('Novos processos por mês')}
+              options={optsLine('Abertos por mês (derivado do número AAAA.MM.xxx)')}
             />
           </div>
         </div>

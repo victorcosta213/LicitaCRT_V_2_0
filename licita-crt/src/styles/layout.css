@@ -47,3 +47,30 @@
 
 /* Helpers */
 .badge.round { border-radius: 999px; padding: .35rem .6rem; font-weight: 600; }
+
+/* src/styles/layout.css */
+:root { --sidebar-w: 260px; }
+
+.app-shell { /* container do conteúdo abaixo da Topbar */
+  min-height: calc(100dvh - 0px);
+}
+
+.sidebar-static {
+  background: var(--bs-body-bg);
+  border-right: 1px solid var(--bs-border-color);
+}
+
+@media (min-width: 992px) {
+  .app-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+  }
+  .app-main {
+    grid-column: 2;
+    padding-bottom: 2rem;
+  }
+}
+@media (max-width: 991.98px) {
+  .app-main { padding-bottom: 2rem; }
+}
+

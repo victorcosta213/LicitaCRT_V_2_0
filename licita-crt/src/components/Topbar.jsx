@@ -1,43 +1,33 @@
-// src/components/Topbar.jsx
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Topbar() {
   const { user, role, logout } = useAuth()
-
-  // tema claro/escuro
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
   useEffect(() => {
     document.documentElement.setAttribute('data-bs-theme', theme)
     localStorage.setItem('theme', theme)
   }, [theme])
-
-  // busca global
   const [query, setQuery] = useState('')
-  // dispara evento ao digitar (com debounce)
   useEffect(() => {
     const t = setTimeout(() => {
       const ev = new CustomEvent('global-search', { detail: { query } })
       window.dispatchEvent(ev)
-    }, 400) // debounce 400ms
+    }, 400)
     return () => clearTimeout(t)
   }, [query])
-
   function submitSearch(e) {
     e?.preventDefault?.()
     const ev = new CustomEvent('global-search', { detail: { query } })
     window.dispatchEvent(ev)
   }
-
   function clearSearch() {
     setQuery('')
     const ev = new CustomEvent('global-search', { detail: { query: '' } })
     window.dispatchEvent(ev)
   }
-
   return (
     <header className="app-topbar d-flex align-items-center justify-content-between">
-      {/* esquerda: menu mobile + busca */}
       <div className="d-flex align-items-center gap-2">
         <button
           className="btn btn-outline-secondary d-lg-none"
@@ -47,7 +37,6 @@ export default function Topbar() {
         >
           <i className="bi bi-list" />
         </button>
-
         <form className="d-none d-md-flex align-items-center topbar-search" onSubmit={submitSearch}>
           <i className="bi bi-search" />
           <input
@@ -68,8 +57,6 @@ export default function Topbar() {
           )}
         </form>
       </div>
-
-      {/* direita: tema + usuário */}
       <div className="d-flex align-items-center gap-2">
         <button
           className="btn btn-outline-secondary"
@@ -79,7 +66,6 @@ export default function Topbar() {
         >
           {theme === 'light' ? <i className="bi bi-moon" /> : <i className="bi bi-sun" />}
         </button>
-
         <div className="dropdown">
           <button className="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
             <i className="bi bi-person-circle me-2" />
