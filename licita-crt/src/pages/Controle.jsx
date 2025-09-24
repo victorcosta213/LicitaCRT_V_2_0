@@ -1,5 +1,4 @@
-// src/pages/Controle.jsx
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { listarProcessos } from '../services/processos'
 import { createDoc, updateById, removeById, findBy } from '../services/db'
@@ -8,6 +7,8 @@ import { exportToExcel, exportToPdf } from '../services/export'
 import { toInputDate, fromInputDate } from '../utils/dates'
 import { computeStatus } from '../utils/status'
 import StepFlow from '../components/StepFlow'
+import PhaseSelect from '../components/PhaseSelect'
+import { PHASES, phaseNameByKey } from '../utils/phases'
 
 const COL = 'processos'
 
@@ -20,30 +21,22 @@ const emptyForm = {
   prazo: '',
   responsavel: '',
   anexoUrl: '',
-  anexoPath: ''
+  anexoPath: '',
+  faseInicialKey: ''
 }
 
-// --- Opções vindas do projeto antigo (TXT) ---
 const OPT_ETAPA = ['Aberto','Em análise','Concluído','Suspenso','Revogado']
 const OPT_TIPO  = ['Inexigibilidade','Dispensa','Pregão','Concorrência','Pronto Pagamento']
-const OPT_PRIOR = ['Crítico','Não Crítico','Estratégico','Alavancavel']
-const OPT_FASE_ATUAL = [
-  'ETP','DFD','Termo de Referência','Análise Jurídica','Planejamento do Edital',
-  'Sessão Pública','Habilitação e Recursos','Homologação','Assinatura de Contrato',
-  'Termo de Abertura','Ofício de Dotação Orçamentária',
-  'Pesquisa e Formalização de Preços','Parecer Jurídico','Autorização de Contratação Direta'
-]
+const OPT_PRIOR = ['Crítico','Não Crítico','Estratégico','Alavancável']
 const OPT_STATUS_PRAZO = ['Em dia','Quase vencendo','Atrasado']
 
 export default function Controle() {
   const { isAdmin } = useAuth()
 
-  // dataset
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  // filtros/busca (com persistência)
   const [busca, setBusca] = useState('')
   const [filtro, setFiltro] = useState(() => {
     try {
@@ -57,20 +50,17 @@ export default function Controle() {
     localStorage.setItem('controle.filters', JSON.stringify(filtro))
   }, [filtro])
 
-  // formulário (novo/editar)
   const [form, setForm] = useState(emptyForm)
-  const [editing, setEditing] = useState(null) // id
+  const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
   const [file, setFile] = useState(null)
   const closeRef = useRef(null)
 
-  // detalhes/fluxo
   const [detail, setDetail] = useState(null)
-  const [stepName, setStepName] = useState('')
-  const [stepDate, setStepDate] = useState('')
+  const [novaFaseKey, setNovaFaseKey] = useState('')
+  const [novaFaseData, setNovaFaseData] = useState('')
   const detailCloseRef = useRef(null)
 
-  // carregar (leitura única, igual fluxo antigo)
   async function load() {
     try {
       setLoading(true); setError('')
@@ -85,41 +75,45 @@ export default function Controle() {
   }
   useEffect(() => { load() }, [])
 
-  // view filtrada
-  const view = rows.filter(r => {
-    const txt = (r.numero || '') + ' ' + (r.objeto || '')
-    const okBusca = !busca || txt.toLowerCase().includes(busca.toLowerCase())
+  const view = useMemo(() => {
+    return rows.filter(r => {
+      const txt = (r.numero || '') + ' ' + (r.objeto || '')
+      const okBusca = !busca || txt.toLowerCase().includes(busca.toLowerCase())
 
-    const okEtapa = !filtro.etapa || (r.etapa || r.statusGeral || '') === filtro.etapa
-    const okPrior = !filtro.prioridade || (r.prioridade || '') === filtro.prioridade
-    const okTipo  = !filtro.tipo || (r.tipo || '') === filtro.tipo
-    const okFase  = !filtro.faseAtual || (r.faseAtual || '') === filtro.faseAtual
+      const okEtapa = !filtro.etapa || (r.etapa || r.statusGeral || '') === filtro.etapa
+      const okPrior = !filtro.prioridade || (r.prioridade || '') === filtro.prioridade
+      const okTipo  = !filtro.tipo || (r.tipo || '') === filtro.tipo
 
-    // Status de prazo (usa computeStatus(prazo))
-    const stPrazo = computeStatus(r.prazo).label // 'Em dia' | 'Quase vencendo' | 'Atrasado' | '—'
-    const okPrazo = !filtro.statusPrazo || stPrazo === filtro.statusPrazo
+      let okFase = true
+      if (filtro.faseAtual) {
+        const faseNome = phaseNameByKey(filtro.faseAtual)
+        const etapa = (r.etapa || '').toString()
+        const fluxo = Array.isArray(r.fluxo) ? r.fluxo : []
+        okFase = etapa === faseNome || fluxo.some(f => (f.nome || '') === faseNome)
+      }
 
-    // Período (dataInicioProcesso ou createdAt)
-    const toDate = (d) => d?.toDate?.() ?? (d ? new Date(d) : null)
-    const baseDate = toDate(r.dataInicioProcesso) || toDate(r.createdAt) || null
+      const stPrazo = computeStatus(r.prazo).label
+      const okPrazo = !filtro.statusPrazo || stPrazo === filtro.statusPrazo
 
-    let okPeriodo = true
-    if ((filtro.de || filtro.ate) && baseDate) {
-      const ymd = (d) => d.toISOString().slice(0,10)
-      if (filtro.de  && ymd(baseDate) < filtro.de) okPeriodo = false
-      if (filtro.ate && ymd(baseDate) > filtro.ate) okPeriodo = false
-    } else if ((filtro.de || filtro.ate) && !baseDate) {
-      okPeriodo = false
-    }
+      const toDate = (d) => d?.toDate?.() ?? (d ? new Date(d) : null)
+      const baseDate = toDate(r.dataInicioProcesso) || toDate(r.createdAt) || null
 
-    return okBusca && okEtapa && okPrior && okTipo && okFase && okPrazo && okPeriodo
-  })
+      let okPeriodo = true
+      if ((filtro.de || filtro.ate) && baseDate) {
+        const ymd = (d) => d.toISOString().slice(0,10)
+        if (filtro.de  && ymd(baseDate) < filtro.de) okPeriodo = false
+        if (filtro.ate && ymd(baseDate) > filtro.ate) okPeriodo = false
+      } else if ((filtro.de || filtro.ate) && !baseDate) {
+        okPeriodo = false
+      }
 
-  // helpers
+      return okBusca && okEtapa && okPrior && okTipo && okFase && okPrazo && okPeriodo
+    })
+  }, [rows, busca, filtro])
+
   const openModal = (id) => document.getElementById(id)?.click()
   const onChange = (e) => setForm(s => ({ ...s, [e.target.name]: e.target.value }))
 
-  // novo/editar/excluir
   const onNew = () => { setEditing(null); setForm(emptyForm); setFile(null); openModal('btnModalControle') }
 
   const onEdit = (row) => {
@@ -134,7 +128,8 @@ export default function Controle() {
       prazo: toInputDate(row.prazo),
       responsavel: row.responsavel || '',
       anexoUrl: row.anexoUrl || '',
-      anexoPath: row.anexoPath || ''
+      anexoPath: row.anexoPath || '',
+      faseInicialKey: ''
     })
     setFile(null)
     openModal('btnModalControle')
@@ -179,10 +174,16 @@ export default function Controle() {
 
       const payload = {
         ...form,
-        prazo: form.prazo ? fromInputDate(form.prazo) : null,
+        prazo: form.prazo ? fromInputDate(form.prazo) : null
       }
 
-      // upload de anexo (opcional)
+      if (!editing) {
+        const faseInicialKey = form.faseInicialKey || null
+        const fluxoInicial = faseInicialKey ? [{ nome: phaseNameByKey(faseInicialKey), data: new Date().toISOString() }] : []
+        payload.fluxo = fluxoInicial
+        if (fluxoInicial.length) payload.etapa = fluxoInicial[0].nome
+      }
+
       if (file) {
         if (form.anexoPath) { try { await removeFile(form.anexoPath) } catch {} }
         const up = await uploadFile('anexos', file, form.numero || undefined)
@@ -195,39 +196,40 @@ export default function Controle() {
 
       await load()
       closeRef.current?.click()
-    } catch (e) {
-      console.error(e)
+    } catch (e2) {
+      console.error(e2)
       alert('Falha ao salvar.')
     } finally {
       setSaving(false)
     }
   }
 
-  // detalhe/fluxograma
   const onRowClick = (row, ev) => {
     if (ev.target.closest('button') || ev.target.closest('a')) return
     setDetail(row)
+    setNovaFaseKey('')
+    setNovaFaseData('')
     openModal('btnModalDetalhe')
   }
 
   const addStep = async () => {
     if (!detail) return
-    const nome = stepName.trim()
-    const data = stepDate ? `${stepDate}T00:00:00` : ''
-    if (!nome || !data) { alert('Informe nome da documentação e a data.'); return }
+    const nome = phaseNameByKey(novaFaseKey)
+    const data = novaFaseData ? `${novaFaseData}T00:00:00` : ''
+    if (!novaFaseKey || !data) { alert('Selecione a fase e a data.'); return }
 
     const fluxo = Array.isArray(detail.fluxo) ? [...detail.fluxo] : []
     fluxo.push({ nome, data })
 
     try {
-      await updateById(COL, detail.id, { fluxo })
-      const newRows = rows.map(r => r.id === detail.id ? { ...r, fluxo } : r)
+      await updateById(COL, detail.id, { fluxo, etapa: nome })
+      const newRows = rows.map(r => r.id === detail.id ? { ...r, fluxo, etapa: nome } : r)
       setRows(newRows)
-      setDetail({ ...detail, fluxo })
-      setStepName(''); setStepDate('')
+      setDetail({ ...detail, fluxo, etapa: nome })
+      setNovaFaseKey(''); setNovaFaseData('')
     } catch (e) {
       console.error(e)
-      alert('Falha ao adicionar passo.')
+      alert('Falha ao adicionar fase.')
     }
   }
 
@@ -242,11 +244,10 @@ export default function Controle() {
       setDetail({ ...detail, fluxo })
     } catch (e) {
       console.error(e)
-      alert('Falha ao remover passo.')
+      alert('Falha ao remover fase.')
     }
   }
 
-  // exportações
   const doExportExcel = () => exportToExcel(view, 'processos.xlsx')
   const doExportPdf = () =>
     exportToPdf(
@@ -257,7 +258,7 @@ export default function Controle() {
         { header: 'Etapa', dataKey: 'etapa' },
         { header: 'Tipo', dataKey: 'tipo' },
         { header: 'Prioridade', dataKey: 'prioridade' },
-        { header: 'Resp.', dataKey: 'responsavel' },
+        { header: 'Resp.', dataKey: 'responsavel' }
       ],
       'Processos CRT-03',
       'processos.pdf'
@@ -267,11 +268,10 @@ export default function Controle() {
     <div className="container py-4">
       <div className="card border-0 shadow-sm">
         <div className="card-body">
-          {/* Toolbar */}
           <div className="d-flex flex-wrap justify-content-between align-items-center toolbar mb-3">
             <h1 className="h5 mb-0">Controle de Processos</h1>
 
-            <div className="d-flex flex-wrap toolbar">
+            <div className="d-flex flex-wrap toolbar gap-2">
               <div className="input-group">
                 <span className="input-group-text">🔎</span>
                 <input
@@ -290,7 +290,6 @@ export default function Controle() {
               <button className="btn btn-outline-danger" onClick={doExportPdf}>PDF</button>
               <button className="btn btn-primary" onClick={onNew}>Novo</button>
 
-              {/* triggers invisíveis dos modais */}
               <button id="btnModalControle" className="d-none" data-bs-toggle="modal" data-bs-target="#modalControle"></button>
               <button id="btnModalDetalhe" className="d-none" data-bs-toggle="modal" data-bs-target="#modalDetalhe"></button>
             </div>
@@ -299,7 +298,6 @@ export default function Controle() {
           {error && <div className="alert alert-danger py-2">{error}</div>}
           {loading && <div className="alert alert-info py-2">Carregando…</div>}
 
-          {/* Tabela */}
           <div className="table-responsive">
             <table className="table table-sm align-middle">
               <thead className="table-light">
@@ -358,7 +356,6 @@ export default function Controle() {
         </div>
       </div>
 
-      {/* OFFCANVAS FILTROS */}
       <div className="offcanvas offcanvas-end" tabIndex="-1" id="filtersOffcanvas" aria-labelledby="filtersTitle">
         <div className="offcanvas-header">
           <h5 id="filtersTitle" className="mb-0">Filtros</h5>
@@ -366,7 +363,6 @@ export default function Controle() {
         </div>
         <div className="offcanvas-body">
           <div className="vstack gap-3">
-            {/* Etapa */}
             <div>
               <label className="form-label">Etapa</label>
               <select className="form-select"
@@ -377,7 +373,6 @@ export default function Controle() {
               </select>
             </div>
 
-            {/* Tipo de Licitação */}
             <div>
               <label className="form-label">Tipo de Licitação</label>
               <select className="form-select"
@@ -388,7 +383,6 @@ export default function Controle() {
               </select>
             </div>
 
-            {/* Prioridade */}
             <div>
               <label className="form-label">Prioridade</label>
               <select className="form-select"
@@ -399,18 +393,16 @@ export default function Controle() {
               </select>
             </div>
 
-            {/* Fase Atual */}
             <div>
-              <label className="form-label">Fase Atual</label>
+              <label className="form-label">Fase (fluxo)</label>
               <select className="form-select"
                 value={filtro.faseAtual}
                 onChange={(e)=>setFiltro(s=>({...s, faseAtual: e.target.value}))}>
                 <option value="">Todas</option>
-                {OPT_FASE_ATUAL.map(op => <option key={op} value={op}>{op}</option>)}
+                {PHASES.map(op => <option key={op.key} value={op.key}>{op.name}</option>)}
               </select>
             </div>
 
-            {/* Status de Prazo */}
             <div>
               <label className="form-label">Status de Prazo</label>
               <select className="form-select"
@@ -420,11 +412,10 @@ export default function Controle() {
                 {OPT_STATUS_PRAZO.map(op => <option key={op} value={op}>{op}</option>)}
               </select>
               <div className="form-text">
-                Calculado a partir de <code>prazo</code> (Em dia / Quase vencendo / Atrasado)
+                Calculado a partir de prazo (Em dia / Quase vencendo / Atrasado)
               </div>
             </div>
 
-            {/* Período */}
             <div className="row g-2">
               <div className="col-6">
                 <label className="form-label">De</label>
@@ -437,9 +428,6 @@ export default function Controle() {
                 <input className="form-control" type="date"
                   value={filtro.ate}
                   onChange={(e)=>setFiltro(s=>({...s, ate: e.target.value}))}/>
-              </div>
-              <div className="form-text">
-                Usa <code>dataInicioProcesso</code> (ou <code>createdAt</code> como fallback) quando disponível.
               </div>
             </div>
 
@@ -456,7 +444,6 @@ export default function Controle() {
         </div>
       </div>
 
-      {/* MODAL NOVO/EDITAR */}
       <div className="modal fade" id="modalControle" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-lg modal-dialog-scrollable">
           <div className="modal-content">
@@ -496,10 +483,17 @@ export default function Controle() {
                       {OPT_PRIOR.map(op => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
-                  <div className="col-md-4">
+
+                  <div className="col-md-6">
+                    <label className="form-label">Fase inicial</label>
+                    <PhaseSelect value={form.faseInicialKey || ''} onChange={(v)=>setForm(s=>({...s, faseInicialKey:v}))} />
+                  </div>
+
+                  <div className="col-md-6">
                     <label className="form-label">Prazo</label>
                     <input className="form-control" type="date" name="prazo" value={form.prazo} onChange={onChange} />
                   </div>
+
                   <div className="col-md-8">
                     <label className="form-label">Responsável</label>
                     <input className="form-control" name="responsavel" value={form.responsavel} onChange={onChange} />
@@ -528,7 +522,6 @@ export default function Controle() {
         </div>
       </div>
 
-      {/* MODAL DETALHES + FLUXOGRAMA */}
       <div className="modal fade" id="modalDetalhe" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-xl modal-dialog-scrollable">
           <div className="modal-content">
@@ -581,12 +574,12 @@ export default function Controle() {
 
                   <div className="row g-2 align-items-end">
                     <div className="col-md-6">
-                      <label className="form-label">Nome da documentação</label>
-                      <input className="form-control" value={stepName} onChange={e=>setStepName(e.target.value)} placeholder="Ex.: ETP, TR, DFD, Edital..." />
+                      <label className="form-label">Adicionar fase</label>
+                      <PhaseSelect value={novaFaseKey} onChange={setNovaFaseKey} />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Data</label>
-                      <input className="form-control" type="date" value={stepDate} onChange={e=>setStepDate(e.target.value)} />
+                      <input className="form-control" type="date" value={novaFaseData} onChange={e=>setNovaFaseData(e.target.value)} />
                     </div>
                     <div className="col-md-3">
                       <button className="btn btn-primary w-100" type="button" onClick={addStep}>Adicionar ao fluxo</button>
