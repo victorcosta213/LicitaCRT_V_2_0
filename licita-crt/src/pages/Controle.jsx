@@ -33,13 +33,6 @@ const OPT_TIPO  = ['Inexigibilidade', 'Dispensa', 'Dispensa Eletrônica', 'Preg�
 const OPT_PRIOR = ['Crítico', 'Não Crítico', 'Estratégico', 'Alavancável']
 const OPT_STATUS_PRAZO = ['Em dia', 'Quase vencendo', 'Atrasado']
 
-function parseNumeroProc(num) {
-  const s = String(num || '').trim()
-  const m = s.match(/^(\d{4})[.\-/]?(\d{2})[.\-/]?(\d+)$/) || s.match(/^(\d{4})(\d{2})(\d+)$/)
-  if (!m) return { y: Infinity, m: Infinity, n: Infinity, bad: true }
-  return { y: Number(m[1]), m: Number(m[2]), n: Number(m[3]), bad: false }
-}
-
 export default function Controle() {
   const { isAdmin } = useAuth()
 
@@ -85,7 +78,7 @@ export default function Controle() {
   useEffect(() => { load() }, [])
 
   const view = useMemo(() => {
-    const filtered = rows.filter(r => {
+    return rows.filter(r => {
       const txt = (r.numero || '') + ' ' + (r.objeto || '')
       const okBusca = !busca || txt.toLowerCase().includes(busca.toLowerCase())
       const okEtapa = !filtro.etapa || (r.etapa || r.statusGeral || '') === filtro.etapa
@@ -117,17 +110,6 @@ export default function Controle() {
 
       return okBusca && okEtapa && okPrior && okTipo && okFase && okPrazo && okPeriodo
     })
-
-    filtered.sort((a, b) => {
-      const A = parseNumeroProc(a.numero)
-      const B = parseNumeroProc(b.numero)
-      if (A.y !== B.y) return A.y - B.y
-      if (A.m !== B.m) return A.m - B.m
-      if (A.n !== B.n) return A.n - B.n
-      return String(a.objeto || '').localeCompare(String(b.objeto || ''))
-    })
-
-    return filtered
   }, [rows, busca, filtro])
 
   const openModal = (id) => document.getElementById(id)?.click()
