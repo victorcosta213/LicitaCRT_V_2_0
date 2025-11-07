@@ -1,4 +1,3 @@
-/* src/pages/home.css */
 .home-search .form-control,
 .home-search .input-group-text {
   border-radius: .75rem;
@@ -8,15 +7,15 @@
 
 .phases-progress {
   display: grid;
-  grid-template-columns: repeat(24, 1fr); /* 24 fases */
+  grid-template-columns: repeat(24, 1fr); 
   gap: 4px;
 }
 .dot {
   height: 8px; border-radius: 999px; background: var(--bs-border-color);
 }
-.dot--done { background: rgba(25, 135, 84, .9); }      /* verde */
-.dot--current { background: rgba(13, 110, 253, .95); } /* azul */
-.dot--todo { background: rgba(108, 117, 125, .35); }   /* cinza claro */
+.dot--done { background: rgba(25, 135, 84, .9); }      
+.dot--current { background: rgba(13, 110, 253, .95); } 
+.dot--todo { background: rgba(108, 117, 125, .35); }   
 
 @media (max-width: 576px) {
   .phases-progress { gap: 3px; }

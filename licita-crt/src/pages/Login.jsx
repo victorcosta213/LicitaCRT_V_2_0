@@ -32,7 +32,6 @@ export default function Login() {
     try {
       setLoading(true)
       await login(email, password)
-      // ⬇️ redireciona para o Dashboard
       navigate('/dashboard', { replace: true })
     } catch (err) {
       console.error('AUTH ERROR:', err?.code, err?.message)

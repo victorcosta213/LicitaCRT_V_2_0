@@ -1,4 +1,3 @@
-// src/services/export.js
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -6,7 +5,6 @@ import { toInputDate } from '../utils/dates'
 
 console.log('[export.js] loaded')
 
-// helpers
 const isTimestamp = (v) => v && typeof v.toDate === 'function'
 const toDate = (v) => {
   if (!v) return null
@@ -21,8 +19,6 @@ const fmtCell = (val) => {
   return String(val)
 }
 
-// ============== EXCEL ==============
-/** columns opcional: [{ header, dataKey }] */
 export const exportToExcel = (rows, filename = 'dados.xlsx', columns) => {
   const data = Array.isArray(rows) ? rows : []
   if (!data.length) { alert('Não há dados para exportar.'); return }
@@ -54,8 +50,6 @@ export const exportToExcel = (rows, filename = 'dados.xlsx', columns) => {
   XLSX.writeFile(wb, filename)
 }
 
-// ============== PDF (centralizado) ==============
-/** columns: [{ header, dataKey }] */
 export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'relatorio.pdf') => {
   const data = Array.isArray(rows) ? rows : []
   if (!data.length) { alert('Não há dados para exportar.'); return }
@@ -66,7 +60,6 @@ export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'rel
   const pageWidth  = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
 
-  // Título / Subtítulo
   const TITLE_Y = 48
   const SUBTITLE_Y = TITLE_Y + 18
   const TABLE_START_Y = SUBTITLE_Y + 24
@@ -84,7 +77,7 @@ export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'rel
   doc.text(subtitle, pageWidth / 2, SUBTITLE_Y, { align: 'center' })
   doc.setTextColor(0)
 
-  // Centralização exata (margens iguais)
+
   const MARGIN_L = 40
   const MARGIN_R = 40
   const TABLE_WIDTH = pageWidth - MARGIN_L - MARGIN_R

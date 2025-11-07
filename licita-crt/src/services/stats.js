@@ -1,5 +1,3 @@
-// funções de agregação em memória, usando listas já carregadas do Firestore
-
 export function groupCount(arr, key) {
   const map = {}
   for (const item of arr) {
@@ -10,7 +8,6 @@ export function groupCount(arr, key) {
 }
 
 export function statusByPrazo(arr) {
-  // espera itens com campos: prazo (Date/Timestamp) e dataInicio (Date/Timestamp)
   const today = new Date()
   const r = { emDia: 0, quaseVencendo: 0, atrasado: 0 }
 
