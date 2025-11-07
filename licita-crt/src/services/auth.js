@@ -20,5 +20,4 @@ export const changePassword = (newPassword) => updatePassword(auth.currentUser, 
 
 export const logout = () => signOut(auth)
 
-// Observer (use em context/provider)
 export const onUserChanged = (cb) => onAuthStateChanged(auth, cb)

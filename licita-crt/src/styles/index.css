@@ -1,12 +1,10 @@
-/* Melhorias visuais da tabela/toolbar */
 .table thead th { position: sticky; top: 0; z-index: 1; }
 .table tbody tr:hover { background: #fafbfd; }
 .toolbar { gap: .5rem; }
 .badge.round { border-radius: 999px; padding: .35rem .6rem; font-weight: 600; }
 .w-420 { max-width: 420px; }
+.w-300 { max-width: 300px; }
 
-
-/* Fluxograma */
 .flow-wrap { overflow-x: auto; padding: .5rem 0; }
 .flow { display: flex; align-items: center; gap: 1.25rem; }
 .flow-step { display: flex; align-items: center; position: relative; }
@@ -15,3 +13,42 @@
 .flow-step .label { margin-left: .5rem; white-space: nowrap; }
 .flow-step .label .name { font-weight: 600; }
 .flow-step .label .date { font-size: .85em; color: #6c757d; }
+
+.modal-tall .modal-dialog {
+  height: calc(100vh - 2rem);
+  margin: 1rem auto;
+}
+.modal-tall .modal-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 2rem);
+}
+.modal-tall .modal-header,
+.modal-tall .modal-footer {
+  flex-shrink: 0;
+}
+.modal-tall .modal-body {
+  overflow-y: auto;
+  padding-bottom: 5.5rem;
+}
+
+.modal-footer.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--bs-body-bg);
+  border-top: 1px solid var(--bs-border-color);
+  z-index: 5;
+}
+
+.modal-dialog-scrollable .modal-content { max-height: calc(100vh - 2rem); }
+.modal-dialog-scrollable .modal-body { overflow-y: auto; }
+
+@media (max-width: 768px) {
+  .modal-tall .row.g-3 > [class^="col-"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .w-420 { max-width: 260px; }
+  .w-300 { max-width: 220px; }
+}

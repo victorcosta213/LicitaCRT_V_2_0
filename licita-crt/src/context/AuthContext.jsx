@@ -19,7 +19,6 @@ export function AuthProvider({ children }) {
         return
       }
       setUser(u)
-      // carrega papel no Firestore
       try {
         const r = await getUserRole(u.uid, u.email)
         setRole(r)

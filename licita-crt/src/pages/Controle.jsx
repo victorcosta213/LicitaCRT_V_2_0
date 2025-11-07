@@ -22,13 +22,23 @@ const emptyForm = {
   responsavel: '',
   anexoUrl: '',
   anexoPath: '',
-  faseInicialKey: ''
+  faseInicialKey: '',
+  justificativa: '',
+  valorCotado: '',
+  valorContratado: ''
 }
 
-const OPT_ETAPA = ['Aberto','Em análise','Concluído','Suspenso','Revogado']
-const OPT_TIPO  = ['Inexigibilidade','Dispensa','Pregão','Concorrência','Pronto Pagamento']
-const OPT_PRIOR = ['Crítico','Não Crítico','Estratégico','Alavancável']
-const OPT_STATUS_PRAZO = ['Em dia','Quase vencendo','Atrasado']
+const OPT_ETAPA = ['Aberto', 'Em análise', 'Concluído', 'Suspenso', 'Revogado']
+const OPT_TIPO  = ['Inexigibilidade', 'Dispensa', 'Dispensa Eletrônica', 'Pregão', 'Concorrência', 'Pronto Pagamento','ARP']
+const OPT_PRIOR = ['Crítico', 'Não Crítico', 'Estratégico', 'Alavancável']
+const OPT_STATUS_PRAZO = ['Em dia', 'Quase vencendo', 'Atrasado']
+
+function parseNumeroProc(num) {
+  const s = String(num || '').trim()
+  const m = s.match(/^(\d{4})[.\-/]?(\d{2})[.\-/]?(\d+)$/) || s.match(/^(\d{4})(\d{2})(\d+)$/)
+  if (!m) return { y: Infinity, m: Infinity, n: Infinity, bad: true }
+  return { y: Number(m[1]), m: Number(m[2]), n: Number(m[3]), bad: false }
+}
 
 export default function Controle() {
   const { isAdmin } = useAuth()
@@ -66,8 +76,7 @@ export default function Controle() {
       setLoading(true); setError('')
       const data = await listarProcessos()
       setRows(data)
-    } catch (e) {
-      console.error(e)
+    } catch {
       setError('Falha ao carregar processos.')
     } finally {
       setLoading(false)
@@ -76,10 +85,9 @@ export default function Controle() {
   useEffect(() => { load() }, [])
 
   const view = useMemo(() => {
-    return rows.filter(r => {
+    const filtered = rows.filter(r => {
       const txt = (r.numero || '') + ' ' + (r.objeto || '')
       const okBusca = !busca || txt.toLowerCase().includes(busca.toLowerCase())
-
       const okEtapa = !filtro.etapa || (r.etapa || r.statusGeral || '') === filtro.etapa
       const okPrior = !filtro.prioridade || (r.prioridade || '') === filtro.prioridade
       const okTipo  = !filtro.tipo || (r.tipo || '') === filtro.tipo
@@ -109,6 +117,17 @@ export default function Controle() {
 
       return okBusca && okEtapa && okPrior && okTipo && okFase && okPrazo && okPeriodo
     })
+
+    filtered.sort((a, b) => {
+      const A = parseNumeroProc(a.numero)
+      const B = parseNumeroProc(b.numero)
+      if (A.y !== B.y) return A.y - B.y
+      if (A.m !== B.m) return A.m - B.m
+      if (A.n !== B.n) return A.n - B.n
+      return String(a.objeto || '').localeCompare(String(b.objeto || ''))
+    })
+
+    return filtered
   }, [rows, busca, filtro])
 
   const openModal = (id) => document.getElementById(id)?.click()
@@ -129,7 +148,10 @@ export default function Controle() {
       responsavel: row.responsavel || '',
       anexoUrl: row.anexoUrl || '',
       anexoPath: row.anexoPath || '',
-      faseInicialKey: ''
+      faseInicialKey: '',
+      justificativa: row.justificativa || '',
+      valorCotado: row.valorCotado || '',
+      valorContratado: row.valorContratado || ''
     })
     setFile(null)
     openModal('btnModalControle')
@@ -142,8 +164,7 @@ export default function Controle() {
       if (row.anexoPath) await removeFile(row.anexoPath)
       await removeById(COL, row.id)
       await load()
-    } catch (e) {
-      console.error(e)
+    } catch {
       alert('Falha ao excluir.')
     }
   }
@@ -166,7 +187,6 @@ export default function Controle() {
     if (v) { alert(v); return }
     try {
       setSaving(true)
-
       if (await checkDuplicateNumero(form.numero, editing)) {
         alert('Já existe um processo com esse número.')
         return
@@ -185,10 +205,14 @@ export default function Controle() {
       }
 
       if (file) {
-        if (form.anexoPath) { try { await removeFile(form.anexoPath) } catch {} }
-        const up = await uploadFile('anexos', file, form.numero || undefined)
-        payload.anexoUrl = up.url
-        payload.anexoPath = up.path
+        try {
+          if (form.anexoPath) { try { await removeFile(form.anexoPath) } catch {} }
+          const up = await uploadFile('anexos', file, form.numero || undefined)
+          payload.anexoUrl = up.url
+          payload.anexoPath = up.path
+        } catch {
+          alert('Falha ao enviar o anexo.')
+        }
       }
 
       if (editing) await updateById(COL, editing, payload)
@@ -196,8 +220,7 @@ export default function Controle() {
 
       await load()
       closeRef.current?.click()
-    } catch (e2) {
-      console.error(e2)
+    } catch {
       alert('Falha ao salvar.')
     } finally {
       setSaving(false)
@@ -227,8 +250,7 @@ export default function Controle() {
       setRows(newRows)
       setDetail({ ...detail, fluxo, etapa: nome })
       setNovaFaseKey(''); setNovaFaseData('')
-    } catch (e) {
-      console.error(e)
+    } catch {
       alert('Falha ao adicionar fase.')
     }
   }
@@ -242,8 +264,7 @@ export default function Controle() {
       const newRows = rows.map(r => r.id === detail.id ? { ...r, fluxo } : r)
       setRows(newRows)
       setDetail({ ...detail, fluxo })
-    } catch (e) {
-      console.error(e)
+    } catch {
       alert('Falha ao remover fase.')
     }
   }
@@ -263,6 +284,13 @@ export default function Controle() {
       'Processos CRT-03',
       'processos.pdf'
     )
+
+  const mostrarJustificativa = ['Revogado', 'Suspenso'].includes(form.etapa || '')
+  const mostrarValores = ['Dispensa', 'Dispensa Eletrônica'].includes(form.tipo || '')
+
+  const showValoresInDetail = (p) =>
+    ['Dispensa', 'Dispensa Eletrônica'].includes(p?.tipo || '') ||
+    !!(p?.valorCotado || p?.valorContratado)
 
   return (
     <div className="container py-4">
@@ -317,7 +345,7 @@ export default function Controle() {
                   return (
                     <tr key={r.id} onClick={(ev)=>onRowClick(r, ev)} style={{cursor:'pointer'}}>
                       <td>{r.numero}</td>
-                      <td className="text-truncate" style={{maxWidth:420}} title={r.objeto}>{r.objeto}</td>
+                      <td className="text-truncate w-420" title={r.objeto}>{r.objeto}</td>
                       <td>{r.etapa || r.statusGeral || '—'}</td>
                       <td>{r.tipo || '—'}</td>
                       <td>
@@ -444,15 +472,15 @@ export default function Controle() {
         </div>
       </div>
 
-      <div className="modal fade" id="modalControle" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-lg modal-dialog-scrollable">
+      <div className="modal fade modal-tall" id="modalControle" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
               <h1 className="modal-title fs-6">{editing ? 'Editar processo' : 'Novo processo'}</h1>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" ref={closeRef}></button>
             </div>
             <form onSubmit={onSubmit}>
-              <div className="modal-body">
+              <div className="modal-body overflow-auto pb-5" style={{ maxHeight: 'calc(100vh - 180px)' }}>
                 <div className="row g-3">
                   <div className="col-md-4">
                     <label className="form-label">Número *</label>
@@ -462,6 +490,7 @@ export default function Controle() {
                     <label className="form-label">Objeto *</label>
                     <input className="form-control" name="objeto" value={form.objeto} onChange={onChange} required />
                   </div>
+
                   <div className="col-md-4">
                     <label className="form-label">Etapa</label>
                     <select className="form-select" name="etapa" value={form.etapa} onChange={onChange}>
@@ -469,6 +498,7 @@ export default function Controle() {
                       {OPT_ETAPA.map(op => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
+
                   <div className="col-md-4">
                     <label className="form-label">Tipo</label>
                     <select className="form-select" name="tipo" value={form.tipo} onChange={onChange}>
@@ -476,6 +506,7 @@ export default function Controle() {
                       {OPT_TIPO.map(op => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
+
                   <div className="col-md-4">
                     <label className="form-label">Prioridade</label>
                     <select className="form-select" name="prioridade" value={form.prioridade} onChange={onChange}>
@@ -509,9 +540,47 @@ export default function Controle() {
                     )}
                   </div>
 
+                  {mostrarJustificativa && (
+                    <div className="col-12">
+                      <label className="form-label">Justificativa</label>
+                      <textarea
+                        className="form-control"
+                        rows={3}
+                        name="justificativa"
+                        value={form.justificativa}
+                        onChange={onChange}
+                        placeholder="Descreva o motivo da suspensão/revogação"
+                      />
+                    </div>
+                  )}
+
+                  {mostrarValores && (
+                    <>
+                      <div className="col-md-6">
+                        <label className="form-label">Valor cotado</label>
+                        <input
+                          className="form-control"
+                          name="valorCotado"
+                          value={form.valorCotado}
+                          onChange={onChange}
+                          placeholder="Ex.: 12.345,67"
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label className="form-label">Valor contratado</label>
+                        <input
+                          className="form-control"
+                          name="valorContratado"
+                          value={form.valorContratado}
+                          onChange={onChange}
+                          placeholder="Ex.: 10.999,99"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer sticky-footer">
                 <button type="button" className="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 <button className="btn btn-primary" type="submit" disabled={saving}>
                   {saving ? 'Salvando…' : (editing ? 'Salvar alterações' : 'Cadastrar')}
@@ -522,8 +591,8 @@ export default function Controle() {
         </div>
       </div>
 
-      <div className="modal fade" id="modalDetalhe" tabIndex="-1" aria-hidden="true">
-        <div className="modal-dialog modal-xl modal-dialog-scrollable">
+      <div className="modal fade modal-tall" id="modalDetalhe" tabIndex="-1" aria-hidden="true">
+        <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
           <div className="modal-content">
             <div className="modal-header">
               <div>
@@ -534,7 +603,7 @@ export default function Controle() {
               </div>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" ref={detailCloseRef}></button>
             </div>
-            <div className="modal-body">
+            <div className="modal-body overflow-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
               {detail ? (
                 <>
                   <div className="row g-3 mb-3">
@@ -564,10 +633,35 @@ export default function Controle() {
                     </div>
                   </div>
 
+                  {detail.justificativa ? (
+                    <div className="mb-3">
+                      <h2 className="h6 mb-2">Justificativa</h2>
+                      <div className="p-3 border rounded-3 bg-body">
+                        <div className="text-wrap">{detail.justificativa}</div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {showValoresInDetail(detail) ? (
+                    <div className="row g-3 mb-3">
+                      <div className="col-md-6">
+                        <div className="p-3 border rounded-3">
+                          <div className="text-secondary small">Valor cotado</div>
+                          <div className="fw-semibold">{detail.valorCotado || '—'}</div>
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="p-3 border rounded-3">
+                          <div className="text-secondary small">Valor contratado</div>
+                          <div className="fw-semibold">{detail.valorContratado || '—'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="mb-2 d-flex align-items-center justify-content-between">
                     <h2 className="h6 mb-0">Fluxograma (documentação por data)</h2>
                   </div>
-
                   <div className="mb-3">
                     <StepFlow items={Array.isArray(detail.fluxo) ? detail.fluxo : []} onRemove={removeStep} />
                   </div>
