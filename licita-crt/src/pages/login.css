@@ -1,15 +1,30 @@
+:root{
+  --login-max-w: 1280px;
+  --login-gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+html { scroll-behavior: smooth; }
+body { overflow-y: overlay; }
+
 .login-bg {
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
-  padding: 2rem 1rem;
-  background: radial-gradient(1200px 600px at -10% -10%, #e7f1ff 0%, transparent 60%),
-              radial-gradient(1000px 800px at 110% 10%, #ffe9f0 0%, transparent 60%),
-              var(--bs-body-bg);
+  padding: clamp(1rem, 2vw, 2rem) clamp(0.75rem, 2vw, 1rem);
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(1200px 600px at -10% -10%, #e7f1ff 0%, transparent 60%),
+    radial-gradient(1000px 800px at 110% 10%, #ffe9f0 0%, transparent 60%),
+    var(--bs-body-bg);
 }
 
 .shape {
-  position: absolute; border-radius: 50%; filter: blur(40px); opacity: .45;
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: .45;
   animation: float 12s ease-in-out infinite;
+  pointer-events: none;
 }
 .shape.s1 { width: 220px; height: 220px; background: #b6d3ff; top: -40px; left: -40px; }
 .shape.s2 { width: 260px; height: 260px; background: #ffd1dc; bottom: -60px; right: -60px; animation-delay: 2s; }
@@ -21,12 +36,15 @@
 }
 
 .login-card {
+  width: min(100%, var(--login-max-w));
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr;              
+  gap: 0;
   overflow: hidden;
   border-radius: 1.25rem;
   backdrop-filter: blur(6px);
   background: rgba(var(--bs-body-bg-rgb), .7);
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
 }
 
 @media (min-width: 768px) {
@@ -34,24 +52,66 @@
 }
 
 .login-hero {
-  padding: 2rem;
-  background: linear-gradient(120deg, rgba(13,110,253,.08), rgba(0,0,0,0) 40%),
-              linear-gradient(180deg, rgba(13,110,253,.06), rgba(255,255,255,.0));
+  padding: clamp(1.25rem, 2vw, 2rem);
+  background:
+    linear-gradient(120deg, rgba(13,110,253,.08), rgba(0,0,0,0) 40%),
+    linear-gradient(180deg, rgba(13,110,253,.06), rgba(255,255,255,0));
+}
+.hero-svg { width: 100%; height: auto; display: block; }
+
+.login-form {
+  background: var(--bs-body-bg);
+  padding: clamp(1rem, 2.5vw, 2rem);
 }
 
-.brand .logo { font-weight: 800; font-size: 1.25rem; letter-spacing: .4px; }
-.hero-svg { width: 100%; height: auto; }
 
-.login-form { background: var(--bs-body-bg); }
+.login-form .card,
+.auth__form,
+.login-card .login-form {
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
 
-.input-group .input-group-text { background: transparent; }
+
+.brand .logo { font-weight: 800; font-size: clamp(1.1rem, 0.9rem + 1vw, 1.4rem); letter-spacing: .4px; }
+h1.h4, .login-form h1.h4 { font-size: clamp(1.1rem, 0.9rem + 1vw, 1.5rem); }
+h2.h4, .login-hero .h4 { font-size: clamp(1rem, 0.85rem + .9vw, 1.3rem); }
+
+
+.form-control { min-height: 44px; }
+.input-group .input-group-text {
+  min-height: 44px;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+}
+button.btn, .btn { min-height: 44px; }
+
+
+.btn-block-sm { width: 100%; }
+@media (min-width: 576px) { .btn-block-sm { width: auto; } }
+
+
+@media (max-height: 680px) {
+  .login-bg { align-items: start; }
+  .login-card { margin-top: 1rem; }
+}
+
 
 :root[data-bs-theme="dark"] .login-bg {
-  background: radial-gradient(1200px 600px at -10% -10%, #0b2b53 0%, transparent 60%),
-              radial-gradient(1000px 800px at 110% 10%, #3b1220 0%, transparent 60%),
-              var(--bs-body-bg);
+  background:
+    radial-gradient(1200px 600px at -10% -10%, #0b2b53 0%, transparent 60%),
+    radial-gradient(1000px 800px at 110% 10%, #3b1220 0%, transparent 60%),
+    var(--bs-body-bg);
 }
 :root[data-bs-theme="dark"] .login-hero {
-  background: linear-gradient(120deg, rgba(13,110,253,.15), rgba(0,0,0,0) 40%),
-              linear-gradient(180deg, rgba(13,110,253,.12), rgba(255,255,255,.0));
+  background:
+    linear-gradient(120deg, rgba(13,110,253,.15), rgba(0,0,0,0) 40%),
+    linear-gradient(180deg, rgba(13,110,253,.12), rgba(255,255,255,0));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  .shape { opacity: .3; }
 }

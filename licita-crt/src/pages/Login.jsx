@@ -34,7 +34,6 @@ export default function Login() {
       await login(email, password)
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      console.error('AUTH ERROR:', err?.code, err?.message)
       setError(errorMap[err?.code] || 'Falha no login. Verifique as credenciais.')
     } finally {
       setLoading(false)
@@ -48,84 +47,104 @@ export default function Login() {
       await resetPassword(email)
       setNotice('Enviamos um link de redefinição para seu e-mail.')
     } catch (err) {
-      console.error(err)
       setError(errorMap[err?.code] || 'Não foi possível enviar o e-mail agora.')
     }
   }
 
   return (
-    <div className="login-bg d-flex align-items-center justify-content-center">
-      <div className="shape s1"></div><div className="shape s2"></div><div className="shape s3"></div>
-      <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-12 col-lg-10">
-            <div className="login-card shadow-lg border-0">
-              <div className="login-hero d-none d-md-flex flex-column justify-content-between">
+    <div className="auth login-bg">
+      <section className="auth__panel">
+        <div className="auth__form">
+          <div className="text-center mb-4">
+            <div className="brand">
+              <span className="logo">CRT-03</span>
+              <small className="text-secondary ms-2">Licitações</small>
+            </div>
+            <h1 className="h4 mb-0">Acessar o sistema</h1>
+            <small className="text-secondary">Faça login para continuar</small>
+          </div>
+
+          <div className="card border-0 shadow-sm">
+            <div className="card-body p-4 p-md-5">
+              {error && <div className="alert alert-danger py-2">{error}</div>}
+              {notice && <div className="alert alert-success py-2">{notice}</div>}
+
+              <form onSubmit={onSubmit} className="vstack gap-3">
                 <div>
-                  <div className="brand mb-3"><span className="logo">CRT-03</span><small className="text-secondary"> Licitações</small></div>
-                  <h2 className="h4 mb-2">Gestão ágil de processos</h2>
-                  <p className="text-secondary mb-4">Cadastre, acompanhe prazos e centralize documentos com segurança.</p>
-                  <Illustration />
+                  <label className="form-label">E-mail</label>
+                  <div className="input-group">
+                    <span className="input-group-text">📧</span>
+                    <input
+                      type="email"
+                      className="form-control"
+                      placeholder="voce@exemplo.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                      inputMode="email"
+                    />
+                  </div>
                 </div>
-                <ul className="list-inline small text-secondary mt-4">
-                  <li className="list-inline-item me-3"><i className="bi bi-shield-check me-1"></i> Firebase Auth</li>
-                  <li className="list-inline-item me-3"><i className="bi bi-hdd-network me-1"></i> Firestore</li>
-                  <li className="list-inline-item"><i className="bi bi-cloud-arrow-up me-1"></i> Storage</li>
-                </ul>
-              </div>
 
-              <div className="login-form p-4 p-md-5">
-                <h1 className="h4 mb-3">Entrar</h1>
-                <p className="text-secondary mb-4">Acesse sua conta para continuar.</p>
-
-                {error && <div className="alert alert-danger py-2">{error}</div>}
-                {notice && <div className="alert alert-success py-2">{notice}</div>}
-
-                <form onSubmit={onSubmit} className="vstack gap-3">
-                  <div>
-                    <label className="form-label">E-mail</label>
-                    <div className="input-group">
-                      <span className="input-group-text"><i className="bi bi-envelope"></i></span>
-                      <input className="form-control" type="email" placeholder="voce@exemplo.com"
-                        value={email} onChange={(e)=>setEmail(e.target.value)} autoComplete="username" required />
-                    </div>
+                <div>
+                  <label className="form-label d-flex justify-content-between">
+                    <span>Senha</span>
+                    <button type="button" className="btn btn-link btn-sm p-0" onClick={()=>setShowPwd(s=>!s)}>
+                      {showPwd ? 'Ocultar' : 'Mostrar'}
+                    </button>
+                  </label>
+                  <div className="input-group">
+                    <span className="input-group-text">🔒</span>
+                    <input
+                      type={showPwd ? 'text' : 'password'}
+                      className="form-control"
+                      placeholder="Sua senha"
+                      value={password}
+                      onChange={(e)=>setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                    />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="form-label d-flex justify-content-between">
-                      <span>Senha</span>
-                      <button type="button" className="btn btn-link btn-sm p-0" onClick={()=>setShowPwd(s=>!s)}>
-                        {showPwd ? 'Ocultar' : 'Mostrar'}
-                      </button>
-                    </label>
-                    <div className="input-group">
-                      <span className="input-group-text"><i className="bi bi-lock"></i></span>
-                      <input className="form-control" type={showPwd ? 'text' : 'password'} placeholder="Sua senha"
-                        value={password} onChange={(e)=>setPassword(e.target.value)} autoComplete="current-password" required />
-                    </div>
+                <div className="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div className="form-check">
+                    <input className="form-check-input" type="checkbox" id="rememberMe" />
+                    <label className="form-check-label" htmlFor="rememberMe">Lembrar-me</label>
                   </div>
-
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div className="form-check">
-                      <input className="form-check-input" type="checkbox" id="rememberMe" />
-                      <label className="form-check-label" htmlFor="rememberMe">Lembrar-me</label>
-                    </div>
-                    <button type="button" className="btn btn-link p-0" onClick={onForgot}>Esqueci minha senha</button>
-                  </div>
-
-                  <button className="btn btn-primary btn-lg w-100" disabled={loading}>
-                    {loading ? (<><span className="spinner-border spinner-border-sm me-2"></span>Entrando…</>) : 'Entrar'}
+                  <button type="button" className="btn btn-link p-0" onClick={onForgot}>
+                    Esqueci minha senha
                   </button>
-                </form>
-
-                <div className="text-center mt-4 small text-secondary">
-                  Ambiente seguro • {new Date().getFullYear()}
                 </div>
-              </div>
+
+                <button className="btn btn-primary btn-block-sm" disabled={loading}>
+                  {loading ? (<><span className="spinner-border spinner-border-sm me-2"></span>Entrando…</>) : 'Entrar'}
+                </button>
+              </form>
+
+              <p className="text-center text-secondary mt-4 mb-0 small">
+                Ambiente seguro • {new Date().getFullYear()}
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <aside className="auth__hero">
+        <div className="auth__hero-inner">
+          <h2 className="h3">Gestão ágil de processos</h2>
+          <p className="text-secondary">
+            Cadastre, acompanhe prazos e centralize documentos com segurança, em qualquer dispositivo.
+          </p>
+          <Illustration />
+          <ul className="list-inline small text-secondary mt-4 mb-0">
+            <li className="list-inline-item me-3">🔐 Firebase Auth</li>
+            <li className="list-inline-item me-3">🗄️ Firestore</li>
+            <li className="list-inline-item">☁️ Storage</li>
+          </ul>
+        </div>
+      </aside>
     </div>
   )
 }
