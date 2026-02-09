@@ -99,11 +99,19 @@ export default function Dashboard() {
     return (dt instanceof Date && !isNaN(dt)) ? dt : null
   }
   const etapaOf = (p) => (p.etapa || p.statusGeral || '').trim()
+  const normalizeStatus = (s) => (s || '')
+    .toString()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
   const isClosed = (p) => {
-    const e = etapaOf(p)?.toLowerCase()
-    return ['concluído', 'concluido', 'suspenso', 'revogado', 'fechado'].includes(e)
+    const e = normalizeStatus(etapaOf(p))
+    return ['concluido', 'suspenso', 'revogado', 'fechado', 'finalizado'].includes(e)
   }
-  const isOpen = (p) => !isClosed(p)
+  const isOpen = (p) => {
+    const e = normalizeStatus(etapaOf(p))
+    return ['aberto', 'em analise'].includes(e)
+  }
   const norm = (s) => (s || '').toString().trim()
 
   function baseMonthDate(p) {
@@ -260,7 +268,6 @@ export default function Dashboard() {
             </div>
 
             <div className="ms-0 ms-md-auto">
-              <label className="form-label mb-1">Fase</label>
               <PhaseFilter value={faseKeyFilter} onChange={setFaseKeyFilter} />
             </div>
 

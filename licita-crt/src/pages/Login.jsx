@@ -53,6 +53,10 @@ export default function Login() {
 
   return (
     <div className="auth login-bg">
+      <div className="login-decor d1" aria-hidden="true" />
+      <div className="login-decor d2" aria-hidden="true" />
+      <div className="login-decor d3" aria-hidden="true" />
+
       <section className="auth__panel">
         <div className="auth__form">
           <div className="text-center mb-4">
