@@ -55,7 +55,8 @@ export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'rel
   if (!data.length) { alert('Não há dados para exportar.'); return }
   if (!Array.isArray(columns) || !columns.length) { alert('Defina as colunas para exportar.'); return }
 
-  const orient = columns.length > 6 ? 'landscape' : 'portrait'
+  const isWideTable = columns.length > 6
+  const orient = isWideTable ? 'landscape' : 'portrait'
   const doc = new jsPDF(orient, 'pt', 'a4')
   const pageWidth  = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
@@ -80,7 +81,8 @@ export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'rel
 
   const MARGIN_L = 40
   const MARGIN_R = 40
-  const TABLE_WIDTH = pageWidth - MARGIN_L - MARGIN_R
+  const fontSize = columns.length > 10 ? 7 : columns.length > 7 ? 8 : 9
+  const cellPadding = columns.length > 10 ? 2 : 4
 
   const head = [columns.map(c => c.header)]
   const body = data.map(r => columns.map(c => fmtCell(r[c.dataKey])))
@@ -90,13 +92,14 @@ export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'rel
     body,
     startY: TABLE_START_Y,
     theme: 'grid',
-    tableWidth: TABLE_WIDTH,
+    tableWidth: 'auto',
     margin: { left: MARGIN_L, right: MARGIN_R, top: TABLE_START_Y, bottom: 40 },
     styles: {
       font: 'helvetica',
-      fontSize: 9,
-      cellPadding: 4,
+      fontSize,
+      cellPadding,
       overflow: 'linebreak',
+      cellWidth: 'auto',
       lineWidth: 0.5,
       halign: 'center',
       valign: 'middle',
@@ -107,10 +110,13 @@ export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'rel
       fontStyle: 'bold',
       halign: 'center',
     },
+    showHead: 'everyPage',
+    horizontalPageBreak: isWideTable,
+    horizontalPageBreakRepeat: isWideTable ? [0] : null,
     columnStyles: Object.fromEntries(
       columns.map((c, i) => {
         const isTexty = /objeto|descri|observa/i.test((c.dataKey || '') + ' ' + (c.header || ''))
-        return [i, { halign: isTexty ? 'left' : 'center', cellWidth: 'wrap' }]
+        return [i, { halign: isTexty ? 'left' : 'center' }]
       })
     ),
     alternateRowStyles: { fillColor: [245, 248, 255] },
