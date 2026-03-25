@@ -3,9 +3,8 @@ import { listarProcessos } from '../services/processos'
 import { PHASES, computePhaseState, monthFromNumero } from '../utils/phases'
 import './home.css'
 
-
 function humanAgo(from, now = new Date()) {
-  if (!from) return '—'
+  if (!from) return '-'
   const ms = Math.max(0, now - from)
   const d = Math.floor(ms / 86400000)
   const h = Math.floor((ms % 86400000) / 3600000)
@@ -17,7 +16,7 @@ function humanAgo(from, now = new Date()) {
 
 function isClosed(etapa) {
   const e = (etapa || '').toString().toLowerCase()
-  return ['concluído','concluido','suspenso','revogado','fechado','finalizado'].includes(e)
+  return ['concluido', 'concluído', 'suspenso', 'revogado', 'fechado', 'finalizado'].includes(e)
 }
 
 export default function Home() {
@@ -26,7 +25,7 @@ export default function Home() {
   const [query, setQuery] = useState('')
 
   useEffect(() => {
-    (async () => {
+    ;(async () => {
       try {
         setLoading(true)
         const data = await listarProcessos()
@@ -37,96 +36,140 @@ export default function Home() {
     })()
   }, [])
 
-
-  const ativos = useMemo(() =>
-    rows.filter(p => !isClosed(p?.etapa || p?.statusGeral)), [rows])
-
+  const ativos = useMemo(
+    () => rows.filter((p) => !isClosed(p?.etapa || p?.statusGeral)),
+    [rows]
+  )
 
   const view = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return ativos
-    return ativos.filter(p => (
+    return ativos.filter((p) => (
       String(p.numero || '').toLowerCase().includes(q) ||
       String(p.objeto || '').toLowerCase().includes(q)
     ))
   }, [ativos, query])
 
+  const stats = useMemo(() => {
+    const total = ativos.length
+    const emAnalise = ativos.filter((p) => String(p?.etapa || '').toLowerCase().includes('an')).length
+    const concluidosFluxo = ativos.filter((p) => {
+      const done = computePhaseState(p.fluxo).completed
+      return done >= Math.ceil(PHASES.length * 0.7)
+    }).length
+    return [
+      { label: 'Processos ativos', value: total, detail: 'Carteira atual monitorada' },
+      { label: 'Em analise', value: emAnalise, detail: 'Dependem de validacao setorial' },
+      { label: 'Fase avancada', value: concluidosFluxo, detail: 'Fluxos acima de 70%' },
+    ]
+  }, [ativos])
+
   return (
-    <div className="container py-3">
-      <div className="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div className="home-page">
+      <section className="home-hero">
         <div>
-          <h1 className="h5 mb-1">Acompanhamento de Processos</h1>
-          <p className="text-secondary mb-0">
-            Visão consolidada para o Prefeito: etapa atual, setor responsável e tempo na etapa.
+          <span className="home-hero__eyebrow">Visão consolidada</span>
+          <h1>Acompanhamento executivo dos processos</h1>
+          <p>
+            Monitore etapa atual, responsavel e ritmo de tramitação em uma interface
+            mais clara para decisão rápida.
           </p>
         </div>
-        <div className="home-search input-group">
-          <span className="input-group-text">🔎</span>
-          <input className="form-control" placeholder="Buscar por nº ou objeto…" value={query} onChange={(e)=>setQuery(e.target.value)} />
-        </div>
-      </div>
 
-      {loading && <div className="alert alert-info">Carregando…</div>}
+        <div className="home-hero__panel">
+          <div className="home-search input-group">
+            <span className="input-group-text">
+              <i className="bi bi-search" />
+            </span>
+            <input
+              className="form-control"
+              placeholder="Buscar por numero ou objeto..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="home-hero__hint">
+            {loading ? 'Atualizando processos...' : `${view.length} processos exibidos`}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-stats">
+        {stats.map((item) => (
+          <article key={item.label} className="home-stat-card">
+            <span>{item.label}</span>
+            <strong>{loading ? '...' : item.value}</strong>
+            <small>{item.detail}</small>
+          </article>
+        ))}
+      </section>
+
+      {loading && <div className="alert alert-info">Carregando...</div>}
       {!loading && view.length === 0 && (
         <div className="alert alert-light">Nenhum processo ativo encontrado.</div>
       )}
 
-      <div className="row g-3">
+      <section className="row g-4">
         {view.map((p) => {
-          const inicio = monthFromNumero(p.numero) 
+          const inicio = monthFromNumero(p.numero)
           const { currentIndex, completed, lastChangeAt } = computePhaseState(p.fluxo)
           const curPhase = PHASES[currentIndex] || PHASES[0]
           const progress = Math.round((completed / PHASES.length) * 100)
 
           return (
-            <div key={p.id} className="col-12 col-md-6 col-xl-4">
-              <div className="card border-0 shadow-sm h-100 home-card">
+            <div key={p.id} className="col-12 col-md-6 col-xxl-4">
+              <article className="card border-0 h-100 home-card">
                 <div className="card-body d-flex flex-column">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div className="me-2">
-                      <div className="text-secondary small">Processo</div>
-                      <div className="fw-semibold text-truncate">{p.numero || '—'}</div>
+                  <div className="home-card__top">
+                    <div>
+                      <span className="home-card__label">Processo</span>
+                      <h2 className="home-card__number">{p.numero || '-'}</h2>
                     </div>
                     <span className="badge round text-bg-primary">{progress}%</span>
                   </div>
 
-                  <div className="text-truncate mb-2" title={p.objeto}>{p.objeto || '—'}</div>
+                  <p className="home-card__title" title={p.objeto}>
+                    {p.objeto || '-'}
+                  </p>
 
-                  <div className="row g-2 small mb-2">
-                    <div className="col-6">
-                      <div className="text-secondary">Início</div>
-                      <div className="fw-semibold">{inicio ? inicio.toLocaleDateString('pt-BR', { month:'2-digit', year:'numeric' }) : '—'}</div>
+                  <div className="home-card__meta">
+                    <div>
+                      <span>Inicio</span>
+                      <strong>
+                        {inicio
+                          ? inicio.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })
+                          : '-'}
+                      </strong>
                     </div>
-                    <div className="col-6">
-                      <div className="text-secondary">Tempo na etapa</div>
-                      <div className="fw-semibold">{humanAgo(lastChangeAt)}</div>
+                    <div>
+                      <span>Tempo na etapa</span>
+                      <strong>{humanAgo(lastChangeAt)}</strong>
                     </div>
-                    <div className="col-12">
-                      <div className="text-secondary">Etapa atual</div>
-                      <div className="fw-semibold">{curPhase.name}</div>
-                      <div className="text-secondary">Responsável: <b>{curPhase.sector}</b></div>
+                    <div className="home-card__phase">
+                      <span>Etapa atual</span>
+                      <strong>{curPhase.name}</strong>
+                      <small>Responsavel: {curPhase.sector}</small>
                     </div>
                   </div>
 
-                 
                   <div className="phases-progress mb-3">
                     {PHASES.map((ph, idx) => {
-                      const state = idx < completed ? 'done' : (idx === currentIndex ? 'current' : 'todo')
-                      return <span key={ph.key} className={`dot dot--${state}`} title={`${idx+1}. ${ph.name}`} />
+                      const state = idx < completed ? 'done' : idx === currentIndex ? 'current' : 'todo'
+                      return <span key={ph.key} className={`dot dot--${state}`} title={`${idx + 1}. ${ph.name}`} />
                     })}
                   </div>
 
                   <div className="mt-auto d-flex justify-content-end">
-                    <a className="btn btn-outline-primary btn-sm" href={`/controle?pid=${p.id}`}>
+                    <a className="btn btn-outline-primary btn-sm home-card__cta" href={`/controle?pid=${p.id}`}>
                       Detalhar no Controle
                     </a>
                   </div>
                 </div>
-              </div>
+              </article>
             </div>
           )
         })}
-      </div>
+      </section>
     </div>
   )
 }

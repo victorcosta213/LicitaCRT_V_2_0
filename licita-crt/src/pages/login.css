@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Onest:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap');
 
 :root{
   --login-max-w: 1200px;
@@ -86,9 +86,10 @@ body { overflow-y: overlay; }
 }
 
 h1.h4 {
-  font-family: "Newsreader", "Georgia", serif;
-  font-weight: 600;
-  font-size: clamp(1.2rem, 1rem + 1vw, 1.7rem);
+  font-family: "Onest", "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.2rem, 1rem + .8vw, 1.55rem);
+  letter-spacing: -.02em;
   color: var(--login-ink);
 }
 
@@ -105,9 +106,10 @@ h1.h4 {
 }
 
 .auth__hero-inner h2.h3 {
-  font-family: "Newsreader", "Georgia", serif;
-  font-weight: 600;
-  font-size: clamp(1.25rem, 1.1rem + 1.2vw, 1.8rem);
+  font-family: "Onest", "Segoe UI", sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.25rem, 1.1rem + .9vw, 1.65rem);
+  letter-spacing: -.02em;
   color: var(--login-ink);
 }
 .auth__hero-inner {

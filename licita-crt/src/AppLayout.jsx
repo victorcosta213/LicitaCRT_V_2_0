@@ -9,7 +9,9 @@ export default function AppLayout() {
       <main className="app-main">
         <Topbar />
         <div className="app-content">
-          <Outlet />
+          <div className="app-page">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

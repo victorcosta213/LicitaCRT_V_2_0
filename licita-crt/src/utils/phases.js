@@ -6,7 +6,7 @@ const PHASES = [
   { key: 'edital_anexos',        name: 'Arquivo do Edital e anexos',                         sector: 'Compras' },
   { key: 'parecer_juridico_ini', name: 'Parecer Jurídico inicial',                           sector: 'Jurídico' },
   { key: 'publicacao_edital',    name: 'Publicação do edital',                               sector: 'Compras/Comunicação' },
-  { key: 'impugnacoes',          name: 'Impugnações/esclarecimentos referentes ao Edital',   sector: 'Compras/Pregoeiro' },
+  { key: 'impugnações',          name: 'Impugnações/esclarecimentos referentes ao Edital',   sector: 'Compras/Pregoeiro' },
   { key: 'vencedores',           name: 'Vencedore(s) do certame/itens vencidos',             sector: 'Pregoeiro/Comissão' },
   { key: 'habilitacao',          name: 'Fase de Habilitação – Situação/Habilitados',         sector: 'Pregoeiro/Comissão' },
   { key: 'adjudicacao',          name: 'Adjudicação',                                        sector: 'Pregoeiro/Comissão' },

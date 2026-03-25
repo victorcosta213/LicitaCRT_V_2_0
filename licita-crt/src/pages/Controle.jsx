@@ -9,6 +9,7 @@ import { computeStatus } from '../utils/status'
 import StepFlow from '../components/StepFlow'
 import PhaseSelect from '../components/PhaseSelect'
 import { PHASES, phaseNameByKey } from '../utils/phases'
+import './controle.css'
 
 const COL = 'processos'
 
@@ -25,13 +26,20 @@ const emptyForm = {
   faseInicialKey: '',
   justificativa: '',
   valorCotado: '',
-  valorContratado: ''
+  valorContratado: '',
 }
 
-const OPT_ETAPA = ['Aberto', 'Em análise', 'Concluído', 'Suspenso', 'Revogado']
-const OPT_TIPO  = ['Inexigibilidade', 'Dispensa', 'Dispensa Eletrônica', 'Pregão', 'Concorrência', 'Pronto Pagamento','ARP']
-const OPT_PRIOR = ['Crítico', 'Não Crítico', 'Estratégico', 'Alavancável']
+const OPT_ETAPA = ['Aberto', 'Em analise', 'Concluido', 'Suspenso', 'Revogado']
+const OPT_TIPO = ['Inexigibilidade', 'Dispensa', 'Dispensa Eletronica', 'Pregao', 'Concorrencia', 'Pronto Pagamento', 'ARP']
+const OPT_PRIOR = ['Critico', 'Nao Critico', 'Estrategico', 'Alavancavel']
 const OPT_STATUS_PRAZO = ['Em dia', 'Quase vencendo', 'Atrasado']
+
+function priorityBadgeClass(value) {
+  if (value === 'Critico') return 'text-bg-danger'
+  if (value === 'Estrategico') return 'text-bg-primary'
+  if (value === 'Alavancavel') return 'text-bg-warning'
+  return 'text-bg-secondary'
+}
 
 export default function Controle() {
   const { isAdmin } = useAuth()
@@ -44,11 +52,12 @@ export default function Controle() {
   const [filtro, setFiltro] = useState(() => {
     try {
       const raw = localStorage.getItem('controle.filters')
-      return raw ? JSON.parse(raw) : { etapa:'', prioridade:'', tipo:'', faseAtual:'', statusPrazo:'', de:'', ate:'' }
+      return raw ? JSON.parse(raw) : { etapa: '', prioridade: '', tipo: '', faseAtual: '', statusPrazo: '', de: '', ate: '' }
     } catch {
-      return { etapa:'', prioridade:'', tipo:'', faseAtual:'', statusPrazo:'', de:'', ate:'' }
+      return { etapa: '', prioridade: '', tipo: '', faseAtual: '', statusPrazo: '', de: '', ate: '' }
     }
   })
+
   useEffect(() => {
     localStorage.setItem('controle.filters', JSON.stringify(filtro))
   }, [filtro])
@@ -66,7 +75,8 @@ export default function Controle() {
 
   async function load() {
     try {
-      setLoading(true); setError('')
+      setLoading(true)
+      setError('')
       const data = await listarProcessos()
       setRows(data)
     } catch {
@@ -75,22 +85,23 @@ export default function Controle() {
       setLoading(false)
     }
   }
+
   useEffect(() => { load() }, [])
 
   const view = useMemo(() => {
-    return rows.filter(r => {
-      const txt = (r.numero || '') + ' ' + (r.objeto || '')
+    return rows.filter((r) => {
+      const txt = `${r.numero || ''} ${r.objeto || ''}`
       const okBusca = !busca || txt.toLowerCase().includes(busca.toLowerCase())
       const okEtapa = !filtro.etapa || (r.etapa || r.statusGeral || '') === filtro.etapa
       const okPrior = !filtro.prioridade || (r.prioridade || '') === filtro.prioridade
-      const okTipo  = !filtro.tipo || (r.tipo || '') === filtro.tipo
+      const okTipo = !filtro.tipo || (r.tipo || '') === filtro.tipo
 
       let okFase = true
       if (filtro.faseAtual) {
         const faseNome = phaseNameByKey(filtro.faseAtual)
         const etapa = (r.etapa || '').toString()
         const fluxo = Array.isArray(r.fluxo) ? r.fluxo : []
-        okFase = etapa === faseNome || fluxo.some(f => (f.nome || '') === faseNome)
+        okFase = etapa === faseNome || fluxo.some((f) => (f.nome || '') === faseNome)
       }
 
       const stPrazo = computeStatus(r.prazo).label
@@ -101,8 +112,8 @@ export default function Controle() {
 
       let okPeriodo = true
       if ((filtro.de || filtro.ate) && baseDate) {
-        const ymd = (d) => d.toISOString().slice(0,10)
-        if (filtro.de  && ymd(baseDate) < filtro.de) okPeriodo = false
+        const ymd = (d) => d.toISOString().slice(0, 10)
+        if (filtro.de && ymd(baseDate) < filtro.de) okPeriodo = false
         if (filtro.ate && ymd(baseDate) > filtro.ate) okPeriodo = false
       } else if ((filtro.de || filtro.ate) && !baseDate) {
         okPeriodo = false
@@ -113,12 +124,20 @@ export default function Controle() {
   }, [rows, busca, filtro])
 
   const openModal = (id) => document.getElementById(id)?.click()
-  const onChange = (e) => setForm(s => ({ ...s, [e.target.name]: e.target.value }))
+  const onChange = (e) => setForm((s) => ({ ...s, [e.target.name]: e.target.value }))
 
-  const onNew = () => { setEditing(null); setForm(emptyForm); setFile(null); openModal('btnModalControle') }
+  const onNew = () => {
+    setEditing(null)
+    setForm(emptyForm)
+    setFile(null)
+    openModal('btnModalControle')
+  }
 
   const onEdit = (row) => {
-    if (!isAdmin) { alert('Você não tem permissão para editar.'); return }
+    if (!isAdmin) {
+      alert('Voce nao tem permissao para editar.')
+      return
+    }
     setEditing(row.id)
     setForm({
       numero: row.numero || '',
@@ -133,14 +152,17 @@ export default function Controle() {
       faseInicialKey: '',
       justificativa: row.justificativa || '',
       valorCotado: row.valorCotado || '',
-      valorContratado: row.valorContratado || ''
+      valorContratado: row.valorContratado || '',
     })
     setFile(null)
     openModal('btnModalControle')
   }
 
   const onDelete = async (row) => {
-    if (!isAdmin) { alert('Você não tem permissão para excluir.'); return }
+    if (!isAdmin) {
+      alert('Voce nao tem permissao para excluir.')
+      return
+    }
     if (!confirm('Confirma excluir este registro?')) return
     try {
       if (row.anexoPath) await removeFile(row.anexoPath)
@@ -152,7 +174,7 @@ export default function Controle() {
   }
 
   const validate = (f) => {
-    if (!f.numero?.trim()) return 'Informe o número.'
+    if (!f.numero?.trim()) return 'Informe o numero.'
     if (!f.objeto?.trim()) return 'Informe o objeto.'
     return ''
   }
@@ -160,23 +182,26 @@ export default function Controle() {
   async function checkDuplicateNumero(numero, currentId) {
     const res = await findBy(COL, 'numero', numero)
     const found = res?.data || []
-    return found.some(x => x.id !== currentId)
+    return found.some((x) => x.id !== currentId)
   }
 
   const onSubmit = async (e) => {
     e.preventDefault()
     const v = validate(form)
-    if (v) { alert(v); return }
+    if (v) {
+      alert(v)
+      return
+    }
     try {
       setSaving(true)
       if (await checkDuplicateNumero(form.numero, editing)) {
-        alert('Já existe um processo com esse número.')
+        alert('Ja existe um processo com esse numero.')
         return
       }
 
       const payload = {
         ...form,
-        prazo: form.prazo ? fromInputDate(form.prazo) : null
+        prazo: form.prazo ? fromInputDate(form.prazo) : null,
       }
 
       if (!editing) {
@@ -188,7 +213,9 @@ export default function Controle() {
 
       if (file) {
         try {
-          if (form.anexoPath) { try { await removeFile(form.anexoPath) } catch {} }
+          if (form.anexoPath) {
+            try { await removeFile(form.anexoPath) } catch {}
+          }
           const up = await uploadFile('anexos', file, form.numero || undefined)
           payload.anexoUrl = up.url
           payload.anexoPath = up.path
@@ -221,17 +248,21 @@ export default function Controle() {
     if (!detail) return
     const nome = phaseNameByKey(novaFaseKey)
     const data = novaFaseData ? `${novaFaseData}T00:00:00` : ''
-    if (!novaFaseKey || !data) { alert('Selecione a fase e a data.'); return }
+    if (!novaFaseKey || !data) {
+      alert('Selecione a fase e a data.')
+      return
+    }
 
     const fluxo = Array.isArray(detail.fluxo) ? [...detail.fluxo] : []
     fluxo.push({ nome, data })
 
     try {
       await updateById(COL, detail.id, { fluxo, etapa: nome })
-      const newRows = rows.map(r => r.id === detail.id ? { ...r, fluxo, etapa: nome } : r)
+      const newRows = rows.map((r) => r.id === detail.id ? { ...r, fluxo, etapa: nome } : r)
       setRows(newRows)
       setDetail({ ...detail, fluxo, etapa: nome })
-      setNovaFaseKey(''); setNovaFaseData('')
+      setNovaFaseKey('')
+      setNovaFaseData('')
     } catch {
       alert('Falha ao adicionar fase.')
     }
@@ -243,7 +274,7 @@ export default function Controle() {
     fluxo.splice(idx, 1)
     try {
       await updateById(COL, detail.id, { fluxo })
-      const newRows = rows.map(r => r.id === detail.id ? { ...r, fluxo } : r)
+      const newRows = rows.map((r) => r.id === detail.id ? { ...r, fluxo } : r)
       setRows(newRows)
       setDetail({ ...detail, fluxo })
     } catch {
@@ -256,112 +287,225 @@ export default function Controle() {
     exportToPdf(
       view,
       [
-        { header: 'Nº', dataKey: 'numero' },
+        { header: 'N', dataKey: 'numero' },
         { header: 'Objeto', dataKey: 'objeto' },
         { header: 'Etapa', dataKey: 'etapa' },
         { header: 'Tipo', dataKey: 'tipo' },
         { header: 'Prioridade', dataKey: 'prioridade' },
-        { header: 'Resp.', dataKey: 'responsavel' }
+        { header: 'Resp.', dataKey: 'responsavel' },
       ],
       'Processos CRT-03',
       'processos.pdf'
     )
 
   const mostrarJustificativa = ['Revogado', 'Suspenso'].includes(form.etapa || '')
-  const mostrarValores = ['Dispensa', 'Dispensa Eletrônica'].includes(form.tipo || '')
+  const mostrarValores = ['Dispensa', 'Dispensa Eletronica'].includes(form.tipo || '')
 
   const showValoresInDetail = (p) =>
-    ['Dispensa', 'Dispensa Eletrônica'].includes(p?.tipo || '') ||
+    ['Dispensa', 'Dispensa Eletronica'].includes(p?.tipo || '') ||
     !!(p?.valorCotado || p?.valorContratado)
 
-  return (
-    <div className="container py-4">
-      <div className="card border-0 shadow-sm">
-        <div className="card-body">
-          <div className="d-flex flex-wrap justify-content-between align-items-center toolbar mb-3">
-            <h1 className="h5 mb-0">Controle de Processos</h1>
+  const activeFilters = [
+    filtro.etapa ? { key: 'Etapa', value: filtro.etapa } : null,
+    filtro.tipo ? { key: 'Tipo', value: filtro.tipo } : null,
+    filtro.prioridade ? { key: 'Prioridade', value: filtro.prioridade } : null,
+    filtro.faseAtual ? { key: 'Fase', value: phaseNameByKey(filtro.faseAtual) } : null,
+    filtro.statusPrazo ? { key: 'Prazo', value: filtro.statusPrazo } : null,
+    filtro.de ? { key: 'De', value: filtro.de } : null,
+    filtro.ate ? { key: 'Ate', value: filtro.ate } : null,
+  ].filter(Boolean)
 
-            <div className="d-flex flex-wrap toolbar gap-2">
+  return (
+    <div className="controle-page">
+      <section className="controle-hero">
+        <div>
+          <span className="controle-hero__eyebrow">Operacao central</span>
+          <h1>Controle de processos</h1>
+          <p>Gerencie a carteira ativa, aplique filtros e acompanhe status e prazo com uma leitura mais direta.</p>
+        </div>
+        <div className="controle-hero__stats">
+          <article>
+            <span>Total visivel</span>
+            <strong>{loading ? '...' : view.length}</strong>
+          </article>
+          <article>
+            <span>Com filtro</span>
+            <strong>{activeFilters.length}</strong>
+          </article>
+        </div>
+      </section>
+
+      <div className="card border-0 shadow-sm controle-surface">
+        <div className="card-body">
+          <div className="controle-toolbar mb-3">
+            <div className="controle-toolbar__search">
               <div className="input-group">
-                <span className="input-group-text">🔎</span>
+                <span className="input-group-text"><i className="bi bi-search" /></span>
                 <input
                   className="form-control"
-                  placeholder="Buscar número / objeto…"
+                  placeholder="Buscar numero ou objeto..."
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
                 />
               </div>
+            </div>
 
+            <div className="controle-toolbar__actions">
               <button className="btn btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#filtersOffcanvas">
+                <i className="bi bi-sliders me-2" />
                 Filtros
               </button>
-
-              <button className="btn btn-outline-success" onClick={doExportExcel}>Excel</button>
-              <button className="btn btn-outline-danger" onClick={doExportPdf}>PDF</button>
-              <button className="btn btn-primary" onClick={onNew}>Novo</button>
+              <button className="btn btn-outline-success" onClick={doExportExcel}>
+                <i className="bi bi-file-earmark-excel me-2" />
+                Excel
+              </button>
+              <button className="btn btn-outline-danger" onClick={doExportPdf}>
+                <i className="bi bi-file-earmark-pdf me-2" />
+                PDF
+              </button>
+              <button className="btn btn-primary" onClick={onNew}>
+                <i className="bi bi-plus-lg me-2" />
+                Novo
+              </button>
 
               <button id="btnModalControle" className="d-none" data-bs-toggle="modal" data-bs-target="#modalControle"></button>
               <button id="btnModalDetalhe" className="d-none" data-bs-toggle="modal" data-bs-target="#modalDetalhe"></button>
             </div>
           </div>
 
-          {error && <div className="alert alert-danger py-2">{error}</div>}
-          {loading && <div className="alert alert-info py-2">Carregando…</div>}
+          {activeFilters.length > 0 && (
+            <div className="filter-chips controle-filter-chips">
+              {activeFilters.map((chip) => (
+                <span key={`${chip.key}-${chip.value}`} className={`chip ${chip.key === 'De' || chip.key === 'Ate' ? 'chip--date' : ''}`}>
+                  <span className="chip-key">{chip.key}</span>
+                  <span className="chip-val">{chip.value}</span>
+                </span>
+              ))}
+            </div>
+          )}
 
-          <div className="table-responsive">
-            <table className="table table-sm align-middle">
-              <thead className="table-light">
+          {error && <div className="alert alert-danger py-2">{error}</div>}
+          {loading && <div className="alert alert-info py-2">Carregando...</div>}
+
+          <div className="process-table-wrap">
+            <table className="process-table">
+              <thead>
                 <tr>
-                  <th style={{width:110}}>Nº</th>
-                  <th>Objeto</th>
-                  <th style={{width:140}}>Etapa</th>
-                  <th style={{width:140}}>Tipo</th>
-                  <th style={{width:130}}>Prioridade</th>
-                  <th style={{width:180}}>Prazo / Status</th>
-                  <th style={{width:140}}></th>
+                  <th className="process-col-numero">N</th>
+                  <th className="process-col-objeto">Objeto</th>
+                  <th className="process-col-etapa">Etapa</th>
+                  <th className="process-col-tipo">Tipo</th>
+                  <th className="process-col-prioridade">Prioridade</th>
+                  <th className="process-col-prazo">Prazo</th>
+                  <th className="process-col-status">Status</th>
+                  <th className="process-col-acoes">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {view.map((r) => {
                   const st = computeStatus(r.prazo)
                   return (
-                    <tr key={r.id} onClick={(ev)=>onRowClick(r, ev)} style={{cursor:'pointer'}}>
-                      <td>{r.numero}</td>
-                      <td className="text-truncate w-420" title={r.objeto}>{r.objeto}</td>
-                      <td>{r.etapa || r.statusGeral || '—'}</td>
-                      <td>{r.tipo || '—'}</td>
-                      <td>
-                        {r.prioridade
-                          ? <span className={`badge round text-bg-${r.prioridade === 'Crítico' || r.prioridade === 'Critico' ? 'danger' : 'secondary'}`}>{r.prioridade}</span>
-                          : '—'}
+                    <tr key={r.id} onClick={(ev) => onRowClick(r, ev)}>
+                      <td className="process-col-numero">
+                        <div className="process-cell-number">{r.numero}</div>
                       </td>
-                      <td>
-                        <div className="d-flex flex-column">
-                          <small className="text-secondary">{toInputDate(r.prazo) || '—'}</small>
-                          <div>
-                            <span className={`badge round text-bg-${st.kind}`}>{st.label}</span>
-                            {st.days !== null && (<small className="ms-2 text-secondary">{st.days} dia(s)</small>)}
-                          </div>
-                        </div>
+                      <td className="process-col-objeto">
+                        <div className="process-cell-title" title={r.objeto}>{r.objeto}</div>
+                        <div className="process-cell-subtitle">{r.responsavel || 'Sem responsavel'}</div>
                       </td>
-                      <td className="text-end" onClick={e => e.stopPropagation()}>
+                      <td className="process-col-etapa">
+                        <span className="process-pill process-pill--soft">{r.etapa || r.statusGeral || '-'}</span>
+                      </td>
+                      <td className="process-col-tipo">{r.tipo || '-'}</td>
+                      <td className="process-col-prioridade">
+                        {r.prioridade ? <span className={`process-pill ${priorityBadgeClass(r.prioridade)}`}>{r.prioridade}</span> : '-'}
+                      </td>
+                      <td className="process-col-prazo">{toInputDate(r.prazo) || '-'}</td>
+                      <td className="process-col-status">
+                        <span className={`process-pill text-bg-${st.kind}`}>{st.label}</span>
+                      </td>
+                      <td className="process-col-acoes" onClick={(e) => e.stopPropagation()}>
                         {isAdmin ? (
-                          <div className="btn-group btn-group-sm">
-                            <button className="btn btn-outline-primary" onClick={() => onEdit(r)}>Editar</button>
-                            <button className="btn btn-outline-danger" onClick={() => onDelete(r)}>Excluir</button>
+                          <div className="process-actions">
+                            <button className="btn btn-sm btn-light" onClick={() => onEdit(r)} title="Editar">
+                              <i className="bi bi-pencil-square" />
+                            </button>
+                            <button className="btn btn-sm btn-light text-danger" onClick={() => onDelete(r)} title="Excluir">
+                              <i className="bi bi-trash3" />
+                            </button>
                           </div>
                         ) : (
-                          <span className="text-secondary small">Sem permissão</span>
+                          <span className="text-secondary tiny">-</span>
                         )}
                       </td>
                     </tr>
                   )
                 })}
                 {!loading && view.length === 0 && (
-                  <tr><td colSpan="7" className="text-center text-secondary py-4">Nenhum registro.</td></tr>
+                  <tr>
+                    <td colSpan="8" className="text-center text-secondary py-4">Nenhum registro.</td>
+                  </tr>
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="process-mobile-list">
+            {view.map((r) => {
+              const st = computeStatus(r.prazo)
+              return (
+                <article key={r.id} className="process-mobile-card" onClick={(ev) => onRowClick(r, ev)}>
+                  <div className="process-mobile-card__head">
+                    <div>
+                      <div className="process-mobile-card__eyebrow">Processo</div>
+                      <div className="process-mobile-card__number">{r.numero}</div>
+                    </div>
+                    <span className={`process-pill ${priorityBadgeClass(r.prioridade)}`}>{r.prioridade || 'Sem prioridade'}</span>
+                  </div>
+
+                  <div className="process-mobile-card__title">{r.objeto}</div>
+
+                  <div className="process-mobile-card__meta">
+                    <div>
+                      <span>Etapa</span>
+                      <strong>{r.etapa || r.statusGeral || '-'}</strong>
+                    </div>
+                    <div>
+                      <span>Tipo</span>
+                      <strong>{r.tipo || '-'}</strong>
+                    </div>
+                    <div>
+                      <span>Prazo</span>
+                      <strong>{toInputDate(r.prazo) || '-'}</strong>
+                    </div>
+                    <div>
+                      <span>Status</span>
+                      <strong><span className={`process-pill text-bg-${st.kind}`}>{st.label}</span></strong>
+                    </div>
+                  </div>
+
+                  <div className="process-mobile-card__footer">
+                    <div className="process-mobile-card__responsavel">
+                      <span>Responsavel</span>
+                      <strong>{r.responsavel || 'Nao informado'}</strong>
+                    </div>
+                    <div className="process-mobile-card__actions" onClick={(e) => e.stopPropagation()}>
+                      {isAdmin ? (
+                        <>
+                          <button className="btn btn-sm btn-outline-primary" onClick={() => onEdit(r)}>Editar</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => onDelete(r)}>Excluir</button>
+                        </>
+                      ) : (
+                        <span className="text-secondary small">Toque para ver detalhes</span>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+            {!loading && view.length === 0 && (
+              <div className="text-center text-secondary py-4">Nenhum registro.</div>
+            )}
           </div>
         </div>
       </div>
@@ -375,75 +519,57 @@ export default function Controle() {
           <div className="vstack gap-3">
             <div>
               <label className="form-label">Etapa</label>
-              <select className="form-select"
-                value={filtro.etapa}
-                onChange={(e)=>setFiltro(s=>({...s, etapa: e.target.value}))}>
+              <select className="form-select" value={filtro.etapa} onChange={(e) => setFiltro((s) => ({ ...s, etapa: e.target.value }))}>
                 <option value="">Todas</option>
-                {OPT_ETAPA.map(op => <option key={op} value={op}>{op}</option>)}
+                {OPT_ETAPA.map((op) => <option key={op} value={op}>{op}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="form-label">Tipo de Licitação</label>
-              <select className="form-select"
-                value={filtro.tipo}
-                onChange={(e)=>setFiltro(s=>({...s, tipo: e.target.value}))}>
+              <label className="form-label">Tipo de Licitacao</label>
+              <select className="form-select" value={filtro.tipo} onChange={(e) => setFiltro((s) => ({ ...s, tipo: e.target.value }))}>
                 <option value="">Todos</option>
-                {OPT_TIPO.map(op => <option key={op} value={op}>{op}</option>)}
+                {OPT_TIPO.map((op) => <option key={op} value={op}>{op}</option>)}
               </select>
             </div>
 
             <div>
               <label className="form-label">Prioridade</label>
-              <select className="form-select"
-                value={filtro.prioridade}
-                onChange={(e)=>setFiltro(s=>({...s, prioridade: e.target.value}))}>
+              <select className="form-select" value={filtro.prioridade} onChange={(e) => setFiltro((s) => ({ ...s, prioridade: e.target.value }))}>
                 <option value="">Todas</option>
-                {OPT_PRIOR.map(op => <option key={op} value={op}>{op}</option>)}
+                {OPT_PRIOR.map((op) => <option key={op} value={op}>{op}</option>)}
               </select>
             </div>
-
             <div>
               <label className="form-label">Fase (fluxo)</label>
-              <select className="form-select"
-                value={filtro.faseAtual}
-                onChange={(e)=>setFiltro(s=>({...s, faseAtual: e.target.value}))}>
+              <select className="form-select" value={filtro.faseAtual} onChange={(e) => setFiltro((s) => ({ ...s, faseAtual: e.target.value }))}>
                 <option value="">Todas</option>
-                {PHASES.map(op => <option key={op.key} value={op.key}>{op.name}</option>)}
+                {PHASES.map((op) => <option key={op.key} value={op.key}>{op.name}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="form-label">Status de Prazo</label>
-              <select className="form-select"
-                value={filtro.statusPrazo}
-                onChange={(e)=>setFiltro(s=>({...s, statusPrazo: e.target.value}))}>
+              <label className="form-label">Status de prazo</label>
+              <select className="form-select" value={filtro.statusPrazo} onChange={(e) => setFiltro((s) => ({ ...s, statusPrazo: e.target.value }))}>
                 <option value="">Todos</option>
-                {OPT_STATUS_PRAZO.map(op => <option key={op} value={op}>{op}</option>)}
+                {OPT_STATUS_PRAZO.map((op) => <option key={op} value={op}>{op}</option>)}
               </select>
-              <div className="form-text">
-                Calculado a partir de prazo (Em dia / Quase vencendo / Atrasado)
-              </div>
+              <div className="form-text">Calculado a partir de prazo.</div>
             </div>
 
             <div className="row g-2">
               <div className="col-6">
                 <label className="form-label">De</label>
-                <input className="form-control" type="date"
-                  value={filtro.de}
-                  onChange={(e)=>setFiltro(s=>({...s, de: e.target.value}))}/>
+                <input className="form-control" type="date" value={filtro.de} onChange={(e) => setFiltro((s) => ({ ...s, de: e.target.value }))} />
               </div>
               <div className="col-6">
-                <label className="form-label">Até</label>
-                <input className="form-control" type="date"
-                  value={filtro.ate}
-                  onChange={(e)=>setFiltro(s=>({...s, ate: e.target.value}))}/>
+                <label className="form-label">Ate</label>
+                <input className="form-control" type="date" value={filtro.ate} onChange={(e) => setFiltro((s) => ({ ...s, ate: e.target.value }))} />
               </div>
             </div>
 
             <div className="d-flex gap-2">
-              <button className="btn btn-outline-secondary"
-                onClick={()=>setFiltro({ etapa:'', prioridade:'', tipo:'', faseAtual:'', statusPrazo:'', de:'', ate:'' })}>
+              <button className="btn btn-outline-secondary" onClick={() => setFiltro({ etapa: '', prioridade: '', tipo: '', faseAtual: '', statusPrazo: '', de: '', ate: '' })}>
                 Limpar filtros
               </button>
               <button className="btn btn-light" data-bs-dismiss="offcanvas">
@@ -465,7 +591,7 @@ export default function Controle() {
               <div className="modal-body overflow-auto pb-5" style={{ maxHeight: 'calc(100vh - 180px)' }}>
                 <div className="row g-3">
                   <div className="col-md-4">
-                    <label className="form-label">Número *</label>
+                    <label className="form-label">Numero *</label>
                     <input className="form-control" name="numero" value={form.numero} onChange={onChange} required />
                   </div>
                   <div className="col-md-8">
@@ -477,7 +603,7 @@ export default function Controle() {
                     <label className="form-label">Etapa</label>
                     <select className="form-select" name="etapa" value={form.etapa} onChange={onChange}>
                       <option value="">Selecione</option>
-                      {OPT_ETAPA.map(op => <option key={op} value={op}>{op}</option>)}
+                      {OPT_ETAPA.map((op) => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
 
@@ -485,7 +611,7 @@ export default function Controle() {
                     <label className="form-label">Tipo</label>
                     <select className="form-select" name="tipo" value={form.tipo} onChange={onChange}>
                       <option value="">Selecione</option>
-                      {OPT_TIPO.map(op => <option key={op} value={op}>{op}</option>)}
+                      {OPT_TIPO.map((op) => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
 
@@ -493,13 +619,13 @@ export default function Controle() {
                     <label className="form-label">Prioridade</label>
                     <select className="form-select" name="prioridade" value={form.prioridade} onChange={onChange}>
                       <option value="">Selecione</option>
-                      {OPT_PRIOR.map(op => <option key={op} value={op}>{op}</option>)}
+                      {OPT_PRIOR.map((op) => <option key={op} value={op}>{op}</option>)}
                     </select>
                   </div>
 
                   <div className="col-md-6">
                     <label className="form-label">Fase inicial</label>
-                    <PhaseSelect value={form.faseInicialKey || ''} onChange={(v)=>setForm(s=>({...s, faseInicialKey:v}))} />
+                    <PhaseSelect value={form.faseInicialKey || ''} onChange={(v) => setForm((s) => ({ ...s, faseInicialKey: v }))} />
                   </div>
 
                   <div className="col-md-6">
@@ -508,20 +634,19 @@ export default function Controle() {
                   </div>
 
                   <div className="col-md-8">
-                    <label className="form-label">Responsável</label>
+                    <label className="form-label">Responsavel</label>
                     <input className="form-control" name="responsavel" value={form.responsavel} onChange={onChange} />
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label">Anexo (PDF, imagem…)</label>
-                    <input className="form-control" type="file" onChange={(e)=>setFile(e.target.files?.[0] || null)} />
+                    <label className="form-label">Anexo (PDF, imagem...)</label>
+                    <input className="form-control" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
                     {form.anexoUrl && (
                       <div className="form-text">
                         Anexo atual: <a href={form.anexoUrl} target="_blank" rel="noreferrer">abrir</a>
                       </div>
                     )}
                   </div>
-
                   {mostrarJustificativa && (
                     <div className="col-12">
                       <label className="form-label">Justificativa</label>
@@ -531,7 +656,7 @@ export default function Controle() {
                         name="justificativa"
                         value={form.justificativa}
                         onChange={onChange}
-                        placeholder="Descreva o motivo da suspensão/revogação"
+                        placeholder="Descreva o motivo da suspensao ou revogacao"
                       />
                     </div>
                   )}
@@ -540,23 +665,11 @@ export default function Controle() {
                     <>
                       <div className="col-md-6">
                         <label className="form-label">Valor cotado</label>
-                        <input
-                          className="form-control"
-                          name="valorCotado"
-                          value={form.valorCotado}
-                          onChange={onChange}
-                          placeholder="Ex.: 12.345,67"
-                        />
+                        <input className="form-control" name="valorCotado" value={form.valorCotado} onChange={onChange} placeholder="Ex.: 12.345,67" />
                       </div>
                       <div className="col-md-6">
                         <label className="form-label">Valor contratado</label>
-                        <input
-                          className="form-control"
-                          name="valorContratado"
-                          value={form.valorContratado}
-                          onChange={onChange}
-                          placeholder="Ex.: 10.999,99"
-                        />
+                        <input className="form-control" name="valorContratado" value={form.valorContratado} onChange={onChange} placeholder="Ex.: 10.999,99" />
                       </div>
                     </>
                   )}
@@ -565,7 +678,7 @@ export default function Controle() {
               <div className="modal-footer sticky-footer">
                 <button type="button" className="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 <button className="btn btn-primary" type="submit" disabled={saving}>
-                  {saving ? 'Salvando…' : (editing ? 'Salvar alterações' : 'Cadastrar')}
+                  {saving ? 'Salvando...' : (editing ? 'Salvar alteraçes' : 'Cadastrar')}
                 </button>
               </div>
             </form>
@@ -578,9 +691,9 @@ export default function Controle() {
           <div className="modal-content">
             <div className="modal-header">
               <div>
-                <h1 className="modal-title fs-6 mb-0">Detalhes do Processo</h1>
+                <h1 className="modal-title fs-6 mb-0">Detalhes do processo</h1>
                 <small className="text-secondary">
-                  {detail ? `Nº ${detail.numero} — ${detail.objeto || ''}` : ''}
+                  {detail ? `N ${detail.numero} - ${detail.objeto || ''}` : ''}
                 </small>
               </div>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" ref={detailCloseRef}></button>
@@ -592,25 +705,25 @@ export default function Controle() {
                     <div className="col-md-3">
                       <div className="p-3 border rounded-3">
                         <div className="text-secondary small">Etapa</div>
-                        <div className="fw-semibold">{detail.etapa || detail.statusGeral || '—'}</div>
+                        <div className="fw-semibold">{detail.etapa || detail.statusGeral || '-'}</div>
                       </div>
                     </div>
                     <div className="col-md-3">
                       <div className="p-3 border rounded-3">
                         <div className="text-secondary small">Tipo</div>
-                        <div className="fw-semibold">{detail.tipo || '—'}</div>
+                        <div className="fw-semibold">{detail.tipo || '-'}</div>
                       </div>
                     </div>
                     <div className="col-md-3">
                       <div className="p-3 border rounded-3">
                         <div className="text-secondary small">Prioridade</div>
-                        <div className="fw-semibold">{detail.prioridade || '—'}</div>
+                        <div className="fw-semibold">{detail.prioridade || '-'}</div>
                       </div>
                     </div>
                     <div className="col-md-3">
                       <div className="p-3 border rounded-3">
-                        <div className="text-secondary small">Responsável</div>
-                        <div className="fw-semibold">{detail.responsavel || '—'}</div>
+                        <div className="text-secondary small">Responsavel</div>
+                        <div className="fw-semibold">{detail.responsavel || '-'}</div>
                       </div>
                     </div>
                   </div>
@@ -629,20 +742,20 @@ export default function Controle() {
                       <div className="col-md-6">
                         <div className="p-3 border rounded-3">
                           <div className="text-secondary small">Valor cotado</div>
-                          <div className="fw-semibold">{detail.valorCotado || '—'}</div>
+                          <div className="fw-semibold">{detail.valorCotado || '-'}</div>
                         </div>
                       </div>
                       <div className="col-md-6">
                         <div className="p-3 border rounded-3">
                           <div className="text-secondary small">Valor contratado</div>
-                          <div className="fw-semibold">{detail.valorContratado || '—'}</div>
+                          <div className="fw-semibold">{detail.valorContratado || '-'}</div>
                         </div>
                       </div>
                     </div>
                   ) : null}
 
                   <div className="mb-2 d-flex align-items-center justify-content-between">
-                    <h2 className="h6 mb-0">Fluxograma (documentação por data)</h2>
+                    <h2 className="h6 mb-0">Fluxograma</h2>
                   </div>
                   <div className="mb-3">
                     <StepFlow items={Array.isArray(detail.fluxo) ? detail.fluxo : []} onRemove={removeStep} />
@@ -655,7 +768,7 @@ export default function Controle() {
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">Data</label>
-                      <input className="form-control" type="date" value={novaFaseData} onChange={e=>setNovaFaseData(e.target.value)} />
+                      <input className="form-control" type="date" value={novaFaseData} onChange={(e) => setNovaFaseData(e.target.value)} />
                     </div>
                     <div className="col-md-3">
                       <button className="btn btn-primary w-100" type="button" onClick={addStep}>Adicionar ao fluxo</button>
@@ -672,7 +785,6 @@ export default function Controle() {
           </div>
         </div>
       </div>
-
     </div>
   )
 }
