@@ -678,7 +678,7 @@ export default function Controle() {
               <div className="modal-footer sticky-footer">
                 <button type="button" className="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 <button className="btn btn-primary" type="submit" disabled={saving}>
-                  {saving ? 'Salvando...' : (editing ? 'Salvar alteraçes' : 'Cadastrar')}
+                  {saving ? 'Salvando...' : (editing ? 'Salvar alterações' : 'Cadastrar')}
                 </button>
               </div>
             </form>

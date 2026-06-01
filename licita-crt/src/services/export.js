@@ -9,8 +9,8 @@ const isTimestamp = (v) => v && typeof v.toDate === 'function'
 const toDate = (v) => {
   if (!v) return null
   if (isTimestamp(v)) return v.toDate()
-  const d = v instanceof Date ? v : new Date(v)
-  return isNaN(d) ? null : d
+  if (v instanceof Date) return isNaN(v) ? null : v
+  return null
 }
 const fmtCell = (val) => {
   const d = toDate(val)
