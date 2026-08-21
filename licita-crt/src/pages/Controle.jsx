@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { listarProcessos } from '../services/processos'
 import { createDoc, updateById, removeById, findBy } from '../services/db'
 import { uploadFile, removeFile } from '../services/files'
 import { exportToExcel, exportToPdf } from '../services/export'
+import { showAlert, showConfirm, showError, showSuccess } from '../utils/alerts'
 import { toInputDate, fromInputDate } from '../utils/dates'
 import { computeStatus } from '../utils/status'
 import StepFlow from '../components/StepFlow'
@@ -43,6 +45,7 @@ function priorityBadgeClass(value) {
 
 export default function Controle() {
   const { isAdmin } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -61,6 +64,8 @@ export default function Controle() {
   useEffect(() => {
     localStorage.setItem('controle.filters', JSON.stringify(filtro))
   }, [filtro])
+
+  const [selectedIds, setSelectedIds] = useState([])
 
   const [form, setForm] = useState(emptyForm)
   const [editing, setEditing] = useState(null)
@@ -88,8 +93,25 @@ export default function Controle() {
 
   useEffect(() => { load() }, [])
 
+  useEffect(() => {
+    if (rows.length > 0) {
+      const pid = searchParams.get('pid')
+      if (pid) {
+        const row = rows.find(r => r.id === pid)
+        if (row) {
+          setDetail(row)
+          setNovaFaseKey('')
+          setNovaFaseData('')
+          setTimeout(() => openModal('btnModalDetalhe'), 100)
+          setSearchParams({})
+        }
+      }
+    }
+  }, [rows, searchParams, setSearchParams])
+
   const view = useMemo(() => {
     return rows.filter((r) => {
+      if (r.arquivado) return false
       const txt = `${r.numero || ''} ${r.objeto || ''}`
       const okBusca = !busca || txt.toLowerCase().includes(busca.toLowerCase())
       const okEtapa = !filtro.etapa || (r.etapa || r.statusGeral || '') === filtro.etapa
@@ -126,6 +148,33 @@ export default function Controle() {
   const openModal = (id) => document.getElementById(id)?.click()
   const onChange = (e) => setForm((s) => ({ ...s, [e.target.name]: e.target.value }))
 
+  const toggleSelection = (id) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  const toggleAll = () => {
+    if (selectedIds.length === view.length && view.length > 0) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(view.map((r) => r.id))
+    }
+  }
+
+  const archiveSelected = async () => {
+    if (!(await showConfirm('Atenção', `Deseja arquivar ${selectedIds.length} processo(s)?`))) return
+    try {
+      setLoading(true)
+      for (const id of selectedIds) {
+        await updateById(COL, id, { arquivado: true })
+      }
+      setSelectedIds([])
+      await load()
+    } catch {
+      showError('Falha ao arquivar.')
+      setLoading(false)
+    }
+  }
+
   const onNew = () => {
     setEditing(null)
     setForm(emptyForm)
@@ -135,7 +184,7 @@ export default function Controle() {
 
   const onEdit = (row) => {
     if (!isAdmin) {
-      alert('Voce nao tem permissao para editar.')
+      showError('Voce nao tem permissao para editar.')
       return
     }
     setEditing(row.id)
@@ -160,16 +209,16 @@ export default function Controle() {
 
   const onDelete = async (row) => {
     if (!isAdmin) {
-      alert('Voce nao tem permissao para excluir.')
+      showError('Voce nao tem permissao para excluir.')
       return
     }
-    if (!confirm('Confirma excluir este registro?')) return
+    if (!(await showConfirm('Atenção', 'Confirma excluir este registro?'))) return
     try {
       if (row.anexoPath) await removeFile(row.anexoPath)
       await removeById(COL, row.id)
       await load()
     } catch {
-      alert('Falha ao excluir.')
+      showError('Falha ao excluir.')
     }
   }
 
@@ -189,13 +238,13 @@ export default function Controle() {
     e.preventDefault()
     const v = validate(form)
     if (v) {
-      alert(v)
+      showError(v)
       return
     }
     try {
       setSaving(true)
       if (await checkDuplicateNumero(form.numero, editing)) {
-        alert('Ja existe um processo com esse numero.')
+        showError('Ja existe um processo com esse numero.')
         return
       }
 
@@ -220,7 +269,7 @@ export default function Controle() {
           payload.anexoUrl = up.url
           payload.anexoPath = up.path
         } catch {
-          alert('Falha ao enviar o anexo.')
+          showError('Falha ao enviar o anexo.')
         }
       }
 
@@ -230,7 +279,7 @@ export default function Controle() {
       await load()
       closeRef.current?.click()
     } catch {
-      alert('Falha ao salvar.')
+      showError('Falha ao salvar.')
     } finally {
       setSaving(false)
     }
@@ -249,7 +298,7 @@ export default function Controle() {
     const nome = phaseNameByKey(novaFaseKey)
     const data = novaFaseData ? `${novaFaseData}T00:00:00` : ''
     if (!novaFaseKey || !data) {
-      alert('Selecione a fase e a data.')
+      showError('Selecione a fase e a data.')
       return
     }
 
@@ -264,7 +313,7 @@ export default function Controle() {
       setNovaFaseKey('')
       setNovaFaseData('')
     } catch {
-      alert('Falha ao adicionar fase.')
+      showError('Falha ao adicionar fase.')
     }
   }
 
@@ -278,7 +327,7 @@ export default function Controle() {
       setRows(newRows)
       setDetail({ ...detail, fluxo })
     } catch {
-      alert('Falha ao remover fase.')
+      showError('Falha ao remover fase.')
     }
   }
 
@@ -351,6 +400,12 @@ export default function Controle() {
             </div>
 
             <div className="controle-toolbar__actions">
+              {selectedIds.length > 0 && (
+                <button className="btn btn-warning me-2 text-white fw-medium" onClick={archiveSelected}>
+                  <i className="bi bi-archive-fill me-2" />
+                  Arquivar ({selectedIds.length})
+                </button>
+              )}
               <button className="btn btn-outline-secondary" data-bs-toggle="offcanvas" data-bs-target="#filtersOffcanvas">
                 <i className="bi bi-sliders me-2" />
                 Filtros
@@ -391,6 +446,14 @@ export default function Controle() {
             <table className="process-table">
               <thead>
                 <tr>
+                  <th style={{ width: '40px', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      checked={view.length > 0 && selectedIds.length === view.length}
+                      onChange={toggleAll}
+                    />
+                  </th>
                   <th className="process-col-numero">N</th>
                   <th className="process-col-objeto">Objeto</th>
                   <th className="process-col-etapa">Etapa</th>
@@ -404,8 +467,17 @@ export default function Controle() {
               <tbody>
                 {view.map((r) => {
                   const st = computeStatus(r.prazo)
+                  const isSelected = selectedIds.includes(r.id)
                   return (
-                    <tr key={r.id} onClick={(ev) => onRowClick(r, ev)}>
+                    <tr key={r.id} onClick={(ev) => onRowClick(r, ev)} className={isSelected ? 'table-active' : ''}>
+                      <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          checked={isSelected}
+                          onChange={() => toggleSelection(r.id)}
+                        />
+                      </td>
                       <td className="process-col-numero">
                         <div className="process-cell-number">{r.numero}</div>
                       </td>
@@ -453,12 +525,22 @@ export default function Controle() {
           <div className="process-mobile-list">
             {view.map((r) => {
               const st = computeStatus(r.prazo)
+              const isSelected = selectedIds.includes(r.id)
               return (
-                <article key={r.id} className="process-mobile-card" onClick={(ev) => onRowClick(r, ev)}>
+                <article key={r.id} className={`process-mobile-card ${isSelected ? 'border-primary' : ''}`} onClick={(ev) => onRowClick(r, ev)}>
                   <div className="process-mobile-card__head">
-                    <div>
-                      <div className="process-mobile-card__eyebrow">Processo</div>
-                      <div className="process-mobile-card__number">{r.numero}</div>
+                    <div className="d-flex align-items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="form-check-input mt-0"
+                        checked={isSelected}
+                        onChange={() => toggleSelection(r.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div>
+                        <div className="process-mobile-card__eyebrow">Processo</div>
+                        <div className="process-mobile-card__number">{r.numero}</div>
+                      </div>
                     </div>
                     <span className={`process-pill ${priorityBadgeClass(r.prioridade)}`}>{r.prioridade || 'Sem prioridade'}</span>
                   </div>

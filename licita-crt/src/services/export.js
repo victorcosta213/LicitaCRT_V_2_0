@@ -1,3 +1,4 @@
+import { showError } from '../utils/alerts';
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -21,7 +22,7 @@ const fmtCell = (val) => {
 
 export const exportToExcel = (rows, filename = 'dados.xlsx', columns) => {
   const data = Array.isArray(rows) ? rows : []
-  if (!data.length) { alert('Não há dados para exportar.'); return }
+  if (!data.length) { showError('Não há dados para exportar.'); return }
 
   let ws
   if (Array.isArray(columns) && columns.length) {
@@ -52,8 +53,8 @@ export const exportToExcel = (rows, filename = 'dados.xlsx', columns) => {
 
 export const exportToPdf = (rows, columns, title = 'Relatório', filename = 'relatorio.pdf') => {
   const data = Array.isArray(rows) ? rows : []
-  if (!data.length) { alert('Não há dados para exportar.'); return }
-  if (!Array.isArray(columns) || !columns.length) { alert('Defina as colunas para exportar.'); return }
+  if (!data.length) { showError('Não há dados para exportar.'); return }
+  if (!Array.isArray(columns) || !columns.length) { showError('Defina as colunas para exportar.'); return }
 
   const isWideTable = columns.length > 6
   const orient = isWideTable ? 'landscape' : 'portrait'

@@ -125,7 +125,6 @@ export default function Home() {
                       <span className="home-card__label">Processo</span>
                       <h2 className="home-card__number">{p.numero || '-'}</h2>
                     </div>
-                    <span className="badge round text-bg-primary">{progress}%</span>
                   </div>
 
                   <p className="home-card__title" title={p.objeto}>
@@ -134,34 +133,22 @@ export default function Home() {
 
                   <div className="home-card__meta">
                     <div>
-                      <span>Inicio</span>
+                      <span>Início</span>
                       <strong>
                         {inicio
                           ? inicio.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })
                           : '-'}
                       </strong>
                     </div>
-                    <div>
-                      <span>Tempo na etapa</span>
-                      <strong>{humanAgo(lastChangeAt)}</strong>
-                    </div>
-                    <div className="home-card__phase">
+                    <div className="home-card__phase" style={{ gridColumn: '1 / -1' }}>
                       <span>Etapa atual</span>
                       <strong>{curPhase.name}</strong>
-                      <small>Responsavel: {curPhase.sector}</small>
                     </div>
                   </div>
 
-                  <div className="phases-progress mb-3">
-                    {PHASES.map((ph, idx) => {
-                      const state = idx < completed ? 'done' : idx === currentIndex ? 'current' : 'todo'
-                      return <span key={ph.key} className={`dot dot--${state}`} title={`${idx + 1}. ${ph.name}`} />
-                    })}
-                  </div>
-
-                  <div className="mt-auto d-flex justify-content-end">
-                    <a className="btn btn-outline-primary btn-sm home-card__cta" href={`/controle?pid=${p.id}`}>
-                      Detalhar no Controle
+                  <div className="mt-auto d-flex justify-content-end pt-3">
+                    <a className="btn btn-primary btn-sm home-card__cta w-100 d-flex align-items-center justify-content-center fw-semibold rounded-pill py-2" href={`/controle?pid=${p.id}`}>
+                      Detalhar no Controle <i className="bi bi-arrow-right ms-2" />
                     </a>
                   </div>
                 </div>

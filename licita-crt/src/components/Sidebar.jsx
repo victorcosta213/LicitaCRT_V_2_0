@@ -36,10 +36,6 @@ function Section({ children }) {
 function MenuLinks({ onClick }) {
   const { role } = useAuth()
   const isAdmin = role === 'admin'
-  const sectorLink =
-    role === 'juridico' ? '/setores/juridico' :
-    role === 'financeiro' ? '/setores/financeiro' :
-    '/setores/secretarias'
 
   return (
     <nav className="list-group list-group-flush menu-links">
@@ -55,26 +51,9 @@ function MenuLinks({ onClick }) {
       <NavLink to="/controle" className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
         <i className="bi bi-journal-check me-2" /> Processos
       </NavLink>
-
-      <Section>Setor</Section>
-      {!isAdmin && (
-        <NavLink to={sectorLink} className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
-          <i className="bi bi-bell me-2" /> Minha área
-        </NavLink>
-      )}
-      {isAdmin && (
-        <>
-          <NavLink to="/setores/juridico" className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
-            <i className="bi bi-shield-check me-2" /> Jurídico
-          </NavLink>
-          <NavLink to="/setores/financeiro" className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
-            <i className="bi bi-cash-coin me-2" /> Financeiro
-          </NavLink>
-          <NavLink to="/setores/secretarias" className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
-            <i className="bi bi-building me-2" /> Secretarias
-          </NavLink>
-        </>
-      )}
+      <NavLink to="/arquivados" className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
+        <i className="bi bi-archive me-2" /> Arquivados
+      </NavLink>
     </nav>
   )
 }
