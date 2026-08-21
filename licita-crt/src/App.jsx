@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Controle from './pages/Controle'
 import Arquivados from './pages/Arquivados'
 import Login from './pages/Login'
+import Usuarios from './pages/Usuarios'
 import { useAuth } from './context/AuthContext'
 
 function Private({ children }) {
@@ -31,6 +32,9 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/controle" element={<Controle />} />
         <Route path="/arquivados" element={<Arquivados />} />
+        
+        {/* Admin only */}
+        <Route path="/usuarios" element={<RoleRoute allow={['admin']}><Usuarios /></RoleRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/home" replace />} />

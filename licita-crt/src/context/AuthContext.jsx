@@ -35,10 +35,12 @@ export function AuthProvider({ children }) {
   const login = (email, password) => signInWithEmailAndPassword(auth, email, password)
   const logout = () => signOut(auth)
 
-  const isAdmin = role === 'admin'               // <-- NOVO
+  const isAdmin = role === 'admin'
+  const isEditor = role === 'editor' || role === 'admin' // Admins also have editor rights implicitly
+  const isViewer = role === 'viewer'
 
   return (
-    <AuthCtx.Provider value={{ user, role, isAdmin, loading, login, logout }}>
+    <AuthCtx.Provider value={{ user, role, isAdmin, isEditor, isViewer, loading, login, logout }}>
       {children}
     </AuthCtx.Provider>
   )

@@ -54,6 +54,15 @@ function MenuLinks({ onClick }) {
       <NavLink to="/arquivados" className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
         <i className="bi bi-archive me-2" /> Arquivados
       </NavLink>
+
+      {isAdmin && (
+        <>
+          <Section>Administração</Section>
+          <NavLink to="/usuarios" className={({ isActive }) => 'list-group-item list-group-item-action d-flex align-items-center menu-item ' + (isActive ? 'active' : '')} onClick={onClick}>
+            <i className="bi bi-people me-2" /> Usuários
+          </NavLink>
+        </>
+      )}
     </nav>
   )
 }
