@@ -8,7 +8,6 @@ import { toInputDate } from '../utils/dates'
 import { computeStatus } from '../utils/status'
 import StepFlow from '../components/StepFlow'
 import { PHASES, phaseNameByKey } from '../utils/phases'
-import { showError, showConfirm } from '../utils/alerts'
 import './controle.css'
 
 const COL = 'processos'
