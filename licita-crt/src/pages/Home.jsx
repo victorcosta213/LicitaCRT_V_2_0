@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { listarProcessos } from '../services/processos'
 import { PHASES, computePhaseState, monthFromNumero } from '../utils/phases'
 import './home.css'
@@ -147,9 +148,12 @@ export default function Home() {
                   </div>
 
                   <div className="mt-auto d-flex justify-content-end pt-3">
-                    <a className="btn btn-primary btn-sm home-card__cta w-100 d-flex align-items-center justify-content-center fw-semibold rounded-pill py-2" href={`/controle?pid=${p.id}`}>
+                    <Link
+                      className="btn btn-primary btn-sm home-card__cta w-100 d-flex align-items-center justify-content-center fw-semibold rounded-pill py-2"
+                      to={`/controle?pid=${p.id}`}
+                    >
                       Detalhar no Controle <i className="bi bi-arrow-right ms-2" />
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </article>
