@@ -12,11 +12,18 @@
   --login-border: #e2e8f0;
 }
 
-html { scroll-behavior: smooth; }
-body { overflow-y: overlay; }
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
 
 .auth.login-bg {
-  min-height: 100dvh;
+  height: 100%;
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
@@ -30,6 +37,7 @@ body { overflow-y: overlay; }
     var(--bs-body-bg);
   font-family: "Onest", "IBM Plex Sans", "Segoe UI", sans-serif;
   color: var(--login-ink);
+  overflow: hidden;
 }
 
 .login-decor {
@@ -58,6 +66,8 @@ body { overflow-y: overlay; }
 .auth__panel {
   display: grid;
   place-items: center;
+  overflow-y: auto;
+  padding-block: 1rem;
 }
 
 .auth__form {
@@ -103,6 +113,7 @@ h1.h4 {
   display: grid;
   align-content: center;
   min-height: 340px;
+  overflow: hidden;
 }
 
 .auth__hero-inner h2.h3 {
@@ -164,6 +175,9 @@ button.btn, .btn { min-height: 46px; border-radius: 12px; }
   }
   .auth__hero {
     min-height: 100%;
+  }
+  .auth__panel {
+    overflow: hidden;
   }
 }
 
