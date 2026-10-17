@@ -1,0 +1,129 @@
+/* Processos licitatórios (Controle e Arquivados) */
+.controle-page { display: grid; gap: 1.25rem; }
+
+.controle-surface .card-body { padding: 0; }
+
+.controle-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+  margin: 0 !important;
+  padding: .75rem;
+  border-bottom: 1px solid var(--traco);
+}
+.controle-toolbar__search { flex: 1 1 300px; min-width: 0; }
+.controle-toolbar__search .input-group-text { background: var(--folha); border-right: 0; }
+.controle-toolbar__search .form-control { border-left: 0; padding-left: 0; }
+.controle-toolbar__search .form-control:focus { box-shadow: none; }
+.controle-toolbar__search .input-group:focus-within { box-shadow: 0 0 0 3px rgba(44, 110, 181, .16); border-radius: var(--raio-sm); }
+.controle-toolbar__search .input-group:focus-within .input-group-text,
+.controle-toolbar__search .input-group:focus-within .form-control { border-color: var(--azul); }
+.controle-toolbar__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .45rem; }
+
+.controle-filter-chips { margin: 0; padding: .6rem .75rem; border-bottom: 1px solid var(--traco); background: var(--folha-2); }
+.controle-surface .alert { margin: .75rem; }
+
+.process-table-wrap { overflow: auto; }
+.process-table { width: 100%; min-width: 960px; border-collapse: separate; border-spacing: 0; font-size: .875rem; }
+.process-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: .6rem .75rem;
+  background: var(--folha-2);
+  border-bottom: 1px solid var(--traco);
+  font-family: var(--fonte-cond);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  white-space: nowrap;
+}
+.process-table tbody td { padding: .65rem .75rem; vertical-align: middle; border-bottom: 1px solid var(--traco); }
+.process-table tbody tr:last-child td { border-bottom: 0; }
+.process-table tbody tr { cursor: pointer; transition: background-color .12s ease; }
+.process-table tbody tr:hover { background: rgba(44, 110, 181, .045); }
+.process-table tbody tr.table-active { background: var(--azul-lavado); }
+.process-table th:first-child, .process-table td:first-child { padding-left: 1.1rem; }
+.process-col-objeto { min-width: 240px; max-width: 400px; }
+.process-col-etapa .process-pill { max-width: 180px; }
+.process-col-status { white-space: nowrap; }
+.process-col-prazo { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.process-col-acoes { width: 92px; }
+
+.process-cell-number { font-family: var(--fonte-mono); font-size: .84rem; font-weight: 600; color: var(--tinta); white-space: nowrap; }
+.process-cell-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-weight: 600;
+  line-height: 1.35;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.process-cell-subtitle { margin-top: .15rem; font-size: .8rem; color: var(--tinta-3); }
+
+/* etiquetas no mesmo desenho dos carimbos */
+.process-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: .24em .55em .2em;
+  border: 1px solid var(--neutro-borda);
+  border-radius: 3px;
+  background: var(--neutro-lavado) !important;
+  color: var(--neutro-tinta) !important;
+  font-family: var(--fonte-cond);
+  font-size: .7rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.process-pill--soft { text-transform: none; letter-spacing: .01em; font-family: var(--fonte); font-weight: 500; font-size: .76rem; }
+.process-pill.text-bg-danger { background: var(--vermelho-lavado) !important; color: var(--vermelho-tinta) !important; border-color: var(--vermelho-borda); }
+.process-pill.text-bg-primary { background: var(--azul-lavado) !important; color: var(--azul-tinta) !important; border-color: var(--azul-borda); }
+.process-pill.text-bg-warning { background: var(--ocre-lavado) !important; color: var(--ocre-tinta) !important; border-color: var(--ocre-borda); }
+.process-pill.text-bg-success { background: var(--verde-lavado) !important; color: var(--verde-tinta) !important; border-color: var(--verde-borda); }
+.process-pill.text-bg-neutral, .process-pill.text-bg-secondary { background: var(--neutro-lavado) !important; color: var(--neutro-tinta) !important; }
+
+.process-actions { display: flex; justify-content: flex-end; gap: .35rem; }
+.process-actions .btn { width: 32px; height: 32px; padding: 0; display: inline-grid; place-items: center; }
+
+/* cartões no celular */
+.process-mobile-list { display: none; padding: .75rem; }
+.process-mobile-card {
+  display: grid;
+  gap: .85rem;
+  padding: 1rem;
+  background: var(--folha);
+  border: 1px solid var(--traco);
+  border-radius: var(--raio);
+}
+.process-mobile-card + .process-mobile-card { margin-top: .75rem; }
+.process-mobile-card__head, .process-mobile-card__footer { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+.process-mobile-card__eyebrow, .process-mobile-card__meta span, .process-mobile-card__responsavel span {
+  display: block;
+  margin-bottom: .2rem;
+  font-family: var(--fonte-cond);
+  font-size: .66rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+.process-mobile-card__number { font-family: var(--fonte-mono); font-weight: 600; }
+.process-mobile-card__title { font-weight: 600; line-height: 1.4; }
+.process-mobile-card__meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.process-mobile-card__meta strong, .process-mobile-card__responsavel strong { display: block; font-size: .9rem; font-weight: 500; }
+.process-mobile-card__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+
+@media (max-width: 767.98px) {
+  .process-table-wrap { display: none; }
+  .process-mobile-list { display: block; }
+  .controle-toolbar__actions { justify-content: flex-start; }
+}

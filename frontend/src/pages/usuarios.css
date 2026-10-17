@@ -1,0 +1,44 @@
+/* Usuários e perfis */
+.usuarios-page { display: grid; gap: 0; }
+.usuarios-page .indicadores { margin-bottom: 1.25rem; }
+
+.usuarios-table-wrap { overflow-x: auto; }
+.usuarios-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .875rem; }
+.usuarios-table thead th {
+  padding: .6rem .9rem;
+  background: var(--folha-2);
+  border-bottom: 1px solid var(--traco);
+  font-family: var(--fonte-cond);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  white-space: nowrap;
+}
+.usuarios-table tbody td { padding: .7rem .9rem; vertical-align: middle; border-bottom: 1px solid var(--traco); }
+.usuarios-table tbody tr:last-child td { border-bottom: 0; }
+.usuarios-table tbody tr:hover { background: var(--folha-2); }
+.usuarios-table th:first-child, .usuarios-table td:first-child { padding-left: 1.15rem; }
+.usuarios-table th:last-child, .usuarios-table td:last-child { padding-right: 1.15rem; }
+
+.u-name-cell { display: flex; align-items: center; gap: .75rem; }
+.u-avatar {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--neutro-lavado);
+  border: 1px solid var(--traco);
+  color: var(--tinta-2);
+  font: 600 .82rem/1 var(--fonte-cond);
+}
+.u-name { font-weight: 600; }
+.u-email { font-size: .8rem; color: var(--tinta-3); }
+
+.usuarios-empty { display: grid; justify-items: center; gap: .5rem; padding: 2rem 1rem; color: var(--tinta-3); }
+.usuarios-empty i { font-size: 1.5rem; }
+
+.usuarios-modal .modal-body .form-label { font-weight: 600; }

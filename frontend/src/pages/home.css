@@ -1,0 +1,105 @@
+/* Quadro de prioridades (processos licitatórios) */
+.home-page { display: grid; gap: 1.25rem; }
+
+.home-total { text-align: right; }
+.home-total strong {
+  display: block;
+  margin-top: .15rem;
+  font: 600 2rem/1 var(--fonte-cond);
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+}
+
+.home-kanban-board {
+  display: flex;
+  align-items: flex-start;
+  gap: .9rem;
+  min-height: 50vh;
+  padding-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  --c: var(--neutro);
+  flex: 1 0 228px;
+  min-width: 228px;
+  max-height: calc(100vh - 220px);
+  display: flex;
+  flex-direction: column;
+  background: var(--folha-3);
+  border: 1px solid var(--traco);
+  border-top: 3px solid var(--c);
+  border-radius: var(--raio);
+}
+.kanban-column[data-priority="Critico"] { --c: var(--vermelho); }
+.kanban-column[data-priority="Estrategico"] { --c: var(--azul); }
+.kanban-column[data-priority="Alavancavel"] { --c: var(--ocre); }
+.kanban-column[data-priority="Nao Critico"] { --c: var(--neutro); }
+.kanban-column[data-priority="Sem Prioridade"] { --c: var(--traco-forte); }
+
+.kanban-column__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .7rem .85rem;
+  border-bottom: 1px solid var(--traco);
+}
+.kanban-column__titulo {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-family: var(--fonte-cond);
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--tinta-2);
+}
+.kanban-column__titulo i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.kanban-column__n { font: 600 .78rem/1 var(--fonte-mono); color: var(--tinta-3); }
+
+.kanban-column__body { display: flex; flex-direction: column; gap: .6rem; padding: .7rem; overflow-y: auto; }
+
+.kanban-card {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+  padding: .75rem .85rem .8rem;
+  background: var(--folha);
+  border: 1px solid var(--traco);
+  border-radius: var(--raio-sm);
+  box-shadow: var(--sombra);
+  cursor: pointer;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+.kanban-card:hover, .kanban-card:focus-visible { border-color: var(--traco-forte); box-shadow: var(--sombra-media); }
+.kanban-card:hover .kcard-seta { color: var(--azul); }
+
+.kcard-top { display: flex; align-items: center; justify-content: space-between; }
+.kcard-number { font: 600 .8rem/1 var(--fonte-mono); color: var(--azul-tinta); }
+.kcard-seta { font-size: .75rem; color: var(--tinta-3); }
+.kcard-title {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  font-family: var(--fonte);
+  font-size: .9rem;
+  font-weight: 600;
+  line-height: 1.35;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.kcard-meta { display: flex; align-items: center; gap: .5rem; }
+.kcard-phase {
+  max-width: 100%;
+  padding: .18rem .45rem;
+  border: 1px dashed var(--traco-forte);
+  border-radius: 3px;
+  font-size: .72rem;
+  color: var(--tinta-2);
+}
+
+@media (max-width: 767.98px) {
+  .home-page { gap: 1rem; }
+  .kanban-column { flex-basis: 260px; }
+}

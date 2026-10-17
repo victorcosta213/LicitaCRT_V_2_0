@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual da Gestão de Contratações · CRT-08</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  :root { --azul:#2c6eb5; --azul-esc:#1d5390; --verde:#259f58; --amarelo:#ffea13; --vermelho:#ed3237; --tinta:#1c1f23; --suave:#5d6066; --traco:#dcd9ce; --papel:#f6f5f0; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 11pt/1.55 "IBM Plex Sans","Segoe UI",system-ui,sans-serif; color:var(--tinta); background:#fff; }
+  .pagina { max-width: 820px; margin: 0 auto; padding: 24px 28px 60px; }
+  h1,h2,h3 { font-family:"IBM Plex Sans Condensed","Arial Narrow","Segoe UI",sans-serif; line-height:1.2; margin:0; }
+  h2 { font-size: 21pt; color:var(--azul-esc); border-bottom:3px solid var(--azul); padding-bottom:6px; margin:0 0 14px; }
+  h3 { font-size: 13.5pt; margin: 22px 0 6px; color:var(--tinta); }
+  h4 { font-size: 11pt; margin: 14px 0 4px; }
+  p { margin: 0 0 9px; }
+  ul, ol { margin: 0 0 10px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  .secao { page-break-before: always; }
+  .secao:first-of-type { page-break-before: auto; }
+  .sub { color:var(--suave); }
+
+  /* capa */
+  .capa { min-height: 240mm; display:flex; flex-direction:column; justify-content:space-between; page-break-after: always; }
+  .capa__faixa { background: var(--azul-esc); color:#fff; padding: 34px 32px 30px; border-radius: 4px;
+    background-image: linear-gradient(rgba(255,255,255,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.09) 1px,transparent 1px); background-size: 28px 28px; }
+  .capa__faixa small { font: 600 9.5pt "IBM Plex Mono",Consolas,monospace; letter-spacing:.14em; text-transform:uppercase; color:var(--amarelo); }
+  .capa__faixa h1 { font-size: 40pt; margin: 8px 0 6px; color:#fff; }
+  .capa__faixa p { font-size: 13pt; margin:0; color:rgba(255,255,255,.9); }
+  .capa__setor { margin-top: 28px; border: 3px double var(--azul-esc); padding: 18px 22px; border-radius: 4px; transform: rotate(-1deg); display:inline-block; }
+  .capa__setor span { display:block; font: 600 9pt "IBM Plex Mono",Consolas,monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--suave); }
+  .capa__setor b { font: 700 24pt "IBM Plex Sans Condensed","Arial Narrow",sans-serif; color:var(--azul-esc); }
+  .capa__rodape { font-size:9.5pt; color:var(--suave); border-top:1px solid var(--traco); padding-top:10px; }
+
+  /* elementos */
+  .passos { counter-reset: p; list-style:none; padding:0; }
+  .passos > li { counter-increment: p; position:relative; padding: 2px 0 8px 40px; }
+  .passos > li::before { content: counter(p); position:absolute; left:0; top:0; width:28px; height:28px; border-radius:4px; background:var(--azul-esc); color:#fff; font: 600 10.5pt/28px "IBM Plex Mono",Consolas,monospace; text-align:center; }
+  .aviso, .dica, .regra { padding: 9px 13px; border-radius: 4px; margin: 10px 0 12px; border-left: 4px solid; font-size: 10.5pt; page-break-inside: avoid; }
+  .aviso { background:#fdf3d9; border-color:#c08418; }
+  .dica { background:#e9f1fa; border-color:var(--azul); }
+  .regra { background:#fdecec; border-color:var(--vermelho); }
+  .aviso > b:first-child, .dica > b:first-child, .regra > b:first-child { display:block; font-size: 9pt; letter-spacing:.07em; text-transform:uppercase; margin-bottom:2px; }
+  table { border-collapse: collapse; width:100%; margin: 8px 0 14px; font-size: 10pt; page-break-inside: avoid; }
+  th { text-align:left; background:#eceae2; font-size:9pt; letter-spacing:.05em; text-transform:uppercase; }
+  th,td { border:1px solid var(--traco); padding: 6px 8px; vertical-align: top; }
+  figure { margin: 12px 0 16px; page-break-inside: avoid; }
+  figure img { width:100%; border:1px solid var(--traco); border-radius:4px; display:block; }
+  figcaption { font-size:9pt; color:var(--suave); margin-top:4px; }
+  .btn { display:inline-block; padding: 0 7px; border:1px solid #b7b3a6; border-radius:3px; background:#f4f3ee; font-weight:600; font-size:9.5pt; white-space:nowrap; }
+  .btn.p { background:var(--azul); color:#fff; border-color:var(--azul); }
+  .btn.v { background:var(--verde); color:#fff; border-color:var(--verde); }
+  .carimbo { display:inline-block; padding:0 6px; border:1px solid; border-radius:3px; font: 600 8.5pt "IBM Plex Sans Condensed","Arial Narrow",sans-serif; letter-spacing:.05em; text-transform:uppercase; }
+  .c-az { color:#1d5390; border-color:#c3d6ee; background:#eaf1f9; } .c-am { color:#85590c; border-color:#ecd6a3; background:#fbf2dd; }
+  .c-vd { color:#187240; border-color:#bfe2cc; background:#e6f4eb; } .c-vm { color:#b81f25; border-color:#f5c2c3; background:#fdeeee; }
+  .c-cz { color:#505256; border-color:#d9d6cc; background:#efeee8; }
+  .indice li { margin-bottom: 2px; }
+  .nao-impressao { background:var(--papel); border:1px solid var(--traco); padding:10px 14px; border-radius:4px; font-size:10pt; margin-bottom: 16px; }
+  @media print { .nao-impressao { display:none; } .pagina { padding:0; max-width:none; } body { font-size:10.5pt; } }
+
+</style>
+</head>
+<body>
+<div class="pagina">
+
+<div class="nao-impressao">
+  Para enviar a um setor: abra este arquivo com <code>?setor=compras</code>, <code>gestao</code>, <code>fiscal</code>, <code>financeiro</code>, <code>gabinete</code>, <code>admin</code> ou <code>consulta</code> no final do endereço e use <b>Imprimir → Salvar como PDF</b>. Sem o parâmetro, aparece o manual completo.
+</div>
+
+<!-- ===================== CAPA ===================== -->
+<section class="capa" data-setor="comum">
+  <div class="capa__faixa">
+    <small>Conselho Regional dos Técnicos Industriais da 8ª Região · AL/SE</small>
+    <h1>Gestão de Contratações</h1>
+    <p>Manual de uso da plataforma de contratos e processos licitatórios</p>
+  </div>
+  <div>
+    <div class="capa__setor"><span>Guia do setor</span><b id="nome-setor">Todos os setores</b></div>
+  </div>
+  <div class="capa__rodape">
+    Versão 2.0 · As imagens deste manual usam dados fictícios, apenas para ilustrar as telas.<br>
+    Dúvidas sobre o uso ou sobre o seu acesso: procure a administração do sistema.
+  </div>
+</section>
+
+<!-- ===================== COMUM 1 ===================== -->
+<section class="secao" data-setor="comum">
+  <h2>1. Antes de começar</h2>
+
+  <h3>Para que serve o sistema</h3>
+  <p>O sistema de Gestão de Contratações acompanha cada contratação do CRT-08 <b>do cadastro até o pagamento</b>: quem precisa agir em cada etapa, os prazos, os valores e o histórico. Os documentos oficiais continuam no <b>SEI</b>; o sistema guarda o acompanhamento e sempre indica o número do processo ou do documento SEI.</p>
+  <p>Também organiza os <b>processos licitatórios</b> (quadro de prioridades, prazos e indicadores).</p>
+
+  <h3>Como entrar</h3>
+  <ol class="passos">
+    <li>Abra o endereço do sistema que a administração informou.</li>
+    <li>Digite o <b>e-mail</b> e a <b>senha</b> e clique em <span class="btn p">Entrar</span>.</li>
+    <li>No primeiro acesso, confirme o e-mail pelo link que o sistema enviou. Se esquecer a senha, clique em <b>Esqueceu a senha?</b> com o e-mail preenchido: chega um link para criar outra.</li>
+  </ol>
+  <div class="aviso"><b>Acesso não liberado?</b>Se aparecer essa mensagem, o login existe mas ainda não tem perfil. Peça à administração para liberar. O que cada pessoa vê e faz depende do <b>perfil</b>.</div>
+  <figure><img src="imagens/login.png" alt="Tela de login"><figcaption>Tela de entrada.</figcaption></figure>
+
+  <h3>Conhecendo a tela</h3>
+  <ul>
+    <li><b>Faixa escura à esquerda</b>: os <b>módulos</b> do seu perfil (Mesa, Contratações, Financeiro, Licitações, Gabinete, Administração). Você só vê os seus.</li>
+    <li><b>Menu ao lado</b>: as telas do módulo aberto. Um número ao lado do item indica pendências.</li>
+    <li><b>Barra superior</b>: onde você está, a <b>busca</b> (contratação, CNPJ ou processo SEI; a tecla <kbd>/</kbd> leva o cursor até ela), o sino de pendências e o seu usuário (tema claro/escuro e Sair).</li>
+    <li>No celular, o botão com três traços abre o menu completo.</li>
+  </ul>
+
+  <h3>Minha mesa</h3>
+  <p>Para Gestão, Fiscal, Financeiro e Compras, a tela inicial é a <b>Minha mesa</b>: só o que está esperando <b>você</b>, em três grupos — <span class="carimbo c-vm">Urgente</span> <span class="carimbo c-am">Atenção</span> <span class="carimbo c-az">Para acompanhar</span>. Clique em <span class="btn">Abrir</span> e o sistema leva direto ao ponto onde você resolve. À direita ficam atalhos do seu perfil e alguns números.</p>
+  <figure><img src="imagens/mesa.png" alt="Minha mesa"><figcaption>Minha mesa (exemplo: perfil Gestão).</figcaption></figure>
+
+  <h3>Como ler os status</h3>
+  <p>Os status aparecem como <b>carimbos</b> coloridos: <span class="carimbo c-vd">verde</span> = em dia/concluído · <span class="carimbo c-am">amarelo</span> = atenção · <span class="carimbo c-vm">vermelho</span> = urgente ou problema · <span class="carimbo c-az">azul</span> = em andamento · <span class="carimbo c-cz">cinza</span> = neutro. Em contratações e competências, o status diz <b>com quem está a vez</b>.</p>
+</section>
+
+<!-- ===================== COMUM 2 ===================== -->
+<section class="secao" data-setor="comum">
+  <h2>2. O caminho de uma contratação</h2>
+  <p>Cada contratação (contrato, nota de empenho ou outro instrumento) passa pelos setores nesta ordem. O sistema avisa cada setor quando chega a sua vez.</p>
+
+  <table>
+    <tr><th style="width:16%">Etapa</th><th style="width:16%">Quem age</th><th>O que acontece</th></tr>
+    <tr><td>1. Cadastro</td><td>Compras</td><td>Com o contrato assinado ou a nota de empenho emitida, cadastra a contratação e a <b>encaminha à Gestão</b>.</td></tr>
+    <tr><td>2. Recebimento</td><td>Gestão</td><td>Confere os dados e <b>recebe</b> a contratação.</td></tr>
+    <tr><td>3. Fiscais</td><td>Gestão</td><td>Designa o <b>fiscal titular</b> e o <b>fiscal substituto</b>.</td></tr>
+    <tr><td>4. Portaria</td><td>Gestão → Gabinete</td><td>Gestão gera a minuta; o Gabinete assina e publica; o número e a data da publicação são registrados.</td></tr>
+    <tr><td>5. Termo de ciência</td><td>Gestão</td><td>Gestor(a) e fiscais assinam o termo no SEI; a Gestão registra a ciência de cada um. A fiscalização fica <b>formalizada</b>.</td></tr>
+    <tr><td>6. OS ou OC</td><td>Gestão → Gabinete</td><td>Gestão prepara a Ordem de Serviço/Compra; Presidente e Diretor Financeiro assinam; a Gestão registra o envio à contratada e o recebimento. Começa a <b>execução</b>.</td></tr>
+    <tr><td>7. Nota fiscal e fiscalização</td><td>Fiscal</td><td>Cada mês: recebe a NF, registra, fiscaliza a execução, anota ocorrência/glosa e <b>atesta</b>.</td></tr>
+    <tr><td>8. Conferência</td><td>Gestão</td><td>Confere o fluxo (não refaz a fiscalização) e <b>libera ao Financeiro</b> ou <b>devolve ao fiscal</b>.</td></tr>
+    <tr><td>9. Pagamento</td><td>Financeiro</td><td>Liquidação, pagamento e acompanhamento dos saldos.</td></tr>
+  </table>
+
+  <div class="dica"><b>Contratações anteriores ao sistema</b>As que já estavam em execução antes da plataforma entram marcadas como "já em execução": não refazem portaria, termo e OS/OC; seguem direto para as competências mensais.</div>
+
+  <h3>Cada mês (competência)</h3>
+  <p>A competência é o mês de referência de cada contratação. Seu status mostra a etapa:</p>
+  <p><span class="carimbo c-cz">Aguardando nota fiscal</span> → <span class="carimbo c-az">NF recebida — aguardando fiscalização</span> → <span class="carimbo c-az">Fiscalizada — aguardando atesto</span> → <span class="carimbo c-az">Atestada — aguardando Gestão</span> → <span class="carimbo c-az">Aguardando liquidação</span> → <span class="carimbo c-az">Liquidada — aguardando pagamento</span> → <span class="carimbo c-vd">Paga</span></p>
+  <p>Podem aparecer também os sinalizadores <span class="carimbo c-vm">Com ocorrência</span>, <span class="carimbo c-am">Com glosa</span> e <span class="carimbo c-vm">Devolvida pela Gestão</span>.</p>
+</section>
+
+<!-- ===================== COMPRAS ===================== -->
+<section class="secao" data-setor="compras">
+  <h2>Setor de Compras</h2>
+  <p class="sub">Perfil <b>Compras</b> · Tela inicial: Minha mesa · Módulos: Mesa, Licitações, Contratações</p>
+
+  <h3>O que você faz no sistema</h3>
+  <ul>
+    <li>Cadastra as contratações (contrato, nota de empenho ou outro instrumento) e as <b>encaminha à Gestão</b>.</li>
+    <li>Acompanha e controla os <b>processos licitatórios</b> (quadro de prioridades, prazos, fases, anexos).</li>
+    <li>Pode importar processos e contratações por planilha.</li>
+  </ul>
+  <div class="regra"><b>Regra importante</b>Depois que a contratação é encaminhada à Gestão, Compras só <b>consulta</b>. Corrija tudo antes de encaminhar.</div>
+
+  <h3>Cadastrar uma contratação</h3>
+  <ol class="passos">
+    <li>Menu <b>Contratações</b> → <span class="btn p">+ Nova contratação</span>.</li>
+    <li>Preencha o formulário em blocos: <b>Instrumento</b> (tipo, número, processo SEI, objeto, modalidade, unidade demandante), <b>Contratada</b> (nome, CNPJ, endereço, representante, e-mail), <b>Vigência ou prazo de execução</b>, <b>Valores e empenho</b> e <b>Garantia</b> (se exigida). Campos com * são obrigatórios.</li>
+    <li>Clique em <span class="btn p">Criar cadastro</span>. A ficha da contratação abre.</li>
+  </ol>
+  <div class="aviso"><b>Dados mínimos para encaminhar</b>Nº do instrumento, processo SEI, contratada, objeto, valor maior que zero e fim da vigência <i>ou</i> prazo de execução. Para nota de empenho, que não tem vigência, informe o prazo de execução em dias.</div>
+
+  <h3>Cadastrar várias de uma vez (planilha)</h3>
+  <ol class="passos">
+    <li>Em Contratações, clique em <span class="btn">Importar planilha</span>.</li>
+    <li>Clique em <span class="btn">Baixar modelo</span>, preencha uma linha por contratação e salve (.xlsx ou .csv). Obrigatórias: <b>Nº, Contratada e Objeto</b>.</li>
+    <li>Escolha o arquivo. O sistema mostra, linha a linha, o que será importado, o que falta completar e o que será ignorado (sem número, repetida ou já cadastrada).</li>
+    <li>Confira e clique em <span class="btn p">Importar</span>. As contratações entram em <b>cadastro</b>; complete os dados e encaminhe na ficha.</li>
+  </ol>
+  <figure><img src="imagens/importar.png" alt="Importar contratações"><figcaption>Importação de contratações por planilha.</figcaption></figure>
+
+  <h3>Encaminhar à Gestão</h3>
+  <ol class="passos">
+    <li>Abra a contratação (lista de Contratações → clique na linha).</li>
+    <li>Clique em <span class="btn v">Encaminhar para Gestão</span>, escolha se solicita <b>Ordem de Serviço</b> ou <b>Ordem de Compra</b> (nota de empenho costuma ser OC) e confirme.</li>
+    <li>O sistema cria, sozinho, a solicitação de designação dos fiscais e a solicitação da OS/OC, e avisa a Gestão.</li>
+  </ol>
+  <p>Se faltar dado, o sistema diz o que preencher antes. Use <span class="btn">Completar cadastro</span> para editar enquanto não foi encaminhada.</p>
+  <figure><img src="imagens/contratos.png" alt="Lista de contratações"><figcaption>Lista de contratações: abas rápidas, busca, filtros e exportação.</figcaption></figure>
+
+  <h3>Processos licitatórios</h3>
+  <p>No módulo <b>Licitações</b> (faixa à esquerda) há quatro telas:</p>
+  <ul>
+    <li><b>Quadro de prioridades</b>: colunas por criticidade (Crítico, Estratégico, Alavancável, Não crítico). Dentro de cada coluna, os processos mais no início da documentação vêm primeiro. Clique num cartão para ver o resumo, informar <b>em qual documentação o processo está</b> (DFD, dotação, estudo técnico, pesquisa de preço, termo de referência, parecer jurídico) e, se for o caso, <b>marcar como concluído</b>.</li>
+    <li><b>Processos</b>: a lista completa, com busca, filtros, exportação em Excel e PDF.</li>
+    <li><b>Indicadores</b>: gráficos por tipo, por prioridade e por mês, com filtro de período e fase.</li>
+    <li><b>Arquivados</b>: consulta aos arquivados; é possível desarquivar.</li>
+  </ul>
+  <figure><img src="imagens/quadro.png" alt="Quadro de prioridades"><figcaption>Quadro de prioridades.</figcaption></figure>
+
+  <h4>Cadastrar e acompanhar um processo</h4>
+  <ol class="passos">
+    <li>Em <b>Processos</b>, clique em <span class="btn p">+ Novo</span> e preencha número, objeto, tipo, prioridade, prazo e responsável.</li>
+    <li>Clique na linha de um processo para abrir o detalhe, onde ficam as <b>fases do fluxo</b> com a data de cada uma. Os anexos ficam no formulário de edição (ícone de lápis na linha).</li>
+    <li>O status do prazo é calculado sozinho: <span class="carimbo c-vd">Em dia</span> <span class="carimbo c-am">Quase vencendo</span> (até 3 dias) <span class="carimbo c-vm">Atrasado</span>.</li>
+    <li>Para guardar processos encerrados, marque-os na lista e use <span class="btn">Arquivar</span>.</li>
+  </ol>
+  <h4>Importar processos por planilha</h4>
+  <p>Em Processos, clique em <span class="btn">Importar</span> e escolha a planilha. Colunas lidas: <i>número do Processo, Situação no SEI, nome do Processo, Unidade Demandante, Modalidade, Valor Estimado (R$), Prioridade, Fase Atual</i> (a ordem é livre). Processos com número já cadastrado são ignorados, e o sistema mostra um resumo para você confirmar antes de gravar.</p>
+  <figure><img src="imagens/processos.png" alt="Lista de processos"><figcaption>Processos: busca, filtros, importação e exportação.</figcaption></figure>
+
+  <div class="dica"><b>Na sua mesa</b>Aparecem também os processos com prazo vencido ou que vencem em até 7 dias.</div>
+</section>
+
+<!-- ===================== GESTÃO ===================== -->
+<section class="secao" data-setor="gestao">
+  <h2>Gestão de Contratos</h2>
+  <p class="sub">Perfil <b>Gestão de contratos</b> · Tela inicial: Minha mesa · Módulos: Mesa, Contratações, Financeiro (consulta)</p>
+
+  <h3>O que você faz no sistema</h3>
+  <ul>
+    <li>Recebe as contratações vindas de Compras e <b>formaliza a fiscalização</b>: designa fiscais, prepara a portaria e o termo de ciência.</li>
+    <li>Prepara as <b>OS/OC</b> e registra envio e recebimento pela contratada.</li>
+    <li>Cada mês, <b>confere</b> as competências atestadas e as libera ao Financeiro ou devolve ao fiscal.</li>
+    <li>Registra eventos contratuais (aditivos, reajustes, prorrogações), ocorrências, pendências e documentos.</li>
+  </ul>
+  <div class="regra"><b>O que não é da Gestão</b>Registrar nota fiscal, fiscalizar e atestar são atos do <b>fiscal</b>. A Gestão confere o fluxo; não refaz a fiscalização.</div>
+
+  <h3>Acompanhar pelo Painel da gestão</h3>
+  <p>Em <b>Contratações → Painel da gestão</b>: quatro indicadores (em execução, a caminho da execução, competências do mês, pendências críticas), a <b>régua de formalização</b> (quantas contratações estão em cada etapa e com quem), a distribuição das competências e as vigências dos próximos 120 dias. Clique em qualquer número para ver a lista.</p>
+  <figure><img src="imagens/ficha-formalizacao.png" alt="Ficha com régua de formalização"><figcaption>Ficha da contratação: legenda no alto, régua de formalização e abas.</figcaption></figure>
+
+  <h3>1. Receber a contratação</h3>
+  <ol class="passos">
+    <li>Na Minha mesa, abra "Nova contratação recebida de Compras".</li>
+    <li>Confira os dados e clique em <span class="btn v">Receber contratação</span>. Se algo importante estiver em branco, o sistema avisa antes de você confirmar.</li>
+  </ol>
+
+  <h3>2. Designar os fiscais</h3>
+  <ol class="passos">
+    <li>Na ficha, aba <b>Cadastro</b>, no quadro <b>Gestão e fiscalização</b>, clique em <span class="btn">Designar</span>.</li>
+    <li>Escolha o <b>papel</b> (gestor(a) do contrato, fiscal titular, fiscal substituto), o servidor na lista de usuários (assim a contratação aparece para ele em "Minhas fiscalizações"), e o e-mail institucional — usado na orientação de envio da nota fiscal.</li>
+    <li>São obrigatórios o <b>fiscal titular</b> e o <b>fiscal substituto</b>.</li>
+  </ol>
+  <figure><img src="imagens/cadastro-gestao.png" alt="Gestão e fiscalização, portaria e termo"><figcaption>Designação dos fiscais, portaria e termo de ciência.</figcaption></figure>
+
+  <h3>3. Portaria de designação</h3>
+  <ol class="passos">
+    <li>No quadro <b>Portaria de designação</b>, clique em <span class="btn">Gerar minuta</span>. O texto aparece pronto: use <b>Copiar para o SEI</b> ou baixe o arquivo .doc.</li>
+    <li>Clique em <span class="btn p">Encaminhar para assinatura/publicação</span>. O Gabinete é avisado.</li>
+    <li>Quando for publicada, o Gabinete (ou você) clica em <span class="btn v">Registrar publicação</span> e informa nº da portaria, data, data e meio da publicação e o documento SEI.</li>
+  </ol>
+
+  <h3>4. Termo de ciência e aceite</h3>
+  <ol class="passos">
+    <li>Com a portaria publicada, clique em <span class="btn">Gerar termo</span> e use o texto no SEI.</li>
+    <li>Quando cada pessoa assinar, clique em <b>Registrar ciência</b> ao lado do nome (gestor(a), fiscal titular e fiscal substituto) com a data da assinatura. Informe também o nº do documento SEI do termo.</li>
+    <li>Com todas as ciências registradas, a fiscalização está <b>formalizada</b>.</li>
+  </ol>
+
+  <h3>5. OS ou OC</h3>
+  <ol class="passos">
+    <li>Menu <b>OS / OC</b>. A solicitação de Compras aparece como <span class="carimbo c-cz">Solicitada</span>. Clique em <span class="btn p">Preparar</span>.</li>
+    <li>Confira os requisitos (contratação recebida, fiscalização formalizada, vigência, garantia, empenho) e preencha número, data, serviço/fornecimento autorizado, período, local e preposto. Salve o rascunho (<span class="carimbo c-az">Rascunho</span>).</li>
+    <li>Use o botão de documento para gerar o texto (com a orientação de envio da nota fiscal) e clique em <span class="btn v">Enviar para assinatura</span>. <b>Só é possível com a fiscalização formalizada.</b></li>
+    <li>O Gabinete registra as assinaturas do Presidente e do Diretor Financeiro. Quando as duas estiverem registradas, a ordem fica <span class="carimbo c-az">Assinada</span>.</li>
+    <li>Envie à contratada e clique em <span class="btn">Registrar envio à contratada</span> (data e meio).</li>
+    <li>Quando a contratada confirmar, clique em <span class="btn v">Registrar recebimento</span> com a data de recebimento e o início da execução. A contratação passa a <span class="carimbo c-vd">Em execução</span>.</li>
+  </ol>
+  <figure><img src="imagens/os.png" alt="Lista de OS/OC"><figcaption>OS/OC: situação e a ação do momento em cada linha.</figcaption></figure>
+
+  <h3>6. Competências mensais: abrir, conferir, liberar</h3>
+  <ol class="passos">
+    <li>Em <b>Competências</b>, o botão <span class="btn">Abrir &lt;mês&gt; (n)</span> abre o mês para as contratações em execução. O fiscal também pode abrir ao registrar a NF.</li>
+    <li>Quando o fiscal atesta, a competência chega a você como "Atestada — aguardando Gestão". Use o filtro <b>Minha vez</b>.</li>
+    <li>Clique em <span class="btn">Tratar</span>. No bloco <b>Conferência da Gestão</b>, veja a lista de conferência (NF, fiscalização, atesto, ocorrências tratadas, glosa, documentos).</li>
+    <li>Tudo certo: marque <b>Encaminhar ao Financeiro</b> e salve. Se algo estiver errado: <span class="btn">Devolver ao fiscal</span> com o motivo; a competência volta ao fiscal marcada como <span class="carimbo c-vm">Devolvida pela Gestão</span>.</li>
+  </ol>
+
+  <h3>7. Outros registros da ficha</h3>
+  <ul>
+    <li><b>Eventos e aditivos</b>: termo aditivo, apostilamento, reajuste, repactuação, reequilíbrio, prorrogação, acréscimo, supressão, suspensão, encerramento. Ao concluir um evento, o valor e a vigência da contratação são atualizados sozinhos.</li>
+    <li><b>Ocorrências</b>: registre o problema, a providência e o prazo dado à contratada.</li>
+    <li><b>Pendências</b> (menu "Mais"): tarefas com prazo e perfil responsável.</li>
+    <li><b>Documentos</b>: índice dos documentos SEI da contratação; os citados nos demais registros aparecem sozinhos.</li>
+    <li><b>Histórico</b> (menu "Mais"): quem mudou o quê e quando, com o antes e o depois.</li>
+    <li><b>Fiscal substituto em atuação</b>: quando o titular se ausenta, clique nesse botão no quadro "Gestão e fiscalização" — as tarefas passam ao substituto. Para voltar, <b>Titular reassume</b>.</li>
+    <li><b>Situação da contratação</b> (suspensa, em prorrogação, encerrada…): em <span class="btn">Editar cadastro</span>.</li>
+  </ul>
+
+  <div class="regra"><b>Nada é excluído</b>Registros não se apagam: ao cancelar, o sistema pede uma <b>justificativa</b> e o item continua no histórico como cancelado.</div>
+
+  <h3>Alertas e relatórios</h3>
+  <p>Vigência (120, 90, 60 e 30 dias), garantia, reajuste, ocorrências e prazos vencidos geram alertas na Minha mesa e em <b>Alertas e prazos</b>. Em <b>Relatórios</b> há 12 relatórios (contratos ativos, por vencer, situação financeira, pagamentos, glosas, ocorrências, prorrogações, reajustes e mais) em Tela, Excel e PDF, além do relatório <b>individual completo</b> de cada contratação (botão na ficha).</p>
+  <figure><img src="imagens/alertas.png" alt="Alertas e prazos"><figcaption>Alertas e prazos, com filtro por severidade e categoria.</figcaption></figure>
+</section>
+
+<!-- ===================== FISCAL ===================== -->
+<section class="secao" data-setor="fiscal">
+  <h2>Fiscais de Contrato</h2>
+  <p class="sub">Perfil <b>Fiscal</b> · Tela inicial: Minha mesa · Módulo: Fiscalização</p>
+
+  <h3>O que você faz no sistema</h3>
+  <ul>
+    <li>Recebe a nota fiscal de cada mês e a <b>registra</b>.</li>
+    <li><b>Fiscaliza</b> a execução, anota ocorrência e glosa, confere a documentação e <b>atesta</b>.</li>
+    <li>O fiscal <b>titular</b> pratica esses atos. O <b>substituto</b> só atua quando a Gestão ou o titular o coloca "em atuação".</li>
+  </ul>
+  <div class="aviso"><b>Você só vê o que é seu</b>No sistema aparecem apenas as contratações em que você foi designado(a) como fiscal. Se uma contratação sua não aparece, peça à Gestão para conferir a designação.</div>
+
+  <h3>Minhas fiscalizações</h3>
+  <p>No módulo <b>Fiscalização</b>, <b>Minhas fiscalizações</b> lista as suas contratações. Clique numa linha para abrir a ficha: a <b>Visão geral</b> mostra os alertas, as competências recentes, os responsáveis, os prazos e os valores.</p>
+
+  <h3>Registrar a nota fiscal do mês</h3>
+  <p>A contratada envia a nota fiscal ao e-mail do fiscal titular, com cópia para a Gestão (a orientação consta na OS/OC).</p>
+  <ol class="passos">
+    <li>Em <b>Competências</b>, clique em <span class="btn p">Registrar NF</span>.</li>
+    <li>Escolha a contratação e informe a competência (mês de referência), a data de recebimento, o nº da NF, a data de emissão e o valor bruto.</li>
+    <li>Clique em <b>Registrar NF</b>. A competência é aberta (ou completada, se a Gestão já a tinha aberto) com o status "NF recebida — aguardando fiscalização". Se a NF do mês já foi registrada, o sistema avisa para não duplicar.</li>
+  </ol>
+  <figure><img src="imagens/registrar-nf.png" alt="Registrar NF"><figcaption>Registro da nota fiscal.</figcaption></figure>
+
+  <h3>Fiscalizar e atestar</h3>
+  <ol class="passos">
+    <li>Em <b>Competências</b> use <b>Minha vez</b> e clique em <span class="btn">Tratar</span> na competência.</li>
+    <li>O formulário tem seções numeradas, com um sumário no alto para pular de uma para outra:
+      <ul>
+        <li><b>01 Nota fiscal</b> — confira os dados.</li>
+        <li><b>02 Fiscalização da execução</b> — execução realizada? conforme contrato/TR/OS? quantidade e qualidade adequadas? prazo cumprido? valor medido (se houver medição), sua manifestação e o relatório (nº SEI). Marque <b>Fiscalização concluída</b> e a data.</li>
+        <li><b>03 Ocorrência</b> — se houve, marque e informe tipo, descrição, providência e prazo dado à contratada.</li>
+        <li><b>04 Glosa</b> — se houver desconto, informe valor e fundamento.</li>
+        <li><b>05 Documentação</b> — certidões, documentação trabalhista/previdenciária e demais documentos conferidos.</li>
+        <li><b>06 Atesto</b> — clique em <span class="btn">Gerar atesto</span>, copie o texto para o SEI, assine, e registre aqui a data e o nº do documento SEI; marque <b>Atestado</b>.</li>
+      </ul>
+    </li>
+    <li>Clique em <span class="btn p">Salvar</span>. A competência segue para a conferência da Gestão.</li>
+  </ol>
+  <figure><img src="imagens/competencia-modal.png" alt="Tratar competência"><figcaption>Competência: seções numeradas e sumário no topo.</figcaption></figure>
+  <div class="dica"><b>Em cada etapa o sistema só deixa mexer no que é seu</b>As seções da Gestão e do Financeiro aparecem bloqueadas para você.</div>
+
+  <h3>Se a Gestão devolver</h3>
+  <p>A competência volta com o carimbo <span class="carimbo c-vm">Devolvida pela Gestão</span> e o motivo. Corrija, atese de novo e salve.</p>
+
+  <h3>Fiscal substituto em atuação</h3>
+  <p>Na ficha, aba <b>Cadastro</b>, o botão <span class="btn">Fiscal substituto em atuação</span> (do titular ou do substituto) passa as tarefas ao substituto; <span class="btn">Titular reassume</span> devolve ao titular. Enquanto o substituto não estiver em atuação, ele só consulta.</p>
+
+  <h3>Ocorrências e documentos</h3>
+  <p>Na ficha: aba <b>Ocorrências</b> para registrar e acompanhar problemas e prazos dados à contratada; aba <b>Documentos</b> para registrar documentos SEI relacionados.</p>
+
+  <h3>Alertas que você recebe</h3>
+  <ul>
+    <li>Nova contratação atribuída a você.</li>
+    <li>Nota fiscal não recebida (cobrada depois que o mês termina).</li>
+    <li>NF recebida aguardando fiscalização; atesto pendente; competência devolvida.</li>
+    <li>Prazo concedido à contratada vencendo ou vencido; competências não abertas.</li>
+  </ul>
+  <figure><img src="imagens/competencias.png" alt="Competências do fiscal"><figcaption>Competências: etapa de cada uma e botão Tratar nas que são sua vez.</figcaption></figure>
+</section>
+
+<!-- ===================== FINANCEIRO ===================== -->
+<section class="secao" data-setor="financeiro">
+  <h2>Financeiro</h2>
+  <p class="sub">Perfil <b>Financeiro</b> · Tela inicial: Minha mesa · Módulos: Mesa, Financeiro, Contratações (consulta)</p>
+
+  <h3>O que você faz no sistema</h3>
+  <ul>
+    <li>Registra os <b>empenhos</b>, com reforços e anulações.</li>
+    <li>Lança a <b>liquidação</b> e o <b>pagamento</b> das competências que a Gestão liberou.</li>
+    <li>Acompanha os saldos.</li>
+  </ul>
+  <div class="regra"><b>Só o que foi liberado</b>Você só lança liquidação e pagamento de competências que passaram pela fiscalização, pelo atesto e pela conferência da Gestão.</div>
+
+  <h3>Painel financeiro</h3>
+  <p>No módulo <b>Financeiro</b>, a faixa no alto mostra o dinheiro em sequência: <b>Contratado → Empenhado → Reconhecido → Liquidado → Pago</b>, com o saldo a liquidar e o valor aguardando pagamento. O sistema mantém cada valor <b>separado</b> (não existe um "saldo" único): valor do contrato, empenhos, executado reconhecido, liquidado, pago e pendente.</p>
+  <figure><img src="imagens/financeiro.png" alt="Painel financeiro"><figcaption>Painel financeiro e fila de liquidação e pagamento.</figcaption></figure>
+
+  <h3>Lançar liquidação e pagamento</h3>
+  <ol class="passos">
+    <li>Aba <b>Fila de liquidação e pagamento</b>: são as competências liberadas pela Gestão.</li>
+    <li>Clique em <span class="btn p">Lançar</span> na linha.</li>
+    <li>Preencha: <b>Empenho utilizado</b> (a lista mostra o saldo de cada um), valor da competência e retenções; <b>Liquidação</b> (data, valor, documento SEI); <b>Pagamento</b> (data e valor pago). Marque <b>Pagamento suspenso</b> se for o caso.</li>
+    <li>Salve. Você pode lançar a liquidação agora e o pagamento depois, voltando em <span class="btn">Lançar</span>.</li>
+  </ol>
+  <div class="aviso"><b>Saldo do empenho</b>Se a liquidação passar do saldo do empenho, o sistema gera um alerta. Confira o empenho escolhido.</div>
+
+  <h3>Empenhos</h3>
+  <ol class="passos">
+    <li>No painel, <span class="btn p">+ Novo empenho</span>: escolha a contratação, informe nº, exercício, data, valor inicial e fonte/dotação.</li>
+    <li>Na ficha da contratação, aba <b>Financeiro</b>, cada empenho tem os botões <b>Reforço</b>, <b>Anulação</b>, <b>Editar</b> e <b>Cancelar empenho</b> (com justificativa).</li>
+  </ol>
+
+  <h3>Outras consultas</h3>
+  <ul>
+    <li>Abas <b>Por contrato</b>, <b>Por exercício</b>, <b>Por competência</b> e <b>Empenhos</b> do painel; botão <span class="btn">Exportar</span> gera Excel.</li>
+    <li><b>Relatórios</b>: situação financeira por contrato, pagamentos por competência e por contratada, execução anual.</li>
+  </ul>
+  <p>Alertas do Financeiro: nova competência liberada, pagamento pendente, empenho com saldo negativo, contratação sem empenho no exercício.</p>
+</section>
+
+<!-- ===================== GABINETE ===================== -->
+<section class="secao" data-setor="gabinete">
+  <h2>Gabinete</h2>
+  <p class="sub">Perfil <b>Gabinete</b> · Tela inicial: Atos para assinatura</p>
+
+  <h3>O que você faz no sistema</h3>
+  <ul>
+    <li>Registra a <b>assinatura e a publicação das portarias</b> de designação dos fiscais.</li>
+    <li>Registra as <b>assinaturas das OS/OC</b> (Presidente e Diretor Financeiro).</li>
+  </ul>
+  <div class="aviso"><b>Você vê só o seu</b>O Gabinete enxerga apenas os atos encaminhados a ele. Quando a Gestão encaminha, o sistema avisa (sino e número no módulo).</div>
+  <figure><img src="imagens/gabinete.png" alt="Atos para assinatura"><figcaption>Atos para assinatura.</figcaption></figure>
+
+  <h3>Portaria aguardando assinatura e publicação</h3>
+  <ol class="passos">
+    <li>Em <b>Atos para assinatura</b>, veja a portaria com os fiscais designados e o processo SEI. <span class="btn">Ver minuta</span> abre o texto.</li>
+    <li>Depois de assinada e publicada, clique em <span class="btn v">Registrar publicação</span>.</li>
+    <li>Informe o <b>nº da portaria</b>, a <b>data da portaria</b>, a <b>data da publicação</b>, o meio (Diário Oficial, boletim interno, site…) e o nº do documento SEI. Confirme.</li>
+  </ol>
+  <p>A partir daí a Gestão segue com o termo de ciência.</p>
+
+  <h3>OS/OC aguardando assinatura</h3>
+  <ol class="passos">
+    <li>Na lista de OS/OC, <span class="btn">Ver documento</span> mostra o texto.</li>
+    <li>Quando assinar, clique em <span class="btn v">Registrar assinaturas</span> e informe a <b>data da assinatura do Presidente</b> e a <b>do Diretor Financeiro</b> (pode registrar uma agora e a outra depois), mais o nº do documento SEI.</li>
+    <li>Quando as duas assinaturas estão registradas, a ordem passa a <span class="carimbo c-az">Assinada</span> e volta à Gestão para o envio à contratada.</li>
+  </ol>
+</section>
+
+<!-- ===================== ADMIN ===================== -->
+<section class="secao" data-setor="admin">
+  <h2>Administração do sistema</h2>
+  <p class="sub">Perfil <b>Administrador</b> · Módulo: Administração (e acesso a todos os demais)</p>
+
+  <h3>O que você faz no sistema</h3>
+  <ul>
+    <li>Cria os acessos, define o <b>perfil</b> de cada pessoa e ativa/desativa.</li>
+    <li>Mantém os <b>parâmetros</b>: prazos de alerta, listas de opções e dados que saem nos documentos.</li>
+  </ul>
+
+  <h3>Usuários e perfis</h3>
+  <figure><img src="imagens/usuarios.png" alt="Usuários e perfis"><figcaption>Administração → Usuários e perfis.</figcaption></figure>
+  <h4>Criar um acesso</h4>
+  <ol class="passos">
+    <li>Administração → <b>Usuários e perfis</b> → <span class="btn p">Novo usuário</span>.</li>
+    <li>Informe nome completo, e-mail, uma <b>senha temporária</b> (mínimo de 8 caracteres) e o <b>perfil</b>.</li>
+    <li>A pessoa recebe um e-mail de confirmação; o acesso funciona depois que ela clicar no link. Depois ela pode trocar a senha por "Esqueceu a senha?".</li>
+  </ol>
+  <h4>Manter os acessos</h4>
+  <ul>
+    <li><b>Editar</b>: muda nome e perfil (o e-mail não muda). A mudança vale na hora, também no banco de dados.</li>
+    <li><b>Desativar / reativar</b>: bloqueia o acesso sem apagar o histórico. Prefira isto a apagar.</li>
+    <li><b>Apagar</b>: remove o perfil e bloqueia o acesso imediatamente.</li>
+    <li>Você não pode desativar, apagar nem mudar o perfil do <b>próprio</b> usuário.</li>
+    <li>Use os filtros <b>Todos / Ativos / Inativos</b>, o filtro por perfil e a busca. A aba <b>Perfis e permissões</b> mostra o que cada perfil faz e quem o tem.</li>
+  </ul>
+  <h4>Perfis disponíveis</h4>
+  <table>
+    <tr><th style="width:22%">Perfil</th><th>O que pode</th></tr>
+    <tr><td>Compras</td><td>Cadastra e encaminha contratações; opera os processos licitatórios.</td></tr>
+    <tr><td>Gestão de contratos</td><td>Recebe, designa fiscais, portaria, termo, OS/OC, confere competências, eventos e ocorrências.</td></tr>
+    <tr><td>Fiscal</td><td>Só as contratações em que está designado: NF, fiscalização, glosa e atesto.</td></tr>
+    <tr><td>Financeiro</td><td>Empenhos, liquidação, pagamento e saldos.</td></tr>
+    <tr><td>Gabinete</td><td>Assina/publica portarias e assina OS/OC; vê só esses atos.</td></tr>
+    <tr><td>Administrador</td><td>Tudo, mais usuários e parâmetros.</td></tr>
+    <tr><td>Visualizador</td><td>Somente consulta.</td></tr>
+  </table>
+  <div class="dica"><b>Para ser fiscal de uma contratação</b>O usuário precisa ter o perfil <b>Fiscal</b> e ser designado na contratação pela Gestão. Sem os dois, ele não vê a contratação.</div>
+
+  <h3>Parâmetros</h3>
+  <figure><img src="imagens/parametros.png" alt="Parâmetros"><figcaption>Administração → Parâmetros.</figcaption></figure>
+  <ul>
+    <li><b>Alertas e prazos</b>: com quantos dias avisar vigência, garantia e reajuste; quantos dias uma competência pode ficar parada em cada etapa antes de ficar crítica; aviso de prazo de ocorrência.</li>
+    <li><b>Listas de apoio</b>: tipos de objeto, modalidades e índices de reajuste (uma opção por linha).</li>
+    <li><b>Documentos gerados</b>: nome do órgão, cidade/UF, Presidente, Diretor(a) Financeiro(a), e-mail institucional da Gestão (cópia das NFs) e as atribuições da fiscalização que saem na portaria.</li>
+  </ul>
+  <div class="aviso"><b>Preencha antes de usar</b>Os dados de "Documentos gerados" aparecem na portaria, no termo, nas OS/OC e no atesto. Preencha o <b>nome completo do órgão</b>, a cidade e os nomes do Presidente e do Diretor Financeiro antes de gerar o primeiro documento.</div>
+
+  <h3>Auditoria</h3>
+  <p>Cada alteração nas contratações fica registrada (quem, quando, antes e depois) na aba <b>Histórico</b> da ficha. Registros não são excluídos.</p>
+</section>
+
+<!-- ===================== CONSULTA ===================== -->
+<section class="secao" data-setor="consulta">
+  <h2>Consulta (Visualizador)</h2>
+  <p class="sub">Perfil <b>Visualizador</b> · Somente leitura</p>
+  <p>Este perfil serve para acompanhar sem alterar nada. Você vê as contratações, os painéis da gestão e financeiro, OS/OC, competências, alertas, relatórios e os processos licitatórios. Os botões de cadastrar, editar, lançar e registrar não aparecem para você.</p>
+  <ul>
+    <li><b>Contratações</b>: lista com abas rápidas (Todas, Em execução, A caminho, Vencendo, Com pendências), busca e filtros. Clique para abrir a ficha completa.</li>
+    <li><b>Painéis</b>: Painel da gestão e Painel financeiro.</li>
+    <li><b>Relatórios</b>: 12 relatórios em tela, Excel e PDF, e o relatório individual de cada contratação.</li>
+    <li><b>Licitações</b>: quadro de prioridades, processos, indicadores e arquivados.</li>
+  </ul>
+</section>
+
+<!-- ===================== COMUM 3 ===================== -->
+<section class="secao" data-setor="comum">
+  <h2>Regras e dúvidas frequentes</h2>
+
+  <h3>Regras que valem para todos</h3>
+  <ul>
+    <li><b>Nada é apagado.</b> Contratações, competências, OS/OC, empenhos e demais registros são <b>cancelados com justificativa</b> e continuam no histórico. Só os processos licitatórios podem ser excluídos, por Compras.</li>
+    <li><b>Cada setor faz o seu ato.</b> O sistema bloqueia o que não é do seu perfil, mesmo que alguém tente por outro caminho.</li>
+    <li><b>O SEI continua sendo o registro oficial.</b> O sistema guarda o número e o link do documento SEI de cada ato e ajuda a gerar os textos (portaria, termo, OS/OC, atesto): use <b>Copiar para o SEI</b> ou baixe o arquivo.</li>
+    <li><b>Ações importantes pedem confirmação</b> e, ao cancelar, uma justificativa.</li>
+  </ul>
+
+  <h3>Dúvidas frequentes</h3>
+  <h4>Não vejo uma contratação.</h4>
+  <p>Fiscal: você só vê as em que foi designado — peça à Gestão para conferir. Gabinete: só aparecem os atos encaminhados a você. Outros perfis: confira os filtros da lista (botão <b>Limpar busca e filtros</b>).</p>
+  <h4>Não aparece o botão que eu preciso.</h4>
+  <p>O botão depende do perfil e da etapa. Exemplo: Compras não edita depois de encaminhar; a OS/OC só segue para assinatura com a fiscalização formalizada; o substituto só atua quando está "em atuação".</p>
+  <h4>Errei um dado. Como corrijo?</h4>
+  <p>Edite o registro enquanto o seu perfil puder (<b>Editar</b>). Se já não puder, peça ao setor que está com a vez ou à Gestão. Para desfazer um lançamento, cancele-o com justificativa.</p>
+  <h4>A página mostra "Banco de dados ainda não preparado" ou erro ao carregar.</h4>
+  <p>Avise a administração do sistema. Verifique também sua conexão e clique em <b>Tentar novamente</b>.</p>
+  <h4>Recebo e-mails do sistema?</h4>
+  <p>Quando o envio de e-mails estiver ativado pela administração, cada tarefa nova que aguarda sua atuação gera um aviso por e-mail. Os mesmos avisos sempre aparecem na Minha mesa.</p>
+  <h4>Posso usar no celular?</h4>
+  <p>Sim. O menu abre pelo botão de três traços; as tabelas rolam para o lado quando necessário.</p>
+</section>
+
+</div>
+<script>
+  // ?setor=compras|gestao|fiscal|financeiro|gabinete|admin|consulta — mostra só o guia daquele setor
+  (function () {
+    var NOMES = { compras: 'Compras', gestao: 'Gestão de Contratos', fiscal: 'Fiscais de Contrato', financeiro: 'Financeiro', gabinete: 'Gabinete', admin: 'Administração do sistema', consulta: 'Consulta (Visualizador)' };
+    var s = new URLSearchParams(location.search).get('setor');
+    if (!s || !NOMES[s]) return;
+    document.getElementById('nome-setor').textContent = NOMES[s];
+    document.title = 'Manual da Gestão de Contratações · ' + NOMES[s];
+    // fica a parte comum (capa, regras) e só a seção do setor pedido
+    document.querySelectorAll('section[data-setor]').forEach(function (el) {
+      var alvos = el.getAttribute('data-setor').split(' ');
+      if (alvos.indexOf('comum') === -1 && alvos.indexOf(s) === -1) el.remove();
+    });
+  })();
+</script>
+</body>
+</html>

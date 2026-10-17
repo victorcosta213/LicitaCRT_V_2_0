@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#2c6eb5"/>
+  <rect x="34" y="34" width="444" height="444" rx="62" fill="none" stroke="#ffffff" stroke-opacity=".28" stroke-width="10"/>
+  <text x="256" y="262" text-anchor="middle" font-family="'IBM Plex Sans Condensed','Arial Narrow',Arial,sans-serif"
+        font-size="196" font-weight="700" fill="#ffffff">CRT</text>
+  <text x="256" y="402" text-anchor="middle" font-family="'IBM Plex Mono',Consolas,monospace"
+        font-size="112" font-weight="600" fill="#ffea13">08</text>
+</svg>

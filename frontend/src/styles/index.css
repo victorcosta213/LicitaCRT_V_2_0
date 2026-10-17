@@ -1,0 +1,57 @@
+/* Utilitários compartilhados pelas telas (os tokens e o Bootstrap ficam em tema.css) */
+
+/* nomes antigos usados pelas telas do módulo licitatório */
+:root,
+[data-bs-theme] {
+  --app-ink: var(--tinta);
+  --app-muted: var(--tinta-3);
+  --app-surface: var(--folha);
+  --app-surface-strong: var(--folha-2);
+  --app-border: var(--traco);
+  --app-shadow: var(--sombra-media);
+  --app-shadow-soft: var(--sombra);
+  --app-brand: var(--azul);
+  --app-brand-strong: var(--azul-tinta);
+  --app-highlight: var(--ocre);
+}
+
+.table-responsive { -webkit-overflow-scrolling: touch; }
+.text-wrap { overflow-wrap: anywhere; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: .5rem; }
+.toolbar .input-group { min-width: 240px; }
+
+/* linha do tempo das fases (StepFlow) */
+.flow-wrap { overflow-x: auto; padding: .5rem 0; }
+.flow { display: flex; align-items: center; gap: 1rem; }
+.flow-step { position: relative; display: flex; align-items: center; }
+.flow-step .dot { width: 10px; height: 10px; border-radius: 2px; background: var(--azul); flex: none; }
+.flow-step .line { width: 48px; height: 1.5px; margin: 0 .35rem; background: var(--traco-forte); }
+.flow-step .label { margin-left: .5rem; white-space: nowrap; }
+.flow-step .label .name { font-weight: 600; font-size: .86rem; }
+.flow-step .label .date { font: 500 .74rem var(--fonte-mono); color: var(--tinta-3); }
+
+/* diálogos altos (formulários longos) */
+.modal-tall .modal-dialog {
+  height: calc(100vh - 2rem);
+  max-width: min(100%, 1000px);
+  margin: 1rem auto;
+}
+.modal-tall .modal-content { height: 100%; max-height: calc(100vh - 2rem); display: flex; flex-direction: column; }
+.modal-tall .modal-header, .modal-tall .modal-footer { flex-shrink: 0; }
+.modal-tall .modal-body { overflow-y: auto; padding-bottom: 5.5rem; }
+.modal-footer.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--folha-2);
+  border-top: 1px solid var(--traco);
+}
+.modal-dialog-scrollable .modal-content { max-height: calc(100vh - 2rem); }
+.modal-dialog-scrollable .modal-body { overflow-y: auto; }
+
+@media (max-width: 768px) {
+  .modal-tall .row.g-3 > [class^="col-"] { flex: 0 0 100%; max-width: 100%; }
+  .toolbar { flex-direction: column; }
+  .toolbar .input-group { min-width: 100%; width: 100%; }
+}
