@@ -1,0 +1,15 @@
+{
+  "name": "licitacrt-backend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Banco de dados da LicitaCRT no Supabase: migrations, RLS, verificação e testes",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
+    "pg": "^8.23.1",
+    "vitest": "^5.0.5"
+  }
+}

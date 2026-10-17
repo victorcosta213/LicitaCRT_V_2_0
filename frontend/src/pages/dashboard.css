@@ -1,0 +1,32 @@
+/* Indicadores das licitações */
+.dashboard-page { display: grid; gap: 1.25rem; }
+.dashboard-page .cabecalho { margin-bottom: 0; }
+
+.dashboard-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 200px)) minmax(220px, 1fr) auto;
+  gap: .75rem 1rem;
+  align-items: end;
+  padding: .9rem 1.1rem;
+  background: var(--folha);
+  border: 1px solid var(--traco);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+}
+.dashboard-filters__phase { min-width: 0; }
+.dashboard-filters__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
+.dashboard-page .indicadores { margin-bottom: 0; }
+
+.chart-card { position: relative; min-height: 300px; display: flex; align-items: center; justify-content: center; }
+.chart-card--wide { min-height: 320px; }
+.chart-card canvas { max-height: 100%; }
+
+@media (max-width: 1199.98px) {
+  .dashboard-filters { grid-template-columns: 1fr 1fr; }
+  .dashboard-filters__phase, .dashboard-filters__actions { grid-column: 1 / -1; }
+  .dashboard-filters__actions { justify-content: flex-start; }
+}
+@media (max-width: 575.98px) {
+  .dashboard-filters { grid-template-columns: 1fr; }
+  .chart-card, .chart-card--wide { min-height: 260px; }
+}
