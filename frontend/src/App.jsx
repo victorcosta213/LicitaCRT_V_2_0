@@ -25,6 +25,7 @@ const Parametros = lazy(() => import('./pages/Parametros'))
 const Usuarios = lazy(() => import('./pages/Usuarios'))
 const Gabinete = lazy(() => import('./pages/Gabinete'))
 const Mesa = lazy(() => import('./pages/Mesa'))
+const Ajuda = lazy(() => import('./pages/Ajuda'))
 
 // Logado e com perfil ativo (mesma regra do banco).
 function Private({ children }) {
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/ordens-servico" element={<RoleRoute allow={['compras', 'gestor', 'viewer']}><OrdensServico /></RoleRoute>} />
           <Route path="/competencias" element={<RoleRoute allow={['gestor', 'fiscal', 'financeiro', 'viewer']}><Competencias /></RoleRoute>} />
           <Route path="/alertas" element={<Alertas />} />
+          <Route path="/ajuda" element={<Ajuda />} />
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/gabinete" element={<RoleRoute allow={['gabinete', 'gestor']}><Gabinete /></RoleRoute>} />
 

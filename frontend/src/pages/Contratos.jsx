@@ -252,7 +252,23 @@ export default function Contratos() {
             </thead>
             <tbody>
               {lista.length === 0 && (
-                <tr><td colSpan="7"><Empty icon="bi-search">{souFiscal && !consolidados.length ? 'Nenhuma contratação atribuída a você.' : 'Nenhuma contratação encontrada com os filtros atuais.'}</Empty></td></tr>
+                <tr><td colSpan="7"><Empty icon={consolidados.length ? 'bi-search' : 'bi-folder2-open'}>
+                  {souFiscal && !consolidados.length
+                    ? 'Nenhuma contratação atribuída a você ainda. Quando a Gestão designar você como fiscal, ela aparece aqui.'
+                    : !consolidados.length
+                      ? (
+                        <span className="vazio-acao">
+                          <span>Ainda não há contratações cadastradas.{can('contrato.criar') ? ' Comece cadastrando a primeira ou importe uma planilha.' : ' Elas aparecem aqui quando Compras cadastrar.'}</span>
+                          {can('contrato.criar') && (
+                            <span className="d-flex gap-2 flex-wrap justify-content-center">
+                              <button type="button" className="btn btn-primary" onClick={() => setNovo(true)}><i className="bi bi-plus-lg me-2" />Cadastrar a primeira contratação</button>
+                              <button type="button" className="btn btn-outline-secondary" onClick={() => setImportando(true)}><i className="bi bi-upload me-2" />Importar planilha</button>
+                            </span>
+                          )}
+                        </span>
+                      )
+                      : 'Nenhuma contratação encontrada com os filtros atuais. Limpe a busca ou os filtros para ver todas.'}
+                </Empty></td></tr>
               )}
               {lista.map((k) => {
                 const a = alertasPorContrato.get(k.id)

@@ -6,6 +6,7 @@ import { Card, Empty, GcGate } from '../components/gc/ui'
 import { ListaTarefas } from '../components/gc/Tarefa'
 import { alertasDoPerfil, minhaVez, painelGestao, painelFinanceiro, tarefaDoAlerta } from '../utils/contrato'
 import { ROLES, can, normalizeRole } from '../utils/permissions'
+import PrimeirosPassos from '../components/gc/PrimeirosPassos'
 import { useProcessosComPrazo } from '../components/useProcessosComPrazo'
 import { brl } from '../utils/format'
 
@@ -50,10 +51,12 @@ export default function Mesa() {
         </div>
       </header>
 
+      <PrimeirosPassos />
+
       <div className="row g-4">
         <div className="col-xl-8">
           {tarefas.length === 0 && (
-            <Card><Empty icon="bi-check2-circle">Tudo em dia. Quando algo depender de você, aparece aqui.</Empty></Card>
+            <Card><Empty icon="bi-check2-circle">Nenhuma tarefa aguardando você. Quando algo depender de você, aparece aqui, sem precisar atualizar a página.</Empty></Card>
           )}
           {grupos.map(([sev, titulo, itens]) => itens.length > 0 && (
             <section key={sev} className="mb-4">

@@ -32,7 +32,9 @@ export function useNavegacao() {
     }
   }, [alertas, consolidados, role, user, processos])
 
-  return { modulos, ...atual, contagens }
+  // a Ajuda não pertence a um módulo: mantém o módulo à vista e indica a tela na trilha
+  const item = pathname === '/ajuda' ? { to: '/ajuda', icon: 'bi-question-circle', label: 'Ajuda' } : atual.item
+  return { modulos, ...atual, item, contagens }
 }
 
 const lerTema = () => {
