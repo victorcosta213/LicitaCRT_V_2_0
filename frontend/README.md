@@ -122,6 +122,9 @@ Os e-mails de tarefa ("Existe uma nova tarefa aguardando sua atuação") saem da
   não há divergência entre telas.
 - **Valor atualizado** = valor inicial + (valor posterior − anterior) dos
   eventos *concluídos*. Vigência vigente = última `vigencia_posterior` concluída.
+- **Saldo do contrato** = valor atualizado − o que já foi comprometido: com OS/OC *dada* (assinada)
+  e com valor, abate-se o valor das ordens; sem elas, abate-se o que o Financeiro **liquidou**. Os dois
+  critérios não se somam (`consolidar()` → `saldoExecucao`, `saldoBase`).
 - **Executado reconhecido** = valor líquido (NF/medição − glosa) das competências
   atestadas. **Saldo do empenho** = inicial + reforços − anulações − liquidado.
   **Pendente de pagamento** = liquidado − retenções − pago.

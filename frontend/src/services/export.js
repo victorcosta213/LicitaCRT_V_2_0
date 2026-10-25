@@ -4,7 +4,6 @@ import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { toInputDate } from '../utils/dates'
 
-console.log('[export.js] loaded')
 
 const isTimestamp = (v) => v && typeof v.toDate === 'function'
 const toDate = (v) => {

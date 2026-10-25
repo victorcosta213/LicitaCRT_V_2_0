@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
 import ErroInesperado from './components/ErroInesperado'
+import ConfiguracaoAusente from './components/ConfiguracaoAusente'
+import { configuracaoCompleta } from './services/supabase'
 import { AuthProvider } from './context/AuthContext'
 import { GcProvider } from './context/GcContext'
 // Ordem importa: Bootstrap primeiro, depois o tema (que o ajusta) e os estilos das telas
@@ -42,13 +44,15 @@ window.addEventListener('vite:preloadError', (event) => {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErroInesperado>
-      <AuthProvider>
-        <GcProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </GcProvider>
-      </AuthProvider>
+      {configuracaoCompleta ? (
+        <AuthProvider>
+          <GcProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </GcProvider>
+        </AuthProvider>
+      ) : <ConfiguracaoAusente />}
     </ErroInesperado>
   </React.StrictMode>
 )

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
 import { Link } from 'react-router-dom'
 import { listarProcessos, atualizarProcesso } from '../services/processos'
 import { useAuth } from '../context/AuthContext'
@@ -23,20 +24,20 @@ export default function Home() {
   const [localDoc, setLocalDoc] = useState('')
   const [savingDoc, setSavingDoc] = useState(false)
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        setLoading(true)
-        const data = await listarProcessos()
-        setRows(data)
-      } catch (err) {
-        console.error(err)
-        Swal.fire('Erro', 'Não foi possível carregar os processos.', 'error')
-      } finally {
-        setLoading(false)
-      }
-    })()
+  const carregar = useCallback(async ({ silencioso = false } = {}) => {
+    try {
+      if (!silencioso) setLoading(true)
+      setRows(await listarProcessos())
+    } catch (err) {
+      console.error(err)
+      if (!silencioso) Swal.fire('Erro', 'Não foi possível carregar os processos.', 'error')
+    } finally {
+      if (!silencioso) setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { carregar() }, [carregar])
+  useAtualizacaoAutomatica(['processos'], () => carregar({ silencioso: true }))
 
   const ativos = useMemo(
     () => rows.filter((p) => !isClosed(p?.etapa || p?.statusGeral)),

@@ -49,7 +49,7 @@ export default function Contratos() {
   const { nome, role } = useAuth()
   const { can, salvar } = useGcActions()
   const souFiscal = normalizeRole(role) === 'fiscal'
-  const [sp, setSp] = useSearchParams()
+  const [sp] = useSearchParams()
 
   const [busca, setBusca] = useParametroDaUrl('busca')
   const [vista, setVista] = useParametroDaUrl('vista', 'todas')
@@ -60,13 +60,9 @@ export default function Contratos() {
   const [exercicio, setExercicio] = useState('')
   const [importando, setImportando] = useState(false)
   const [filtrosAbertos, setFiltrosAbertos] = useState(() => Boolean(sp.get('situacao')))
-  const novo = sp.get('nova') === '1'
-  const setNovo = (abrir) => setSp((atual) => {
-    const p = new URLSearchParams(atual)
-    if (abrir) p.set('nova', '1')
-    else p.delete('nova')
-    return p
-  }, { replace: true })
+  // "?nova=1" (atalho da Minha mesa) abre o formulário; depois disso o estado é local, para que
+  // fechar o formulário não dispute com a navegação para a ficha da contratação recém-criada
+  const [novo, setNovo] = useState(() => sp.get('nova') === '1')
 
   const alertasPorContrato = useMemo(() => {
     const m = new Map()

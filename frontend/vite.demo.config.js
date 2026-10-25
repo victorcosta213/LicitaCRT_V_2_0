@@ -14,6 +14,11 @@ export default mergeConfig(base, defineConfig({
     enforce: 'pre',
     resolveId: (id) => (id === '@supabase/supabase-js' ? clienteFalso : null),
   }],
+  // a demonstração não usa o banco, mas o sistema exige estas variáveis para iniciar
+  define: {
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify('http://demo.local'),
+    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify('demo'),
+  },
   optimizeDeps: { exclude: ['@supabase/supabase-js'] },
   // cache próprio: não interfere num `npm run dev` aberto ao mesmo tempo
   cacheDir: 'node_modules/.vite-demo',

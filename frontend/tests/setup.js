@@ -2,7 +2,7 @@
 process.env.TZ = 'America/Sao_Paulo'
 
 import '@testing-library/jest-dom/vitest'
-import { afterEach } from 'vitest'
+import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
 afterEach(() => {
@@ -16,3 +16,9 @@ globalThis.fetch = (input, init) => {
   if (/^https?:/i.test(url)) return Promise.reject(new Error(`Rede bloqueada nos testes: ${url}`))
   return fetchOriginal(input, init)
 }
+
+// Sem Realtime nos testes (não abre conexão). Os testes do próprio Realtime refazem este mock.
+vi.mock('../src/services/tempoReal', async (importOriginal) => ({
+  ...(await importOriginal()),
+  assinarMudancas: () => () => {},
+}))

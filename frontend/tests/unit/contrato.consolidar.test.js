@@ -69,7 +69,7 @@ describe('consolidar — valor e vigência vigentes', () => {
 })
 
 describe('consolidar — saldos distintos (escopo §8)', () => {
-  const b = () => bucket({
+  const b = (extra = {}) => bucket({
     competencias: [
       { id: 'k1', competencia: '2026-08-01', atestado: true, valor_liquido: 10000, relatorio_recebido: true, nf_recebida: true, doc_completa: true, liberado_financeiro: true },
       { id: 'k2', competencia: '2026-09-01', atestado: false, valor_liquido: 10000, relatorio_recebido: true },
@@ -88,13 +88,51 @@ describe('consolidar — saldos distintos (escopo §8)', () => {
     execucoes: [
       { id: 'x1', competencia_id: 'k1', empenho_id: 'emp1', valor_competencia: 10000, valor_liquidado: 10000, retencao: 1000, valor_pago: 5000 },
       { id: 'x2', competencia_id: 'k2', empenho_id: 'emp1', valor_competencia: 8000, valor_liquidado: null },
-    ],
+    ],    ...extra,
   })
 
   it('execução reconhecida = líquido das competências atestadas, não suspensas nem canceladas', () => {
     const k = consolidar(contrato(), b())
     expect(k.execucaoReconhecida).toBe(10000)
+  })
+
+  it('saldo do contrato sem OS com valor: valor atualizado − liquidado (não o atestado)', () => {
+    const k = consolidar(contrato(), b())
+    expect(k.liquidado).toBe(10000)
+    expect(k.saldoBase).toBe('liquidacao')
     expect(k.saldoExecucao).toBe(110000)
+    // atestado e ainda não liquidado não abate o saldo
+    const semLiquidar = consolidar(contrato(), b({ execucoes: [] }))
+    expect(semLiquidar.execucaoReconhecida).toBe(10000)
+    expect(semLiquidar.saldoExecucao).toBe(120000)
+  })
+
+  it('saldo do contrato com OS/OC dada: abate o valor das ordens, sem contar a liquidação de novo', () => {
+    const ordens = [
+      { id: 'o1', status: 'vigente', valor: 30000 },
+      { id: 'o2', status: 'emitida', valor: 5000 },
+      { id: 'o3', status: 'aguardando_ciencia', valor: 2000 },
+    ]
+    const k = consolidar(contrato(), b({ os: ordens }))
+    expect(k.saldoBase).toBe('os')
+    expect(k.valorOrdens).toBe(37000)
+    expect(k.saldoExecucao).toBe(83000)
+    expect(k.liquidado).toBe(10000)
+  })
+
+  it('só abatem a OS dada: solicitada, rascunho, aguardando assinatura, cancelada e sem valor ficam de fora', () => {
+    const ordens = ['solicitada', 'em_conferencia', 'aguardando_assinatura', 'cancelada']
+      .map((status, i) => ({ id: `o${i}`, status, valor: 9999 }))
+      .concat([{ id: 'oc', status: 'vigente', valor: 7000, cancelado: true }, { id: 'ov', status: 'vigente', valor: null }])
+    const k = consolidar(contrato(), b({ os: ordens, execucoes: [] }))
+    expect(k.valorOrdens).toBe(0)
+    expect(k.saldoBase).toBe('liquidacao')
+    expect(k.saldoExecucao).toBe(120000)
+  })
+
+  it('o saldo reflete eventos de valor e pode ficar negativo', () => {
+    const k = consolidar(contrato(), b({ os: [{ id: 'o1', status: 'vigente', valor: 130000 }] }))
+    expect(k.saldoExecucao).toBe(-10000)
   })
 
   it('empenho: atual = inicial + reforços − anulações; saldo = atual − liquidado; reservado não liquidado', () => {

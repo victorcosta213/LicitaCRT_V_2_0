@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from './AuthContext'
-import { carregarTudo, tabelaAusente } from '../services/gc'
+import { carregarTudo, tabelaAusente, TABELAS } from '../services/gc'
+import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
 import { consolidar, gerarAlertas, indexar } from '../utils/contrato'
 
 const Ctx = createContext(null)
@@ -28,11 +29,17 @@ export function GcProvider({ children }) {
   const liberado = !!user && acesso === 'liberado'
   const [state, setState] = useState({ loading: true, error: null, schemaMissing: false, raw: null, params: PARAMS_PADRAO })
 
+  // leitura que termina depois de a pessoa sair (ou trocar de usuário) é descartada
+  const sessao = useRef(0)
+
   const reload = useCallback(async () => {
+    const minha = sessao.current
     try {
       const { raw, params } = await carregarTudo()
+      if (minha !== sessao.current) return
       setState({ loading: false, error: null, schemaMissing: false, raw, params: { ...PARAMS_PADRAO, ...params } })
     } catch (err) {
+      if (minha !== sessao.current) return
       console.error('[GC] erro ao carregar dados', err)
       setState((s) => ({
         ...s, loading: false, raw: s.raw,
@@ -43,17 +50,18 @@ export function GcProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    sessao.current += 1
     if (!liberado) {
       // sem sessão ou sem acesso: descarta os dados em memória
       setState({ loading: true, error: null, schemaMissing: false, raw: null, params: PARAMS_PADRAO })
-      return undefined
+      return
     }
     reload()
-    // atualiza ao voltar para a aba (vários perfis trabalham sobre os mesmos dados)
-    const onFocus = () => reload()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
   }, [liberado, user?.id, reload])
+
+  // Vários setores trabalham sobre os mesmos dados: o que um envia ao outro aparece sozinho,
+  // sem F5 (Realtime, com leitura periódica e ao voltar para a aba como reserva)
+  useAtualizacaoAutomatica([...Object.values(TABELAS), 'gc_parametros'], reload, { ativo: liberado })
 
   const value = useMemo(() => {
     const { raw, params } = state

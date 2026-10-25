@@ -19,6 +19,7 @@ import { COLUNAS_EXCEL, COLUNAS_PDF, paraExportar, abrirAnexoComAviso } from '..
 import StepFlow from '../components/StepFlow'
 import PhaseSelect from '../components/PhaseSelect'
 import { PHASES, phaseNameByKey, DOC_STEPS } from '../utils/phases'
+import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
 import './controle.css'
 
 const emptyForm = {
@@ -71,7 +72,7 @@ export default function Controle() {
   })
 
   useEffect(() => {
-    localStorage.setItem('controle.filters', JSON.stringify(filtro))
+    try { localStorage.setItem('controle.filters', JSON.stringify(filtro)) } catch { /* modo privado: só não lembra os filtros */ }
   }, [filtro])
 
   const [selectedIds, setSelectedIds] = useState([])
@@ -87,20 +88,21 @@ export default function Controle() {
   const [novaFaseData, setNovaFaseData] = useState('')
   const detailCloseRef = useRef(null)
 
-  async function load() {
+  // silencioso: atualização automática, sem piscar a tela nem apagar o aviso de erro de uma ação
+  async function load({ silencioso = false } = {}) {
     try {
-      setLoading(true)
-      setError('')
+      if (!silencioso) { setLoading(true); setError('') }
       const data = await listarProcessos()
       setRows(data)
     } catch {
-      setError('Falha ao carregar processos.')
+      if (!silencioso) setError('Falha ao carregar processos.')
     } finally {
-      setLoading(false)
+      if (!silencioso) setLoading(false)
     }
   }
 
   useEffect(() => { load() }, [])
+  useAtualizacaoAutomatica(['processos'], () => load({ silencioso: true }))
 
   useEffect(() => {
     if (rows.length > 0) {

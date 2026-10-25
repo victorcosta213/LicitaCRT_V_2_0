@@ -18,6 +18,8 @@ supabase/
                                       assinaturas, NF/glosa/atesto do fiscal, substituto em
                                       atuação, perfil Gabinete, justificativa ao cancelar,
                                       fila de e-mails (gc_notificacoes)
+    20261019_atualizacao_automatica.sql  liga o Supabase Realtime nas tabelas do sistema: o que um
+                                      setor envia ao outro aparece na tela do outro sem F5
   functions/enviar-notificacoes/      Edge Function que envia os e-mails da fila
   verificacao.sql                     checagem pós-migração (somente leitura)
 tests/
@@ -37,6 +39,10 @@ Alternativa ao SQL Editor: com `DATABASE_URL` em `backend/.env` (ignorado pelo G
 connection string do *Session pooler*, porta 5432), o script `scripts/banco.mjs` faz
 `diagnostico` (só leitura), `backup <pasta>`, `aplicar <arquivos.sql>` (cada um numa
 transação) e `verificar`. Apague o `.env` ao terminar.
+
+**Atualização automática.** A migration `20261019` adiciona as tabelas à publicação `supabase_realtime`
+(o item 15 do `verificacao.sql` confere). Sem ela o sistema continua funcionando: as telas se
+atualizam sozinhas a cada minuto e ao voltar para a aba, só que sem a resposta imediata.
 
 Nova alteração de banco = novo arquivo em `migrations/` com a data no nome
 (`AAAAMMDD_descricao.sql`). Não edite migrations já aplicadas em produção.

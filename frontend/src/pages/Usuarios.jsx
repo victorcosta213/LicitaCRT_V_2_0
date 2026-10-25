@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext'
 import { ROLES, normalizeRole } from '../utils/permissions'
 import { Indicadores, PageHeader, Tabs } from '../components/gc/ui'
 import { fmtDate } from '../utils/format'
+import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
 import './usuarios.css'
 
 const PERFIS = ['admin', 'gestor', 'compras', 'fiscal', 'financeiro', 'gabinete', 'viewer']
@@ -31,18 +32,19 @@ export default function Usuarios() {
   const [role, setRole] = useState('viewer')
   const [submitting, setSubmitting] = useState(false)
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async ({ silencioso = false } = {}) => {
+    if (!silencioso) setLoading(true)
     try {
       const data = await listarUsuarios()
       setUsers(data)
     } catch (err) {
       console.error(err)
-      Swal.fire('Erro', 'Não foi possível carregar os usuários', 'error')
+      if (!silencioso) Swal.fire('Erro', 'Não foi possível carregar os usuários', 'error')
     } finally {
-      setLoading(false)
+      if (!silencioso) setLoading(false)
     }
   }
+  useAtualizacaoAutomatica(['usuarios'], () => loadData({ silencioso: true }))
 
   useEffect(() => {
     loadData()
