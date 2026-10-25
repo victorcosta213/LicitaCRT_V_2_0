@@ -96,6 +96,9 @@ export default function Topbar({ nav, tema, alternarTema }) {
       </form>
 
       <div className="topo__acoes">
+        <Link to="/ajuda" className="topo__ajuda" title="Como usar o sistema" aria-label="Ajuda">
+          <i className="bi bi-question-circle" aria-hidden="true" /><span className="d-none d-lg-inline">Ajuda</span>
+        </Link>
         <Link to={sino} className="topo__icone" title={nSino ? `${nSino} pendência(s) aguardando você` : 'Nada pendente'} aria-label="Pendências">
           <i className="bi bi-bell" />
           {nSino > 0 && <span className="topo__contagem">{nSino > 99 ? '99+' : nSino}</span>}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useGc } from '../context/GcContext'
 import { Empty, GcGate, PageHeader, Pill } from '../components/gc/ui'
+import PrimeirosPassos from '../components/gc/PrimeirosPassos'
 import DocumentoModal from '../components/gc/DocumentoModal'
 import { PublicacaoModal } from '../components/gc/Formalizacao'
 import { OSAssinaturas } from '../components/gc/OSTable'
@@ -31,6 +32,8 @@ export default function Gabinete() {
           ? 'Nenhum ato aguardando o Gabinete.'
           : <>Há <mark>{total} {total === 1 ? 'ato' : 'atos'}</mark> aguardando o Gabinete: portarias de designação e Ordens de Serviço/Compra.</>}
       />
+
+      <PrimeirosPassos />
 
       <h2 className="grupo-titulo">Portarias aguardando assinatura e publicação <span className="mono">{portarias.length}</span></h2>
       <div className="card mb-4">

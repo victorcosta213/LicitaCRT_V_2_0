@@ -1,0 +1,60 @@
+/* Guia "Por onde começar", página Ajuda e telas vazias */
+.guia { border-left: 4px solid var(--azul); }
+.guia__cab { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem .5rem; }
+.guia__titulo { margin: 0; font: 600 1.15rem/1.3 var(--fonte-cond); color: var(--azul-tinta); }
+.guia__resumo { margin: .25rem 0 0; color: var(--tinta-2); font-size: .98rem; }
+.guia__passos { list-style: none; counter-reset: passo; margin: 0; padding: .25rem 1.25rem 1rem; display: grid; gap: .6rem; }
+.guia__passos--solto { padding: 0; }
+.guia__passo {
+  counter-increment: passo;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .9rem;
+  padding: .75rem .9rem; background: var(--folha-2); border: 1px solid var(--traco); border-radius: 6px;
+}
+.guia__num {
+  display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+  background: var(--azul); color: #fff; font: 600 1rem/1 var(--fonte-cond);
+}
+.guia__num::before { content: counter(passo); }
+.guia__texto { display: flex; flex-direction: column; min-width: 0; }
+.guia__texto strong { font-size: 1rem; }
+.guia__texto span { color: var(--tinta-2); font-size: .92rem; }
+.guia__acao { white-space: nowrap; }
+.guia__rodape { padding: 0 1.25rem 1rem; color: var(--tinta-3); font-size: .9rem; }
+
+.caminho { list-style: none; counter-reset: etapa; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.caminho__etapa {
+  counter-increment: etapa; display: grid; grid-template-columns: 2rem 11rem 1fr; align-items: center; gap: .75rem;
+  padding: .55rem .8rem; border: 1px solid var(--traco); border-radius: 6px; background: var(--folha);
+}
+.caminho__etapa::before {
+  content: counter(etapa); display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%;
+  background: var(--folha-3); color: var(--tinta-2); font: 600 .85rem/1 var(--fonte-cond);
+}
+.caminho__setor { font-weight: 600; color: var(--azul-tinta); }
+.caminho__etapa--outro { opacity: .85; }
+.caminho__etapa--meu { border-color: var(--azul); background: var(--azul-lavado); opacity: 1; }
+.caminho__etapa--meu::before { background: var(--azul); color: #fff; }
+
+.ajuda__dicas { padding-left: 1.2rem; display: grid; gap: .4rem; }
+.ajuda__glossario { display: grid; gap: .6rem 2rem; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.ajuda__glossario dt { font-weight: 600; color: var(--azul-tinta); }
+.ajuda__glossario dd { margin: 0; color: var(--tinta-2); font-size: .93rem; }
+
+.vazio-acao { display: flex; flex-direction: column; align-items: center; gap: .9rem; }
+
+@media (max-width: 767.98px) {
+  .guia__cab { flex-direction: column; }
+  .guia__passo { grid-template-columns: auto 1fr; }
+  .guia__acao { grid-column: 1 / -1; justify-self: stretch; text-align: center; }
+  .caminho__etapa { grid-template-columns: 2rem 1fr; }
+  .caminho__etapa span:last-child { grid-column: 2; }
+}
+
+/* botão Ajuda na barra superior */
+.topo__ajuda {
+  display: inline-flex; align-items: center; gap: .4rem; height: 2.25rem; padding: 0 .75rem;
+  border: 1px solid var(--traco-forte); border-radius: 6px; background: var(--folha);
+  color: var(--azul-tinta); font-weight: 600; font-size: .9rem; text-decoration: none;
+}
+.topo__ajuda:hover { background: var(--azul-lavado); border-color: var(--azul); color: var(--azul-tinta); }
+.topo__ajuda i { font-size: 1.1rem; }

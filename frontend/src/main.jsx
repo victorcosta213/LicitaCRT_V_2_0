@@ -25,6 +25,7 @@ import './styles/index.css'
 import './styles/layout.css'
 import './styles/ui-extras.css'
 import './styles/componentes.css'
+import './styles/guia.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 // Após um novo deploy, abas abertas podem pedir arquivos que não existem mais:
