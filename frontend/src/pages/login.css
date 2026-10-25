@@ -6,7 +6,7 @@
   background: var(--papel);
 }
 
-/* prancha azul: papel milimetrado de desenho técnico */
+/* prancha branca: papel milimetrado de desenho técnico */
 .entrada__prancha {
   position: relative;
   display: flex;
@@ -15,13 +15,14 @@
   gap: 3.5rem;
   padding: 3rem clamp(2rem, 5vw, 5rem);
   overflow: hidden;
-  color: #fff;
-  background-color: #1d5390;
+  color: var(--tinta);
+  background-color: #fff;
+  border-right: 1px solid var(--traco);
   background-image:
-    linear-gradient(rgba(255, 255, 255, .085) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, .085) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px);
+    linear-gradient(rgba(44, 110, 181, .10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(44, 110, 181, .10) 1px, transparent 1px),
+    linear-gradient(rgba(44, 110, 181, .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(44, 110, 181, .045) 1px, transparent 1px);
   background-size: 96px 96px, 96px 96px, 16px 16px, 16px 16px;
   background-position: -1px -1px;
 }
@@ -29,16 +30,13 @@
   content: '';
   position: absolute;
   inset: 14px;
-  border: 1px solid rgba(255, 255, 255, .28);
+  border: 1px solid rgba(44, 110, 181, .30);
   pointer-events: none;
 }
 
 .entrada__placa {
   align-self: flex-start;
-  padding: .9rem 1.1rem;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 10px 30px rgba(6, 25, 48, .35);
+  padding: .9rem 0;
 }
 .entrada__placa img { display: block; width: 300px; max-width: 100%; height: auto; }
 
@@ -48,15 +46,16 @@
   font: 600 .72rem/1 var(--fonte-mono);
   letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--crt-amarelo);
+  color: var(--azul);
 }
 .entrada__nome {
   display: block;
   margin: .55rem 0 .8rem;
   font: 600 clamp(2.3rem, 1.5rem + 2.2vw, 3.2rem)/1.05 var(--fonte-cond);
   letter-spacing: -.02em;
+  color: var(--azul-tinta);
 }
-.entrada__produto p { margin: 0; font-size: 1.02rem; line-height: 1.55; color: rgba(255, 255, 255, .82); }
+.entrada__produto p { margin: 0; font-size: 1.02rem; line-height: 1.55; color: var(--tinta-2); }
 
 /* formulário */
 .entrada__conteudo {
