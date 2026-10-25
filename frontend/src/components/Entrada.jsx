@@ -1,4 +1,5 @@
 import logo from '../assets/crt08-logo.png'
+import brasao from '../assets/brasao.png'
 import { NOME_APP, ORGAO_NOME } from '../config'
 import '../pages/login.css'
 
@@ -23,6 +24,7 @@ export default function Entrada({ children }) {
           <img className="entrada__logo-movel" src={logo} alt={ORGAO_NOME} width="240" height="80" />
           {children}
         </div>
+        <img className="entrada__brasao" src={brasao} alt="Brasão da República Federativa do Brasil" width="72" height="76" />
         <footer className="entrada__rodape">{ORGAO_NOME}</footer>
       </main>
     </div>

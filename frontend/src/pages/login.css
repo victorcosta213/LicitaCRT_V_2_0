@@ -111,3 +111,17 @@
   .entrada__prancha { display: none; }
   .entrada__logo-movel { display: block; }
 }
+
+/* brasão da República no canto inferior direito */
+.entrada__conteudo { position: relative; }
+.entrada__brasao {
+  position: absolute;
+  right: clamp(1rem, 3vw, 2.5rem);
+  bottom: clamp(1rem, 3vw, 2rem);
+  width: 72px;
+  height: auto;
+  filter: drop-shadow(0 4px 6px rgba(28, 31, 35, .28)) drop-shadow(0 1px 1px rgba(28, 31, 35, .2));
+  pointer-events: none;
+  user-select: none;
+}
+@media (max-width: 575.98px) { .entrada__brasao { width: 52px; bottom: 4rem; } }
