@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useAtualizacaoAutomatica } from './useAtualizacao'
 import { listarProcessos } from '../services/processos'
 import { computeStatus } from '../utils/status'
 import { fmtDate } from '../utils/format'
 
-// Uma leitura compartilhada por até 1 minuto (menu e mesa pedem ao mesmo tempo)
+// Uma leitura compartilhada por até 1 minuto (menu e mesa pedem ao mesmo tempo);
+// `forcar` ignora o cache (atualização automática)
 let cache = null
-function carregar() {
-  if (!cache || Date.now() - cache.em > 60000) {
+function carregar(forcar = false) {
+  if (forcar || !cache || Date.now() - cache.em > 60000) {
     const promessa = listarProcessos()
     cache = { em: Date.now(), promessa }
     promessa.catch(() => { cache = null })
@@ -21,14 +23,18 @@ const fechado = (etapa) => ['concluido', 'concluído', 'suspenso', 'revogado', '
 // `ativo` = o perfil opera o módulo licitatório.
 export function useProcessosComPrazo(ativo) {
   const [lista, setLista] = useState([])
+  const vivo = useRef(true)
   useEffect(() => {
-    if (!ativo) return undefined
-    let vivo = true
-    carregar()
-      .then((rows) => { if (vivo) setLista(rows) })
-      .catch(() => { /* sem os processos, a mesa segue com as contratações */ })
-    return () => { vivo = false }
-  }, [ativo])
+    vivo.current = true
+    return () => { vivo.current = false }
+  }, [])
+
+  const ler = useCallback((forcar) => carregar(forcar)
+    .then((rows) => { if (vivo.current) setLista(rows) })
+    .catch(() => { /* sem os processos, a mesa segue com as contratações */ }), [])
+
+  useEffect(() => { if (ativo) ler(false) }, [ativo, ler])
+  useAtualizacaoAutomatica(['processos'], () => ler(true), { ativo })
 
   return useMemo(() => (ativo ? lista : [])
     .filter((p) => !p.arquivado && !fechado(p.etapa) && p.prazo)

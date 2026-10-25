@@ -45,6 +45,8 @@ export const STATUS_OS = {
   concluida:             { label: 'Concluída',                kind: 'dark',      dono: null },
   cancelada:             { label: 'Cancelada',                kind: 'danger',    dono: null },
 }
+// OS/OC "dada": já assinada pelo Gabinete (a partir daí o valor da ordem compromete o saldo do contrato)
+export const OS_DADA = ['emitida', 'aguardando_ciencia', 'vigente', 'concluida']
 export const OS_EM_TRATAMENTO = ['solicitada', 'em_conferencia', 'aguardando_assinatura', 'emitida', 'aguardando_ciencia']
 
 // fiscal_tecnico é o fiscal titular (nome mantido no banco)
@@ -362,6 +364,11 @@ export function consolidar(c, b = vazio(), params = {}) {
 
   const empenhado = soma(empenhos, (e) => e.valorAtual)
   const liquidado = soma(execs, (x) => x.valor_liquidado)
+  // Saldo do contrato: com OS/OC dada (e com valor), abate o valor das ordens; sem elas, abate
+  // o que o Financeiro liquidou. Os dois critérios não se somam, para não contar duas vezes.
+  const valorOrdens = soma(validos(b.os).filter((o) => OS_DADA.includes(o.status)), (o) => o.valor)
+  const saldoPelaOS = valorOrdens > 0
+  const abatidoDoSaldo = saldoPelaOS ? valorOrdens : liquidado
   const pago = soma(execs, (x) => x.valor_pago)
   const retido = soma(execs, (x) => x.retencao)
   const pendentePagamento = execs.reduce((s, x) => s + situacaoExecucao(x).pendente, 0)
@@ -389,7 +396,10 @@ export function consolidar(c, b = vazio(), params = {}) {
       ? toISO(new Date(parseISO(vigenciaFim).getTime() - maiorAlerta * 86400000))
       : null,
     execucaoReconhecida,
-    saldoExecucao: valorAtualizado - execucaoReconhecida,
+    saldoExecucao: valorAtualizado - abatidoDoSaldo,
+    saldoBase: saldoPelaOS ? 'os' : 'liquidacao',
+    abatidoDoSaldo,
+    valorOrdens,
     empenhado,
     empenhos,
     saldoEmpenhos: soma(empenhos, (e) => e.saldo),

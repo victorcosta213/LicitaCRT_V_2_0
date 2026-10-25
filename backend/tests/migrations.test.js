@@ -7,7 +7,7 @@ import { PGlite } from '@electric-sql/pglite'
 
 const ler = (caminho) => readFileSync(new URL(caminho, import.meta.url), 'utf8')
 const MIGRATIONS = ['20261015_gestao_contratual.sql', '20261016_processos_importacao.sql',
-  '20261017_correcoes_producao.sql', '20261018_fluxo_funcional.sql']
+  '20261017_correcoes_producao.sql', '20261018_fluxo_funcional.sql', '20261019_atualizacao_automatica.sql']
   .map((f) => ler(`../supabase/migrations/${f}`))
 const [M1, M2, M3] = MIGRATIONS
 const VERIFICACAO = ler('../supabase/verificacao.sql')
@@ -128,7 +128,7 @@ describe('migrations', () => {
 
   it('o script de verificação roda e confirma os itens resolvidos pela migration', async () => {
     const { rows } = await db.query(VERIFICACAO)
-    expect(rows).toHaveLength(14)
+    expect(rows).toHaveLength(15)
     const status = Object.fromEntries(rows.map((r) => [r.ordem, r.status]))
     for (const ordem of [1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14]) expect(status[ordem], `item ${ordem}`).toBe('✅')
     expect(rows.find((r) => r.ordem === 12).detalhe).toMatch(/perfis ativos: 10 · processos: 1 · contratos: 2/)
@@ -689,6 +689,54 @@ describe('perfis antigos com id diferente do login', () => {
     expect((await banco.query('select usuario_id from gc_responsaveis')).rows).toEqual([{ usuario_id: novo }])
     expect((await como(novo, 'select public.gc_role() as r', [], banco)).rows[0].r).toBe('fiscal')
     expect(Number((await como(novo, 'select count(*)::int as n from gc_contratos', [], banco)).rows[0].n)).toBe(1)
+    await banco.close()
+  }, 60000)
+})
+
+describe('atualização automática (Realtime)', () => {
+  it('a verificação (item 15) acusa o Realtime ausente e aprova quando está configurado', async () => {
+    const sem = await novoBanco()
+    const itemSem = (await sem.query(VERIFICACAO)).rows.find((r) => Number(r.ordem) === 15)
+    expect(itemSem.status).toBe('⚠️')
+    expect(itemSem.detalhe).toMatch(/inexistente/)
+    await sem.close()
+    const com = await novoBanco({ antes: 'create publication supabase_realtime;' })
+    expect((await com.query(VERIFICACAO)).rows.find((r) => Number(r.ordem) === 15).status).toBe('✅')
+    await com.close()
+  }, 60000)
+
+  const REALTIME = ['gc_contratos', 'gc_responsaveis', 'gc_ordens_servico', 'gc_competencias', 'gc_empenhos',
+    'gc_empenho_movs', 'gc_execucoes', 'gc_eventos', 'gc_ocorrencias', 'gc_documentos', 'gc_pendencias',
+    'gc_parametros', 'processos', 'usuarios']
+  const M5 = MIGRATIONS[4]
+  const publicadas = async (banco) => (await banco.query(
+    `select tablename from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' order by 1`)).rows.map((r) => r.tablename)
+
+  it('com a publicação do Supabase, adiciona as tabelas do sistema (e só elas)', async () => {
+    const banco = await novoBanco({ antes: 'create publication supabase_realtime;' })
+    expect(await publicadas(banco)).toEqual([...REALTIME].sort())
+    await banco.close()
+  }, 60000)
+
+  it('é idempotente e não mexe em tabela que já estava publicada', async () => {
+    const banco = await novoBanco({ antes: 'create publication supabase_realtime;' })
+    await banco.exec(M5)
+    await banco.exec(M5)
+    expect(await publicadas(banco)).toEqual([...REALTIME].sort())
+    await banco.close()
+  }, 60000)
+
+  it('sem a publicação (Realtime não configurado), a migration passa sem erro e sem criar nada', async () => {
+    const banco = await novoBanco()
+    expect((await banco.query(`select count(*)::int as n from pg_publication where pubname = 'supabase_realtime'`)).rows[0].n).toBe(0)
+    await banco.close()
+  }, 60000)
+
+  it('não publica tabelas internas (notificações, auditoria)', async () => {
+    const banco = await novoBanco({ antes: 'create publication supabase_realtime;' })
+    const lista = await publicadas(banco)
+    expect(lista).not.toContain('gc_notificacoes')
+    expect(lista).not.toContain('gc_auditoria')
     await banco.close()
   }, 60000)
 })

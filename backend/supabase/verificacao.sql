@@ -86,6 +86,18 @@ with checks(ordem, ok, item, detalhe) as (
          'E-mails de tarefa com falha de envio (confira a Edge Function enviar-notificacoes)',
          coalesce(string_agg(distinct coalesce(erro, ''), ' | '), '')
     from public.gc_notificacoes where enviada_em is null and tentativas > 0
+
+  union all
+  select 15, count(*) = 0,
+         'Atualização automática das telas (Realtime): tabelas que ainda não avisam as mudanças',
+         case when not exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+              then 'publicação supabase_realtime inexistente'
+              else coalesce(string_agg(t, ', '), '') end
+    from unnest(array['gc_contratos', 'gc_responsaveis', 'gc_ordens_servico', 'gc_competencias', 'gc_empenhos',
+                      'gc_empenho_movs', 'gc_execucoes', 'gc_eventos', 'gc_ocorrencias', 'gc_documentos',
+                      'gc_pendencias', 'gc_parametros', 'processos', 'usuarios']) as t
+   where not exists (select 1 from pg_publication_tables
+                      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t)
 )
 select ordem, case when ok then '✅' else '⚠️' end as status, item, detalhe
   from checks

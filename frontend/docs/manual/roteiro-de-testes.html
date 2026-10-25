@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roteiro de testes manuais · Gestão de Contratações</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  :root { --azul:#2c6eb5; --azul-esc:#1d5390; --tinta:#1c1f23; --suave:#5d6066; --traco:#d4d1c6; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 10.5pt/1.5 "IBM Plex Sans","Segoe UI",system-ui,sans-serif; color:var(--tinta); background:#fff; }
+  .pagina { max-width: 860px; margin: 0 auto; padding: 22px 26px 60px; }
+  h1,h2,h3 { font-family:"IBM Plex Sans Condensed","Arial Narrow","Segoe UI",sans-serif; line-height:1.2; margin:0; }
+  h1 { font-size: 30pt; color:var(--azul-esc); }
+  h2 { font-size: 17pt; color:var(--azul-esc); border-bottom:3px solid var(--azul); padding-bottom:5px; margin: 0 0 12px; }
+  h3 { font-size: 12.5pt; margin: 18px 0 6px; }
+  p { margin: 0 0 8px; }
+  ul, ol { margin: 0 0 9px; padding-left: 22px; } li { margin-bottom: 3px; }
+  .secao { page-break-before: always; }
+  .capa { background: var(--azul-esc); color:#fff; padding: 28px 28px 24px; border-radius: 4px; margin-bottom: 18px;
+    background-image: linear-gradient(rgba(255,255,255,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.09) 1px,transparent 1px); background-size: 26px 26px; }
+  .capa small { font: 600 9pt "IBM Plex Mono",Consolas,monospace; letter-spacing:.13em; text-transform:uppercase; color:#ffea13; }
+  .capa h1 { color:#fff; margin: 6px 0 4px; } .capa p { margin:0; color:rgba(255,255,255,.9); font-size: 12pt; }
+  .aviso, .dica, .regra { padding: 8px 12px; border-radius: 4px; margin: 9px 0 11px; border-left: 4px solid; font-size: 10pt; page-break-inside: avoid; }
+  .aviso { background:#fdf3d9; border-color:#c08418; } .dica { background:#e9f1fa; border-color:var(--azul); } .regra { background:#fdecec; border-color:#ed3237; }
+  .aviso > b:first-child, .dica > b:first-child, .regra > b:first-child { display:block; font-size:8.5pt; letter-spacing:.07em; text-transform:uppercase; margin-bottom:1px; }
+  table { border-collapse: collapse; width:100%; margin: 6px 0 12px; font-size: 9.5pt; }
+  th { text-align:left; background:#eceae2; font-size:8.5pt; letter-spacing:.05em; text-transform:uppercase; }
+  th,td { border:1px solid var(--traco); padding: 5px 7px; vertical-align: top; }
+  tr { page-break-inside: avoid; }
+  td.n { width: 46px; font: 600 9pt "IBM Plex Mono",Consolas,monospace; color:var(--azul-esc); white-space:nowrap; }
+  td.ok { width: 92px; font-size: 9pt; white-space:nowrap; line-height:1.7; }
+  td.obs { width: 120px; }
+  .teste th:nth-child(1){width:46px}
+  .perfil { display:inline-block; padding:0 6px; border:1px solid #c3d6ee; background:#eaf1f9; color:#1d5390; border-radius:3px; font: 600 8pt "IBM Plex Sans Condensed","Arial Narrow",sans-serif; letter-spacing:.05em; text-transform:uppercase; white-space:nowrap; }
+  .btn { display:inline-block; padding: 0 6px; border:1px solid #b7b3a6; border-radius:3px; background:#f4f3ee; font-weight:600; font-size:9pt; white-space:nowrap; }
+  code { font-family:"IBM Plex Mono",Consolas,monospace; font-size:.9em; background:#f1efe8; padding:0 3px; border-radius:2px; }
+  .obj { color:var(--suave); font-size: 10pt; margin-bottom: 8px; }
+  .linhas td { height: 26px; }
+  @media print { .pagina { padding:0; max-width:none; } body { font-size:10pt; } }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+<div class="capa">
+  <small>Conselho Regional dos Técnicos Industriais da 8ª Região · AL/SE</small>
+  <h1>Roteiro de testes manuais</h1>
+  <p>Gestão de Contratações — aprender o sistema e conferir, passo a passo, se cada fluxo funciona</p>
+</div>
+
+<h2>Como usar este roteiro</h2>
+<p>Cada teste tem os <b>passos</b> e o <b>resultado esperado</b>. Faça o passo, compare com o esperado e marque <b>OK</b> ou <b>Falhou</b> (anote o que viu na coluna de observação). Os testes seguem a ordem do trabalho real: por isso é melhor fazê-los na sequência, principalmente a <b>Parte 2</b>, em que o mesmo contrato passa por vários setores.</p>
+
+<h3>Dois ambientes, duas partes</h3>
+<table>
+  <tr><th style="width:24%">Parte 1 e 2 — Demonstração</th><td>Endereço <code>http://127.0.0.1:5174</code>, aberto com <code>npm run demo</code> na pasta <code>frontend</code>. Dados <b>fictícios, só em memória</b>: pode errar à vontade. <b>Recarregar a página (F5) volta tudo ao início.</b> Ideal para aprender. A faixa preta no canto inferior esquerdo troca de perfil sem perder os dados (também dá para entrar pelo formulário de login usando o e-mail do perfil e qualquer senha).</td></tr>
+  <tr><th>Parte 3 — Sistema real</th><td>Endereço do sistema em produção. Aqui os dados <b>ficam gravados</b> e registros não podem ser apagados, só cancelados com justificativa. Por isso a Parte 3 é curta e usa sempre o texto <b>TESTE</b> no número e no objeto.</td></tr>
+</table>
+
+<h3>Perfis da demonstração</h3>
+<table>
+  <tr><th>Perfil</th><th>Pessoa</th><th>E-mail (senha: qualquer uma)</th></tr>
+  <tr><td>Administrador</td><td>Administração do Sistema</td><td><code>admin@crt08.demo</code></td></tr>
+  <tr><td>Gestão de contratos</td><td>Ana Ribeiro</td><td><code>ana.ribeiro@crt08.demo</code></td></tr>
+  <tr><td>Fiscal (titular nos exemplos)</td><td>Bruno Lima</td><td><code>bruno.lima@crt08.demo</code></td></tr>
+  <tr><td>Fiscal (substituta nos exemplos)</td><td>Carla Souza</td><td><code>carla.souza@crt08.demo</code></td></tr>
+  <tr><td>Compras</td><td>Diego Alves</td><td><code>diego.alves@crt08.demo</code></td></tr>
+  <tr><td>Financeiro</td><td>Elisa Martins</td><td><code>elisa.martins@crt08.demo</code></td></tr>
+  <tr><td>Gabinete</td><td>Fábio Nunes</td><td><code>fabio.nunes@crt08.demo</code></td></tr>
+  <tr><td>Visualizador</td><td>Gisele Prado</td><td><code>gisele.prado@crt08.demo</code></td></tr>
+</table>
+
+<h3>Antes de começar</h3>
+<ul>
+  <li>Abra o navegador em janela normal e use <b>F5</b> sempre que quiser zerar a demonstração.</li>
+  <li>Tenha ao lado o <b>Manual do setor</b> correspondente (pasta <code>docs/manual/pdf</code>) para ver as telas.</li>
+  <li>Se algo falhar, anote: <b>perfil usado, tela, o que você fez e a mensagem que apareceu</b> (se possível, tire um print). Há uma ficha de problemas no final.</li>
+</ul>
+<div class="dica"><b>Na demonstração já existem contratações em várias etapas</b>014/2026 (em execução), 021/2026 (com glosa e ocorrência), 027/2026 (portaria no Gabinete), 030/2026 (recebida, aguardando Gestão), 031/2026 (em cadastro), 009/2025 (em prorrogação), 002/2024 (já em execução antes do sistema) e a nota de empenho 2026NE000233 (OC aguardando assinatura). Use-as para explorar; a Parte 2 cria uma nova, a <b>TESTE 900/2026</b>.</div>
+
+<!-- ================= PARTE 1 ================= -->
+<div class="secao"></div>
+<h2>Parte 1 — Conhecer o sistema (demonstração)</h2>
+
+<h3>T01 · Acesso e navegação</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">1.1</td><td>Saia (menu do usuário → Sair). Tente entrar com e-mail <code>x@x.com</code> e qualquer senha.</td><td>Mensagem "Credenciais inválidas…". Não entra.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">1.2</td><td>Entre como <span class="perfil">Gestão</span> (<code>ana.ribeiro@crt08.demo</code>).</td><td>Abre a <b>Minha mesa</b> com saudação e tarefas separadas em Urgente / Atenção / Para acompanhar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">1.3</td><td>Na faixa escura à esquerda, clique em cada módulo (Mesa, Contratos, Financeiro).</td><td>O menu ao lado muda e mostra só as telas do módulo aberto. A tela de cada módulo abre.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">1.4</td><td>Aperte a tecla <code>/</code> (fora de campos), digite <code>Limpa</code> e Enter.</td><td>O cursor vai para a busca; abre Contratações já filtrada, mostrando 014/2026.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">1.5</td><td>Menu do usuário → <b>Tema escuro</b>; depois volte ao claro.</td><td>Toda a tela muda de tema e lembra a escolha ao recarregar (F5 mantém o tema).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">1.6</td><td>Estreite a janela do navegador (ou use o modo celular, F12). Abra o menu de três traços.</td><td>Menu completo aparece em painel lateral; as páginas não ficam cortadas para o lado.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">1.7</td><td>Clique no sino de pendências.</td><td>Leva à Minha mesa. O número do sino é igual ao de tarefas urgentes + atenção.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T02 · Explorar as telas como Gestão</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">2.1</td><td>Contratos → <b>Painel da gestão</b>.</td><td>4 indicadores, régua de formalização (cada etapa com a quantidade e quem age), barra de competências e vigências dos próximos 120 dias. Clicar numa etapa da régua leva à lista filtrada.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">2.2</td><td>Contratações: clique nas abas Todas / Em execução / A caminho / Vencendo / Com pendências.</td><td>A lista muda e os números de cada aba batem com as linhas mostradas.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">2.3</td><td>Clique em <b>Filtros</b>, escolha uma situação e depois "Limpar busca e filtros".</td><td>Filtra e limpa corretamente; o contador no rodapé ("n de 8") acompanha.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">2.4</td><td>Abra 014/2026. Percorra as abas: Visão geral, Cadastro, OS/OC, Competências, Financeiro, Ocorrências, Eventos e aditivos, Documentos e, em "Mais", Pendências e Histórico.</td><td>Todas abrem sem erro. A legenda no alto mostra contratada, CNPJ, SEI, vigência, valor, gestão e fiscal.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">2.5</td><td>Abra 027/2026.</td><td>Aparece a <b>régua de formalização</b> com a etapa "Publicação" marcada e o texto "Próximo passo… com Gabinete".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">2.6</td><td>Contratos → <b>Alertas e prazos</b>. Troque os filtros de severidade e categoria.</td><td>A lista filtra; cada alerta abre a contratação na aba certa.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">2.7</td><td>Contratos → <b>Relatórios</b>: gere "Contratos ativos" e "Contratos por vencer"; use Excel e PDF.</td><td>Mostra a tabela; baixa um .xlsx e um .pdf com os mesmos dados.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">2.8</td><td>Na ficha 014/2026, clique em <b>Relatório completo</b>.</td><td>Abre o relatório individual da contratação, imprimível.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<!-- ================= PARTE 2 ================= -->
+<div class="secao"></div>
+<h2>Parte 2 — Fluxo completo de uma contratação</h2>
+<p class="obj">Uma contratação nova, a <b>TESTE 900/2026</b>, passa por todos os setores, do cadastro ao pagamento. <b>Não recarregue a página (F5) durante a Parte 2</b>, ou os dados voltam ao início. Troque de perfil pela faixa preta no canto inferior esquerdo.</p>
+
+<h3>T03 · Compras cadastra e encaminha</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">3.1</td><td>Perfil <span class="perfil">Compras</span>. Contratações → <span class="btn">+ Nova contratação</span>. Clique em <b>Criar cadastro</b> sem preencher nada.</td><td>O formulário não deixa criar e destaca os campos obrigatórios (*).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">3.2</td><td>Preencha: instrumento <b>Contrato</b>, nº <code>900/2026</code>, SEI <code>0001.000900/2026-00</code>, objeto <code>TESTE manutenção predial</code>, contratada <code>Empresa Teste Ltda</code>, CNPJ <code>11.222.333/0001-81</code>, início = hoje, valor <code>12000</code>. <b>Não</b> preencha fim da vigência nem prazo. Criar.</td><td>Recusa: "Informe o fim da vigência ou o prazo de execução."</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">3.3</td><td>Corrija o CNPJ para <code>11.222.333/0001-00</code> (inválido) e informe um fim de vigência daqui a 1 ano. Criar.</td><td>Recusa: "CNPJ inválido."</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">3.4</td><td>Volte o CNPJ para <code>11.222.333/0001-81</code>. Marque <b>Prorrogável</b>. Criar.</td><td>Cria e abre a ficha. Situação <b>Em cadastro (Compras)</b>; botão <b>Encaminhar para Gestão</b> visível.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">3.5</td><td>Na ficha, clique em <span class="btn">Completar cadastro</span>, altere o objeto para <code>TESTE manutenção predial e jardinagem</code> e salve. Confira na aba Cadastro.</td><td>O objeto aparece alterado.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">3.6</td><td>Clique em <span class="btn">Encaminhar para Gestão</span>, escolha <b>Ordem de Serviço</b> e confirme.</td><td>Mensagem de sucesso. A etapa passa a "Aguardando gestão contratual". Na aba OS/OC surge uma OS <b>Solicitada</b>; na aba Pendências, "Designar fiscal titular e fiscal substituto".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">3.7</td><td>Ainda como Compras, olhe a ficha e a aba Cadastro.</td><td>Os botões de editar sumiram e há o aviso de que Compras só consulta depois de encaminhar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T04 · Gestão recebe e formaliza a fiscalização</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">4.1</td><td>Perfil <span class="perfil">Gestão</span>. Minha mesa.</td><td>Há uma tarefa "Nova contratação recebida de Compras" para 900/2026.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.2</td><td>Abra a contratação. Clique em <span class="btn">Receber contratação</span> e confirme.</td><td>Sucesso; a etapa muda para "Aguardando designação dos fiscais"; a régua avança.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.3</td><td>Aba <b>Cadastro</b> → quadro "Gestão e fiscalização". Veja a Portaria de designação.</td><td>O botão <b>Encaminhar para assinatura/publicação</b> está <b>desabilitado</b> (faltam fiscais).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.4</td><td>Clique em <span class="btn">Designar</span>: papel <b>Gestor(a) do contrato</b>, servidor <b>Ana Ribeiro</b>. Salve.</td><td>Aparece na lista com o papel "Gestor(a) do contrato".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.5</td><td>Designar de novo: <b>Fiscal titular</b> = Bruno Lima. Depois <b>Fiscal substituto</b> = Carla Souza.</td><td>Os três aparecem. A etapa passa a "Portaria de designação a elaborar". Bruno aparece como "em atuação".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.6</td><td>Na Portaria: <span class="btn">Gerar minuta</span>. Clique em "Copiar para o SEI" e em baixar .doc.</td><td>Abre o texto da portaria com os nomes dos fiscais e do órgão. Copiar mostra confirmação; o arquivo baixa.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.7</td><td>Clique em <span class="btn">Encaminhar para assinatura/publicação</span> e confirme.</td><td>O status da portaria vira "Aguardando assinatura/publicação"; a etapa vira "Portaria aguardando assinatura/publicação".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.8</td><td>Perfil <span class="perfil">Gabinete</span>. A tela inicial é <b>Atos para assinatura</b>.</td><td>Aparece a portaria da 900/2026 (e a da 027/2026). O Gabinete <b>não vê</b> as demais contratações.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.9</td><td>Clique em <b>Ver minuta</b> e depois em <span class="btn">Registrar publicação</span>. Tente salvar sem preencher.</td><td>Exige nº da portaria, data da portaria e data da publicação.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.10</td><td>Preencha nº <code>77/2026</code>, as duas datas (hoje), meio <code>Diário Oficial</code> e salve.</td><td>A portaria sai da lista do Gabinete.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.11</td><td>Volte a <span class="perfil">Gestão</span>, ficha 900/2026, aba Cadastro.</td><td>Portaria "Publicada — fiscalização designada" com nº 77/2026. A etapa é "Fiscalização designada — termo de ciência pendente".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">4.12</td><td>Termo de ciência: <span class="btn">Gerar termo</span>. Depois, ao lado de cada um dos 3 nomes, <b>Registrar ciência</b> com a data de hoje.</td><td>Cada nome ganha o "ciente em…". Quando o terceiro é registrado, a etapa vira "Fiscalização formalizada — OS/OC pendente".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T05 · OS/OC: da solicitação ao início da execução</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">5.1</td><td><span class="perfil">Gestão</span> → Contratos → <b>OS / OC</b>. Localize a OS da 900/2026 e clique em <span class="btn">Preparar</span>.</td><td>Abre o rascunho com a "Conferência de requisitos" (cadastro recebido ✓, fiscalização formalizada ✓…).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.2</td><td>Preencha nº <code>900/2026-01</code>, serviço autorizado <code>TESTE manutenção</code>, período (hoje até daqui a 1 ano) e salve o rascunho.</td><td>Status "Rascunho". Aparecem os botões <b>Editar rascunho</b> e <b>Enviar para assinatura</b>.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.3</td><td>Clique no ícone de documento da linha.</td><td>Gera o texto da OS com a orientação de envio da nota fiscal (PARA o fiscal titular, com cópia para a Gestão).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.4</td><td>Clique em <span class="btn">Enviar para assinatura</span> e confirme.</td><td>Status "Aguardando assinatura".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.5</td><td><span class="perfil">Gabinete</span> → Atos para assinatura → OS/OC. <span class="btn">Registrar assinaturas</span>: preencha <b>só</b> a do Presidente (hoje) e salve.</td><td>A ordem continua em "Aguardando assinatura"; o Presidente aparece como "assinou", o Diretor como "pendente".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.6</td><td>Registre agora a do Diretor Financeiro (hoje).</td><td>A ordem sai da lista do Gabinete e vira "Assinada".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.7</td><td><span class="perfil">Gestão</span> → OS/OC → <span class="btn">Registrar envio à contratada</span> (data de hoje, meio <code>E-mail</code>).</td><td>Status "Encaminhada à contratada".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.7b</td><td>Antes de seguir, na ficha 900/2026 → aba <b>Financeiro</b> ou <b>Visão geral</b>, veja o <b>Saldo do contrato</b>. (No teste 5.2, informe também o <b>Valor específico</b> da OS = <code>3000</code>.)</td><td>Com a OS já <b>assinada</b> (e só a partir daí), o saldo do contrato = R$ 12.000,00 − R$ 3.000,00 = <b>R$ 9.000,00</b>, com a observação "valor − ordens de serviço/compra dadas". Antes da assinatura, o saldo é R$ 12.000,00.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">5.8</td><td><span class="btn">Registrar recebimento</span>: data de hoje, início da execução hoje.</td><td>Status "Em execução". A contratação passa a <b>Em execução</b>; a régua some.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+<div class="aviso"><b>Teste extra de bloqueio (opcional)</b>Repita 4.1–5.4 com a contratação <b>030/2026</b> (já recebida, ainda sem fiscais): ao tentar <b>Enviar para assinatura</b> a OS com a fiscalização ainda não formalizada, o sistema deve recusar e explicar que falta portaria publicada e termo de ciência.</div>
+
+<h3>T06 · Fiscal: nota fiscal, fiscalização e atesto</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">6.1</td><td>Perfil <span class="perfil">Fiscal</span> = <b>Bruno Lima</b>. Veja o menu e Minhas fiscalizações.</td><td>O módulo se chama <b>Fiscalização</b>. Aparece a 900/2026 (e as demais em que Bruno é fiscal). Não existem Financeiro, Licitações, Gabinete nem Painel da gestão.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">6.2</td><td>Competências → <span class="btn">Registrar NF</span>. Escolha 900/2026, competência = mês atual, recebimento hoje, NF <code>1001</code>, valor bruto <code>1000</code>. Salve.</td><td>Cria a competência com status "NF recebida — aguardando fiscalização".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">6.3</td><td>Tente registrar a mesma NF (mesmo mês) outra vez.</td><td>Recusa: "A NF de … já foi registrada. Abra a competência para corrigir."</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">6.4</td><td>Na lista (filtro "Minha vez"), clique em <span class="btn">Tratar</span> na competência.</td><td>Abre o formulário com <b>sumário</b> no topo e seções 01 a 07. As seções 06 (Atesto) e 07 (Gestão): a 07 está bloqueada para o fiscal.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">6.5</td><td>Seção 02: marque tudo como <b>Sim</b>, escreva uma manifestação, marque <b>Fiscalização concluída</b> com data de hoje. Salve.</td><td>Status "Fiscalizada — aguardando atesto".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">6.6</td><td>Reabra. Seção 03: marque <b>Houve ocorrência</b>, tipo <b>Atraso</b>, descrição <code>TESTE</code>, prazo daqui a 5 dias. Seção 04: <b>Houve glosa</b>, valor <code>100</code>, fundamento <code>TESTE</code>. Salve.</td><td>A competência ganha os sinalizadores "Com ocorrência" e "Com glosa". Na ficha, aba Ocorrências, a ocorrência aparece. O valor líquido mostra R$ 900,00.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">6.7</td><td>Seção 05: marque as 3 conferências de documentos. Seção 06: clique em <span class="btn">Gerar atesto</span>.</td><td>Abre o texto do atesto com contratada, competência e valores.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">6.8</td><td>Marque <b>Atestado</b>, data de hoje, nº SEI <code>0009999</code>. Salve.</td><td>Status "Atestada — aguardando Gestão".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T07 · Gestão confere (devolve e libera)</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">7.1</td><td><span class="perfil">Gestão</span> → Minha mesa.</td><td>Tarefa "Competência atestada — aguardando conferência da Gestão" da 900/2026.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">7.2</td><td>Competências → <span class="btn">Tratar</span>. Veja a caixa de conferência e, na seção 07, tente marcar <b>Encaminhar ao Financeiro</b> e salvar.</td><td>A caixa "Conferência da Gestão" mostra "Ocorrências tratadas" com ✗ (há ocorrência aberta). As seções do fiscal estão só para leitura. Ao salvar com o encaminhamento marcado, o sistema <b>recusa</b>: "Há ocorrência em aberto nesta competência: trate-a antes de liberar ao financeiro."</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">7.3</td><td>Clique em <span class="btn">Devolver ao fiscal</span>. Informe o motivo <code>TESTE ajustar valor</code>.</td><td>A competência volta com "Devolvida pela Gestão" e o motivo; status "Fiscalizada — aguardando atesto".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">7.4</td><td><span class="perfil">Fiscal</span> (Bruno) → Minha mesa.</td><td>Tarefa "Devolvida pela Gestão: TESTE ajustar valor".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">7.5</td><td>Bruno trata a competência: na ficha → Ocorrências, deixe a ocorrência como <b>Regularizada</b>; volte em Competências → Tratar, marque de novo <b>Atestado</b> (a devolução o desmarcou) e salve.</td><td>Status volta a "Atestada — aguardando Gestão".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">7.6</td><td><span class="perfil">Gestão</span> → Tratar → marque <b>Encaminhar ao Financeiro</b>, data de hoje, e salve.</td><td>Status "Aguardando liquidação".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T08 · Financeiro: empenho, liquidação e pagamento</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">8.1</td><td>Perfil <span class="perfil">Financeiro</span>. Financeiro → Painel financeiro.</td><td>Faixa Contratado → Empenhado → Reconhecido → Liquidado → Pago. A fila mostra a competência da 900/2026 com botão <b>Lançar</b>.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">8.2</td><td>Clique em <span class="btn">+ Novo empenho</span>: contratação 900/2026, nº <code>2026NE900</code>, exercício atual, valor <code>5000</code>. Salve.</td><td>O empenho aparece na aba Empenhos, e "Empenhado" sobe R$ 5.000,00.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">8.3</td><td>Na fila, <span class="btn">Lançar</span>: empenho 2026NE900, valor da competência <code>900</code>, liquidação hoje com valor <code>900</code>. Salve (sem pagamento).</td><td>Status "Liquidada — aguardando pagamento".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">8.4</td><td><span class="btn">Lançar</span> de novo: data e valor do pagamento <code>900</code>. Salve.</td><td>Status "Paga — concluída". "Pago" sobe R$ 900,00 e o saldo do empenho cai para R$ 4.100,00.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">8.4b</td><td>Em um contrato <b>sem OS com valor</b> (ex.: 014/2026 tem OS; use a 031/2026 depois de completar, ou teste na 002/2024), lance uma liquidação e veja o <b>Saldo do contrato</b> na ficha.</td><td>Sem OS com valor, o saldo = valor da contratação − <b>liquidado</b> (observação "valor − liquidado pelo Financeiro"). Só atestar não muda o saldo; liquidar muda.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">8.5</td><td>Abra a ficha da 900/2026 → aba <b>Financeiro</b>. Use <b>Reforço</b> de <code>1000</code> no empenho.</td><td>O valor atualizado do empenho passa a R$ 6.000,00 e o saldo a R$ 5.100,00.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">8.6</td><td>Confira como Financeiro as abas Por contrato, Por exercício e Por competência; clique em <b>Exportar</b>.</td><td>Os valores batem com o que foi lançado. Baixa um Excel.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<!-- ================= PARTE 2b ================= -->
+<h3>T09 · Fiscal substituto em atuação</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">9.1</td><td><span class="perfil">Fiscal</span> = <b>Carla Souza</b> (substituta da 900/2026). Abra a 900/2026, abra a competência (Tratar) e tente registrar NF por Competências → Registrar NF.</td><td>A 900/2026 <b>não aparece</b> na lista de contratações do "Registrar NF" de Carla. Ao abrir a competência existente (Tratar), os campos do fiscal ficam bloqueados com o aviso "Somente consulta: o fiscal titular está em atuação".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">9.2</td><td><span class="perfil">Gestão</span> → ficha 900/2026 → Cadastro → <span class="btn">Fiscal substituto em atuação</span>.</td><td>Alerta amarelo "Fiscal substituto em atuação desde…". Carla fica "em atuação".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">9.3</td><td>Como Carla: Competências → <b>Registrar NF</b> do mês seguinte (nº <code>1002</code>, valor <code>1000</code>).</td><td>Agora funciona. As tarefas desta contratação passam a aparecer na mesa de Carla (e não na de Bruno).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">9.4</td><td>Como Gestão, clique em <span class="btn">Titular reassume</span>.</td><td>Bruno volta a ser o fiscal em atuação; Carla volta a só consultar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T10 · Eventos, pendências, documentos, histórico e cancelamento</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">10.1</td><td><span class="perfil">Gestão</span> → 900/2026 → <b>Eventos e aditivos</b> → <span class="btn">Registrar evento</span>: tipo <b>Prorrogação</b>, situação <b>Em análise</b>, vigência anterior = fim atual, nova vigência = daqui a 2 anos.</td><td>O evento aparece. A situação da contratação vira "Em prorrogação".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">10.2</td><td>Edite o evento e marque a situação <b>Concluído</b>.</td><td>A situação da contratação volta a "Ativa" e o <b>fim da vigência</b> exibido passa a ser a nova data.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">10.3</td><td>Registre outro evento: <b>Termo aditivo</b>, concluído, com valor anterior igual ao atual e valor posterior maior em R$ 1.000,00.</td><td>O <b>valor atualizado</b> da contratação sobe R$ 1.000,00 na legenda e na aba Financeiro.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">10.4</td><td>Aba Pendências (menu "Mais") → <span class="btn">Nova pendência</span> com prazo para amanhã.</td><td>Aparece na lista e, em até 7 dias do prazo, na Minha mesa da Gestão.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">10.5</td><td>Aba Documentos → <span class="btn">Registrar documento</span> (tipo Parecer, nº SEI <code>0123456</code>).</td><td>Entra na lista; os SEI citados em portaria, termo, OS e atesto já aparecem sozinhos.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">10.6</td><td>Aba Histórico (menu "Mais").</td><td>Lista as alterações feitas nesta contratação, com usuário, data e antes/depois.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">10.7</td><td>Cancele a pendência criada em 10.4 (ícone de cancelar).</td><td>O sistema <b>exige uma justificativa</b>. A pendência sai das ativas, sem ser apagada.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<!-- ================= PARTE 1c ================= -->
+<div class="secao"></div>
+<h2>Importação por planilha e Licitações</h2>
+
+<h3>T11 · Importar contratações por planilha</h3>
+<p class="obj">Crie uma planilha no Excel (ou use o modelo baixado no próprio sistema).</p>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">11.1</td><td><span class="perfil">Compras</span> → Contratações → <span class="btn">Importar planilha</span> → <b>Baixar modelo</b>. Abra o arquivo.</td><td>Baixa um .xlsx com as colunas e uma linha de exemplo.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">11.2</td><td>Monte 5 linhas: (a) completa; (b) sem contratada; (c) com o mesmo nº de uma já existente (<code>014/2026</code>, Contrato); (d) repetida da (a); (e) com número, contratada e objeto, mas com CNPJ inválido e sem valor. Salve e escolha o arquivo.</td><td>Mostra o resumo e a tabela: a e e como "a importar"; b "ignorada: sem contratada"; c e d "já cadastrada ou repetida". A linha e traz "completar: valor…" e aviso de CNPJ inválido.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">11.3</td><td>Clique em <b>Importar</b>.</td><td>As 2 contratações entram <b>em cadastro</b>. Confira na lista (aba "A caminho").</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">11.4</td><td><span class="perfil">Gestão</span> → importar uma linha completa marcando <b>"já estavam em execução antes da plataforma"</b>.</td><td>A contratação entra <b>Ativa</b> e recebida, sem passar por portaria/termo/OS. A linha incompleta da planilha não é importada nesse modo.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">11.5</td><td>Entre como <span class="perfil">Fiscal</span> e abra Contratações.</td><td>Não existe o botão de importar nem de nova contratação.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T12 · Processos licitatórios (Compras)</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">12.1</td><td><span class="perfil">Compras</span> → módulo <b>Licitações</b> → Quadro de prioridades.</td><td>Colunas por criticidade com os processos; cada cartão mostra nº, objeto e a documentação em que está.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.2</td><td>Clique num cartão, escolha outra documentação em "Em qual documentação está?" e <b>Salvar</b>.</td><td>Mensagem "Salvo"; o cartão mostra a nova documentação.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.3</td><td>Processos → <span class="btn">+ Novo</span>: nº <code>2026/TESTE</code>, objeto <code>TESTE</code>, tipo Pregão, prioridade Crítico, prazo daqui a 2 dias. Salve.</td><td>Aparece na lista com status <b>Quase vencendo</b> (prazo em até 3 dias) e no quadro, coluna Crítico. Entra também na Minha mesa como "Prazo do processo em 2 dia(s)".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.4</td><td>Tente criar outro processo com o mesmo número <code>2026/TESTE</code>.</td><td>Recusa por número já em uso.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.5</td><td>Clique na linha do processo e registre uma <b>fase do fluxo</b> com data.</td><td>A fase entra na linha do tempo, em ordem de data.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.6</td><td>Use a busca, depois <b>Filtros</b> (prioridade, status de prazo). Clique em <b>Excel</b> e <b>PDF</b>.</td><td>Filtra corretamente, mostra as etiquetas dos filtros e baixa os dois arquivos.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.7</td><td>Importe processos: <span class="btn">Importar</span> com planilha de colunas <i>numero do Processo, nome do Processo, Unidade Demandante, Modalidade, Valor Estimado (R$), Prioridade, Fase Atual</i> (2 linhas, uma com número já existente).</td><td>Mostra o resumo ("1 processo a importar, 1 ignorada"), pede confirmação e importa só o novo.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.8</td><td>Marque o processo de teste na lista e clique em <b>Arquivar</b>. Depois abra <b>Arquivados</b> e desarquive.</td><td>Some da lista e aparece em Arquivados; volta ao desarquivar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">12.9</td><td>Licitações → <b>Indicadores</b>; mude o período e a fase.</td><td>Os 4 números e os 3 gráficos (tipo, prioridade, por mês) acompanham os filtros.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<!-- ================= PARTE 3 ================= -->
+<div class="secao"></div>
+<h2>Usuários, permissões e segurança</h2>
+
+<h3>T13 · Administração</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">13.1</td><td><span class="perfil">Administrador</span> → módulo Administração → <b>Usuários e perfis</b>.</td><td>Lista com 8 usuários, indicadores e filtros Todos/Ativos/Inativos.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.2</td><td>Filtre por perfil <b>Fiscal</b>; depois busque por <code>carla</code>.</td><td>Mostra só as pessoas que atendem aos filtros.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.3</td><td>Aba <b>Perfis e permissões</b>.</td><td>Um cartão por perfil com a descrição e quem o tem.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.4</td><td><span class="btn">Novo usuário</span>: nome <code>TESTE Pessoa</code>, e-mail <code>teste@crt08.demo</code>, senha de 3 letras, perfil Fiscal. Tente salvar.</td><td>Recusa a senha curta (mínimo de 8 caracteres).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.5</td><td>Use uma senha de 8+ caracteres e salve.</td><td>O usuário aparece na lista como Ativo.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.6</td><td>Edite o usuário criado e mude o perfil para Financeiro.</td><td>O perfil muda na lista; o e-mail não pode ser alterado.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.7</td><td>Desative o usuário; veja o filtro Inativos; reative.</td><td>Muda o status e as contagens dos filtros acompanham.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.8</td><td>Tente desativar ou apagar o <b>seu próprio</b> usuário (o admin logado).</td><td>Os botões estão desabilitados, com a explicação no passar do mouse.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.9</td><td>Apague o usuário de teste.</td><td>Pede confirmação e remove da lista.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">13.10</td><td>Administração → <b>Parâmetros</b>: altere "Nome do órgão" e salve.</td><td>Mensagem de sucesso. Gere de novo uma minuta de portaria (qualquer contratação): o nome do órgão novo aparece no texto.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T14 · Cada perfil só enxerga o que é seu</h3>
+<p class="obj">Em cada linha, entre com o perfil e tente abrir o endereço digitado direto na barra do navegador (ex.: <code>http://127.0.0.1:5174/financeiro</code>). Na demonstração, a troca de perfil pela faixa não recarrega; para digitar o endereço use F5 <b>depois de trocar</b> (os dados da demonstração voltam ao início, o que não atrapalha aqui).</p>
+<table class="teste">
+<tr><th>Nº</th><th>Perfil e ação</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">14.1</td><td><span class="perfil">Fiscal</span> digita <code>/financeiro</code>, <code>/gestao</code>, <code>/controle</code>, <code>/usuarios</code>.</td><td>É redirecionado para a própria mesa, sem mostrar a tela pedida.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.2</td><td><span class="perfil">Fiscal</span> (Bruno) abre Minhas fiscalizações.</td><td>Só aparecem as contratações em que Bruno é fiscal. Não aparece, por exemplo, a 009/2025 (fiscal: Carla).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.3</td><td><span class="perfil">Gabinete</span> digita <code>/financeiro</code> e depois <code>/contratos</code>.</td><td><code>/financeiro</code> volta para Atos para assinatura. <code>/contratos</code> abre, mas lista <b>somente</b> as contratações com ato pendente para o Gabinete; as demais não aparecem.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.4</td><td><span class="perfil">Financeiro</span> digita <code>/gestao</code> e <code>/arquivados</code>.</td><td>Volta para a mesa. No Financeiro só há lançamentos de competências já liberadas pela Gestão.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.5</td><td><span class="perfil">Compras</span> digita <code>/competencias</code>, <code>/financeiro</code>, <code>/usuarios</code>.</td><td>Volta para a mesa.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.6</td><td><span class="perfil">Compras</span> abre uma contratação já encaminhada (ex.: 030/2026).</td><td>Só consulta: sem botões de editar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.7</td><td><span class="perfil">Gestão</span> digita <code>/usuarios</code> e <code>/parametros</code>.</td><td>Volta para a mesa (só o Administrador acessa).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.8</td><td><span class="perfil">Visualizador</span> percorre todas as telas.</td><td>Tudo abre para leitura, mas não existe nenhum botão de cadastrar, editar, lançar, registrar ou cancelar. Entra direto em Licitações → Quadro de prioridades.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">14.9</td><td>Sem estar logado, digite <code>/contratos</code>.</td><td>Vai para a tela de login.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<div class="regra"><b>Importante sobre segurança</b>A demonstração só reproduz as regras de tela. No <b>sistema real</b>, as mesmas regras também são aplicadas no banco de dados: mesmo que alguém tente contornar a tela, o banco recusa. O teste T16 confere isso na prática.</div>
+
+<!-- ================= PARTE 3 ================= -->
+<div class="secao"></div>
+<h2>Parte 3 — Conferência no sistema real (curta)</h2>
+<p class="obj">Faça depois de a Parte 2 passar na demonstração. Use sempre o texto <b>TESTE</b>. Os registros ficam gravados: ao final, cancele-os com justificativa (T17).</p>
+
+<h3>T15 · Preparação do ambiente</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">15.1</td><td>Abra o endereço de produção e entre como <span class="perfil">Administrador</span>.</td><td>Entra na Minha mesa. Sem erro de carregamento.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">15.2</td><td>Em Parâmetros, preencha nome do órgão, cidade/UF, Presidente, Diretor(a) Financeiro(a) e e-mail da Gestão. Salve e recarregue a página.</td><td>Os dados continuam após recarregar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">15.3</td><td>Em Usuários e perfis, crie uma pessoa para cada perfil que vai usar (Gestão, Fiscal titular, Fiscal substituto, Compras, Financeiro, Gabinete). Use e-mails reais.</td><td>Cada uma recebe um e-mail de confirmação do Supabase. Depois de clicar no link, consegue entrar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">15.4</td><td>Numa janela anônima, tente entrar com um usuário recém-criado <b>antes</b> de confirmar o e-mail.</td><td>Recusa com "Por favor, confirme seu e-mail".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">15.5</td><td>Na tela de login, digite um e-mail e clique em <b>Esqueceu a senha?</b>. Abra o e-mail recebido e crie nova senha.</td><td>O link abre "Nova senha" no endereço do sistema; depois de salvar, entra normalmente.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">15.6</td><td>Entre com uma pessoa recém-criada <b>sem</b> perfil (se houver) ou desative um usuário e tente entrar com ele.</td><td>Aparece "Acesso não liberado" / "Acesso desativado" e nenhum dado é mostrado.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T16 · Fluxo mínimo real e proteção no banco</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">16.1</td><td>Repita, com as pessoas reais, os testes <b>3.1 a 8.4</b> usando a contratação <code>TESTE 900/2026</code> (valores pequenos).</td><td>Todos os resultados esperados da Parte 2 se repetem, inclusive o status final "Paga — concluída".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">16.2</td><td>Gere a minuta da portaria, o termo, a OS e o atesto no sistema real.</td><td>Os documentos saem com o <b>nome do órgão, a cidade e os nomes do Presidente e do Diretor Financeiro</b> preenchidos em Parâmetros.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">16.3</td><td>Como <span class="perfil">Fiscal</span>, confirme que só vê a contratação em que está designado e <b>não vê</b> contratos de outros fiscais.</td><td>Lista com só as contratações dele. Se o fiscal digitar o endereço de uma contratação alheia, aparece "não encontrada ou sem permissão".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">16.4</td><td>Como <span class="perfil">Gabinete</span>, confirme que só vê os atos encaminhados.</td><td>Sem acesso a contratações em outras etapas.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">16.5</td><td>Importe processos e contratações com planilhas reais pequenas (2 linhas).</td><td>Resumo correto; os registros aparecem nas listas.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">16.6</td><td><b>Atualização automática.</b> Abra o sistema em dois navegadores (ou uma janela anônima), cada um com um perfil: por exemplo Compras e Gestão. Em Compras, encaminhe uma contratação de teste à Gestão. <b>Não aperte F5 na Gestão.</b></td><td>Em poucos segundos a Gestão vê, sozinha, a contratação recebida na Minha mesa e o número do sino sobe. O mesmo vale para os demais envios (portaria no Gabinete, OS para assinatura, competência atestada para a Gestão, liberação para o Financeiro). Se demorar até 1 minuto, o Realtime não está ligado (rode a migration 20261019).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">16.7</td><td>Abra o sistema no <b>celular</b> e faça login, Minha mesa e uma ficha.</td><td>Tudo legível, sem rolar para o lado; menu pelo botão de três traços.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T17 · Limpeza dos dados de teste</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">17.1</td><td>Cancele cada registro de teste (contratação TESTE 900/2026 e o que foi criado nela), sempre com a justificativa <code>TESTE — cancelado</code>. Processos de teste podem ser excluídos em Licitações → Processos.</td><td>Cada cancelamento exige justificativa e o registro fica no histórico como cancelado. Contratações canceladas não aparecem mais nas listas.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">17.2</td><td>Desative (ou apague) os usuários de teste que não vão usar o sistema.</td><td>Perdem o acesso na hora.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<!-- ================= RESULTADO ================= -->
+<div class="secao"></div>
+<h2>Resultado e ficha de problemas</h2>
+<h3>Resumo</h3>
+<table>
+<tr><th>Bloco</th><th style="width:12%">Testes</th><th style="width:12%">OK</th><th style="width:12%">Falhou</th></tr>
+<tr><td>Parte 1 — Conhecer (T01, T02)</td><td>15</td><td></td><td></td></tr>
+<tr><td>Parte 2 — Fluxo completo (T03 a T10)</td><td>60</td><td></td><td></td></tr>
+<tr><td>Importação e Licitações (T11, T12)</td><td>14</td><td></td><td></td></tr>
+<tr><td>Usuários e segurança (T13, T14)</td><td>19</td><td></td><td></td></tr>
+<tr><td>Parte 3 — Sistema real (T15 a T17)</td><td>15</td><td></td><td></td></tr>
+</table>
+
+<h3>Ficha de problemas</h3>
+<p>Para cada falha: o número do teste, o perfil, a tela, o que você fez, o que apareceu (mensagem exata) e, se puder, um print.</p>
+<table class="linhas">
+<tr><th style="width:9%">Teste</th><th style="width:14%">Perfil</th><th style="width:17%">Tela</th><th>O que aconteceu</th><th style="width:16%">Resolvido?</th></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td></td><td></td><td></td><td></td><td>☐</td></tr>
+</table>
+
+<div class="dica"><b>Quando considerar o sistema aprovado</b>Quando os testes da Parte 2 e da Parte 3 estiverem todos OK e nenhum problema "Gravidade alta" (perda de dado, acesso indevido, valor errado) ficar aberto. Pequenos ajustes de texto ou visual não impedem o uso.</div>
+
+</div>
+</body>
+</html>

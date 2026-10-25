@@ -11,6 +11,7 @@ import { can } from '../utils/permissions'
 import { COLUNAS_EXCEL, COLUNAS_PDF, paraExportar } from '../utils/processosTela'
 import StepFlow from '../components/StepFlow'
 import { PHASES } from '../utils/phases'
+import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
 import './controle.css'
 
 const OPT_ETAPA = ['Aberto', 'Em analise', 'Concluido', 'Suspenso', 'Revogado']
@@ -39,20 +40,21 @@ export default function Arquivados() {
   const [detail, setDetail] = useState(null)
   const detailCloseRef = useRef(null)
 
-  async function load() {
+  // silencioso: atualização automática, sem piscar a tela nem apagar o aviso de erro de uma ação
+  async function load({ silencioso = false } = {}) {
     try {
-      setLoading(true)
-      setError('')
+      if (!silencioso) { setLoading(true); setError('') }
       const data = await listarProcessos()
       setRows(data)
     } catch {
-      setError('Falha ao carregar processos.')
+      if (!silencioso) setError('Falha ao carregar processos.')
     } finally {
-      setLoading(false)
+      if (!silencioso) setLoading(false)
     }
   }
 
   useEffect(() => { load() }, [])
+  useAtualizacaoAutomatica(['processos'], () => load({ silencioso: true }))
 
   const view = useMemo(() => {
     return rows.filter((r) => {

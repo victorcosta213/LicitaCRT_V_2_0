@@ -42,12 +42,12 @@ const RELATORIOS = {
   },
   situacao_financeira: {
     label: 'Situação financeira por contrato',
-    colunas: [...BASE_COLS, { key: 'valor', label: 'Valor atualizado' }, { key: 'empenhado', label: 'Empenhado' },
+    colunas: [...BASE_COLS, { key: 'valor', label: 'Valor atualizado' }, { key: 'saldoContr', label: 'Saldo do contrato' }, { key: 'empenhado', label: 'Empenhado' },
       { key: 'saldoEmp', label: 'Saldo empenhos' }, { key: 'exec', label: 'Executado' }, { key: 'liq', label: 'Liquidado' },
       { key: 'pago', label: 'Pago' }, { key: 'pend', label: 'Pendente pgto' }],
     financeiro: true,
     linhas: (ks) => ks.map((k) => ({
-      contrato: k.c.numero, contratada: k.c.contratada, valor: brl(k.valorAtualizado), empenhado: brl(k.empenhado),
+      contrato: k.c.numero, contratada: k.c.contratada, valor: brl(k.valorAtualizado), saldoContr: brl(k.saldoExecucao), empenhado: brl(k.empenhado),
       saldoEmp: brl(k.saldoEmpenhos), exec: brl(k.execucaoReconhecida), liq: brl(k.liquidado), pago: brl(k.pago),
       pend: brl(k.pendentePagamento),
     })),
@@ -388,7 +388,7 @@ function RelatorioIndividual({ k }) {
         <Secao titulo="Valores e saldos">
           <DefList cols={4} items={[
             ['Valor inicial', brl(k.valorInicial)], ['Valor atualizado', brl(k.valorAtualizado)],
-            ['Executado reconhecido', brl(k.execucaoReconhecida)], ['Saldo de execução', brl(k.saldoExecucao)],
+            ['Executado reconhecido', brl(k.execucaoReconhecida)], ['Saldo do contrato', brl(k.saldoExecucao)],
             ['Empenhado', brl(k.empenhado)], ['Saldo dos empenhos', brl(k.saldoEmpenhos)],
             ['Liquidado', brl(k.liquidado)], ['Pago', brl(k.pago)], ['Pendente de pagamento', brl(k.pendentePagamento)],
           ]} />

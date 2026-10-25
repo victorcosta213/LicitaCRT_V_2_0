@@ -40,9 +40,13 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleUser(session?.user)
-    })
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => handleUser(session?.user))
+      .catch((err) => {
+        // sem rede ou sessão ilegível: mostra o login em vez de ficar carregando para sempre
+        console.error('[Auth] erro ao ler a sessão:', err)
+        handleUser(null)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       handleUser(session?.user)

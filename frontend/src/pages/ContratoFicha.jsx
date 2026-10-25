@@ -40,8 +40,13 @@ function Composicao({ k }) {
         </div>
       ))}
       <div className="composicao__saldo">
-        <span>Saldo a executar</span>
-        <strong>{brl(k.saldoExecucao)}</strong>
+        <span>
+          Saldo do contrato
+          <span className="d-block small text-secondary">
+            {k.saldoBase === 'os' ? 'valor − ordens de serviço/compra dadas' : 'valor − liquidado pelo Financeiro'}
+          </span>
+        </span>
+        <strong className={k.saldoExecucao < 0 ? 'text-danger' : ''}>{brl(k.saldoExecucao)}</strong>
       </div>
       <div className="composicao__saldo border-0 pt-0">
         <span>Saldo dos empenhos <span className="text-secondary">(a liquidar)</span></span>

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
 import { listarProcessos } from '../services/processos'
 import { Card, Indicadores, PageHeader } from '../components/gc/ui'
 import { normalizePriority } from '../utils/priority'
@@ -150,20 +151,22 @@ export default function Dashboard() {
   const [faseKeyFilter, setFaseKeyFilter] = useState('')
 
   useEffect(() => {
-    localStorage.setItem('dashboard.periodo', JSON.stringify(periodo))
+    try { localStorage.setItem('dashboard.periodo', JSON.stringify(periodo)) } catch { /* modo privado: só não lembra o período */ }
   }, [periodo])
 
-  useEffect(() => {
-    ;(async () => {
-      try {
-        setLoading(true)
-        const data = await listarProcessos()
-        setRows(data)
-      } finally {
-        setLoading(false)
-      }
-    })()
+  const carregar = useCallback(async ({ silencioso = false } = {}) => {
+    try {
+      if (!silencioso) setLoading(true)
+      setRows(await listarProcessos())
+    } catch (err) {
+      console.error('[Dashboard] erro ao carregar processos', err)
+    } finally {
+      if (!silencioso) setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { carregar() }, [carregar])
+  useAtualizacaoAutomatica(['processos'], () => carregar({ silencioso: true }))
 
 
 

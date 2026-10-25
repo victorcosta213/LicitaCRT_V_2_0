@@ -208,7 +208,7 @@ const atualizar = (tabela, linha, valores) => {
 
 const RPC = {
   gc_encaminhar_contratacao({ p_contrato, p_tipo_ordem = 'os' }) {
-    exigir(papel() === 'compras', 'Somente Compras encaminha a contratação à Gestão.')
+    exigir(['compras', 'admin'].includes(papel()), 'Somente Compras encaminha a contratação à Gestão.')
     const c = achar('gc_contratos', p_contrato)
     exigir(c, 'Contratação não encontrada.')
     exigir(!c.encaminhado_em, 'Contratação já encaminhada à Gestão.')
@@ -223,7 +223,7 @@ const RPC = {
     }))
   },
   gc_registrar_publicacao_portaria({ p_contrato, p_numero, p_data, p_publicacao_data, p_publicacao_meio, p_sei, p_link }) {
-    exigir(['gestor', 'gabinete'].includes(papel()), 'Somente a Gestão ou o Gabinete registra a publicação da portaria.')
+    exigir(['gestor', 'gabinete', 'admin'].includes(papel()), 'Somente a Gestão ou o Gabinete registra a publicação da portaria.')
     const c = achar('gc_contratos', p_contrato)
     exigir(c, 'Contratação não encontrada.')
     exigir(papel() !== 'gabinete' || c.portaria_status === 'aguardando_publicacao', 'Esta portaria não está aguardando publicação.')
@@ -234,7 +234,7 @@ const RPC = {
     })
   },
   gc_registrar_assinatura_os({ p_os, p_presidente, p_diretor, p_sei, p_link }) {
-    exigir(['gestor', 'gabinete'].includes(papel()), 'Somente a Gestão ou o Gabinete registra as assinaturas.')
+    exigir(['gestor', 'gabinete', 'admin'].includes(papel()), 'Somente a Gestão ou o Gabinete registra as assinaturas.')
     const o = achar('gc_ordens_servico', p_os)
     exigir(o && o.status === 'aguardando_assinatura', 'Esta OS/OC não está aguardando assinatura.')
     const presidente = p_presidente || o.assinatura_presidente_em
@@ -248,7 +248,7 @@ const RPC = {
   gc_definir_substituto_em_atuacao({ p_contrato, p_ativo }) {
     const designado = banco.gc_responsaveis.some((r) => r.contrato_id === p_contrato && r.usuario_id === usuarioId() && r.ativo
       && ['fiscal_tecnico', 'fiscal_substituto'].includes(r.papel))
-    exigir(papel() === 'gestor' || (papel() === 'fiscal' && designado), 'Somente a Gestão ou os fiscais da contratação alteram o fiscal em atuação.')
+    exigir(['gestor', 'admin'].includes(papel()) || (papel() === 'fiscal' && designado), 'Somente a Gestão ou os fiscais da contratação alteram o fiscal em atuação.')
     exigir(!p_ativo || banco.gc_responsaveis.some((r) => r.contrato_id === p_contrato && r.ativo && r.papel === 'fiscal_substituto'),
       'Não há fiscal substituto designado nesta contratação.')
     atualizar('gc_contratos', achar('gc_contratos', p_contrato), { substituto_em_atuacao: p_ativo, substituto_desde: p_ativo ? hoje() : null })
@@ -259,6 +259,12 @@ const RPC = {
 export function createClient() {
   return {
     from: (tabela) => new Consulta(tabela),
+    // Realtime: na demonstração os dados vivem só neste navegador, então não há o que escutar
+    channel() {
+      const canal = { on: () => canal, subscribe: () => canal }
+      return canal
+    },
+    removeChannel: () => {},
     async rpc(funcao, args) {
       await espera()
       if (!RPC[funcao]) return erro(`Função ${funcao} indisponível na demonstração`)
@@ -282,12 +288,14 @@ export function createClient() {
         if (!chave) return erro('Invalid login credentials')
         perfil = chave
         gravarPerfil(chave)
+        if (window.__demoSel) window.__demoSel.value = chave
         avisar('SIGNED_IN')
         return { data: sessao(), error: null }
       },
       async signOut() {
         perfil = 'sair'
         gravarPerfil('sair')
+        if (window.__demoSel) window.__demoSel.value = 'sair'
         avisar('SIGNED_OUT')
         return { error: null }
       },
@@ -321,9 +329,18 @@ function faixa() {
   const nomes = { gestor: 'Gestão', fiscal: 'Fiscal titular', substituto: 'Fiscal substituto', compras: 'Compras', financeiro: 'Financeiro', gabinete: 'Gabinete', admin: 'Administrador', viewer: 'Visualizador', sair: '(deslogado)' }
   for (const k of [...Object.keys(PERFIS), 'sair']) sel.add(new Option(nomes[k], k))
   sel.value = perfil
-  sel.onchange = () => { gravarPerfil(sel.value); window.location.href = '/' }
+  // troca de perfil sem recarregar: os dados já lançados na demonstração continuam
+  sel.onchange = () => {
+    perfil = sel.value
+    gravarPerfil(perfil)
+    avisar(perfil === 'sair' ? 'SIGNED_OUT' : 'SIGNED_IN')
+    window.history.pushState({}, '', '/')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }
   el.append(sel)
+  el.dataset.seletor = '1'
   document.body.append(el)
+  window.__demoSel = sel
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', faixa)
 else faixa()

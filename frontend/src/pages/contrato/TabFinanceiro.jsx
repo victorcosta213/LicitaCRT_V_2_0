@@ -9,9 +9,12 @@ import { brl, fmtCompetencia, fmtDate, hojeISO } from '../../utils/format'
 export function SaldosContrato({ k }) {
   return (
     <Indicadores fluxo itens={[
-      { label: 'Contratado', value: brl(k.valorAtualizado), hint: `inicial ${brl(k.valorInicial)} ${k.acrescimos >= 0 ? '+' : '−'} eventos ${brl(Math.abs(k.acrescimos))}` },
+      {
+        label: 'Contratado', value: brl(k.valorAtualizado),
+        hint: `saldo do contrato ${brl(k.saldoExecucao)}`, kind: k.saldoExecucao < 0 ? 'danger' : undefined,
+      },
       { label: 'Empenhado', value: brl(k.empenhado), hint: `saldo a liquidar ${brl(k.saldoEmpenhos)}`, kind: k.saldoEmpenhos < 0 ? 'danger' : undefined },
-      { label: 'Reconhecido', value: brl(k.execucaoReconhecida), hint: `saldo a executar ${brl(k.saldoExecucao)}`, kind: k.saldoExecucao < 0 ? 'danger' : undefined },
+      { label: 'Reconhecido', value: brl(k.execucaoReconhecida), hint: 'competências atestadas' },
       { label: 'Liquidado', value: brl(k.liquidado), hint: `${k.empenhos.length} empenho(s)` },
       {
         label: 'Pago', value: brl(k.pago),
