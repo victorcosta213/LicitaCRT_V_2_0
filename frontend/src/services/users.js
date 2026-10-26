@@ -41,10 +41,12 @@ function getSecondaryClient() {
   })
 }
 
+// Devolve { uid, precisaConfirmar }: precisaConfirmar = a pessoa ainda tem de clicar no e-mail para entrar
 export async function criarUsuario({ nome, email, password, role }) {
   const secondary = getSecondaryClient()
 
-  // 1. Cria o login (o Supabase envia o e-mail de confirmação)
+  // 1. Cria o login. Com a confirmação de e-mail ligada no Supabase, ele envia o link; desligada,
+  //    o login já nasce confirmado (e o Auth devolve uma sessão, que este cliente descarta).
   const { data: authData, error: authErr } = await secondary.auth.signUp({
     email,
     password,
@@ -69,7 +71,7 @@ export async function criarUsuario({ nome, email, password, role }) {
   }])
 
   if (dbErr) throw dbErr
-  return uid
+  return { uid, precisaConfirmar: !authData.session }
 }
 
 export async function atualizarUsuario(uid, { nome, role }) {

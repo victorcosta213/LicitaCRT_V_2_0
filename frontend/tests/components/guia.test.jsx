@@ -11,7 +11,7 @@ vi.mock('../../src/context/GcContext', () => ({ useGc: () => ({ alertas: [], con
 
 import PrimeirosPassos from '../../src/components/gc/PrimeirosPassos'
 import Ajuda from '../../src/pages/Ajuda'
-import { CAMINHO, GLOSSARIO, GUIA } from '../../src/utils/guia'
+import { CAMINHO, GLOSSARIO, GUIA, GUIA_LICITACAO } from '../../src/utils/guia'
 import { ROLES, menuFor } from '../../src/utils/permissions'
 
 const como = (role, ui) => {
@@ -50,6 +50,19 @@ describe('guia de uso', () => {
     }
   })
 
+  it('os perfis do módulo de licitações têm guia, com atalhos para telas que existem', () => {
+    const app = readFileSync('src/App.jsx', 'utf8')
+    const rotas = [...app.matchAll(/path="([^"]+)"/g)].map((m) => m[1])
+    expect(Object.keys(GUIA_LICITACAO).sort()).toEqual(['admin', 'compras', 'viewer'])
+    for (const [r, g] of Object.entries(GUIA_LICITACAO)) {
+      const telas = menuFor(r).licitacoes.map((i) => i.to)
+      for (const p of g.passos) {
+        expect(rotas, `${r}: ${p.to}`).toContain(p.to.split('?')[0])
+        expect(telas, `${r}: ${p.to}`).toContain(p.to.split('?')[0])
+      }
+    }
+  })
+
   it('o caminho e o glossário têm conteúdo', () => {
     expect(CAMINHO.length).toBeGreaterThan(5)
     expect(GLOSSARIO.map(([t]) => t)).toEqual(expect.arrayContaining(['Atesto', 'Glosa', 'Liquidação', 'OS / OC']))
@@ -74,6 +87,17 @@ describe('Por onde começar', () => {
     expect(screen.getByRole('button', { name: 'Mostrar guia' })).toBeInTheDocument()
   })
 
+  it('nas licitações mostra o guia próprio, com escolha independente do das contratações', async () => {
+    const ui = userEvent.setup()
+    como('compras', <PrimeirosPassos tipo="licitacao" />)
+    const guia = screen.getByRole('region', { name: 'Por onde começar nas licitações' })
+    expect(within(guia).getByText('Cadastre o processo')).toBeInTheDocument()
+    expect(within(guia).getByRole('link', { name: 'Quadro de prioridades' })).toHaveAttribute('href', '/home')
+    await ui.click(within(guia).getByRole('button', { name: 'Ocultar guia' }))
+    expect(localStorage.getItem('guia-aberto-licitacao-compras')).toBe('0')
+    expect(localStorage.getItem('guia-aberto-compras')).toBeNull()
+  })
+
   it('funciona mesmo sem armazenamento no navegador', () => {
     const lido = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('bloqueado') })
     como('gestor', <PrimeirosPassos />)
@@ -89,5 +113,16 @@ describe('página Ajuda', () => {
     expect(screen.getByText(/O seu papel: Financeiro/)).toBeInTheDocument()
     expect(screen.getByText('Por onde uma contratação anda')).toBeInTheDocument()
     expect(screen.getByText('Glosa')).toBeInTheDocument()
+  })
+
+  it('quem opera as licitações vê também o guia dos processos', () => {
+    como('compras', <Ajuda />)
+    expect(screen.getByText('Processos licitatórios')).toBeInTheDocument()
+    expect(screen.getByText('DFD')).toBeInTheDocument()
+  })
+
+  it('quem não usa as licitações não vê essa seção', () => {
+    como('fiscal', <Ajuda />)
+    expect(screen.queryByText('Processos licitatórios')).not.toBeInTheDocument()
   })
 })

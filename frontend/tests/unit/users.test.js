@@ -28,9 +28,15 @@ const dados = { nome: 'Ana', email: 'ana@crt08.gov.br', password: 'Senha1234', r
 describe('criarUsuario', () => {
   it('cria o login e o perfil com o mesmo id, já ativo', async () => {
     h.signUp.mockResolvedValue({ data: { user: { id: 'u9', identities: [{ id: 'i' }] } }, error: null })
-    await expect(criarUsuario(dados)).resolves.toBe('u9')
+    await expect(criarUsuario(dados)).resolves.toEqual({ uid: 'u9', precisaConfirmar: true })
     expect(h.signUp).toHaveBeenCalledWith(expect.objectContaining({ email: 'ana@crt08.gov.br', password: 'Senha1234' }))
     expect(h.insert).toHaveBeenCalledWith([{ id: 'u9', nome: 'Ana', email: 'ana@crt08.gov.br', role: 'fiscal', ativo: true }])
+  })
+
+  it('com a confirmação de e-mail desligada no Supabase, o login já nasce liberado', async () => {
+    h.signUp.mockResolvedValue({ data: { user: { id: 'u8', identities: [{ id: 'i' }] }, session: { access_token: 't' } }, error: null })
+    await expect(criarUsuario(dados)).resolves.toEqual({ uid: 'u8', precisaConfirmar: false })
+    expect(h.insert).toHaveBeenCalledOnce()
   })
 
   // O Supabase não acusa e-mail repetido: devolve um usuário "fantasma" sem identidades.

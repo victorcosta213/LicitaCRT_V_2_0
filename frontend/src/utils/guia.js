@@ -64,6 +64,30 @@ export const GUIA = {
   },
 }
 
+// Módulo de processos licitatórios (compras e admin operam; consulta só acompanha)
+const GUIA_OPERA_LICITACAO = {
+  resumo: 'Aqui você acompanha cada processo de licitação, do pedido até a contratação.',
+  passos: [
+    { titulo: 'Cadastre o processo', texto: 'Em Processos, clique em "Novo" e informe número, objeto, modalidade, prioridade e prazo.', to: '/controle', acao: 'Abrir processos' },
+    { titulo: 'Ou importe uma planilha', texto: 'Já tem os processos numa planilha? Use "Importar" na mesma tela.', to: '/controle', acao: 'Abrir processos' },
+    { titulo: 'Acompanhe no quadro', texto: 'O quadro separa os processos por prioridade. Clique num cartão para ver os detalhes.', to: '/home', acao: 'Quadro de prioridades' },
+    { titulo: 'Registre o andamento', texto: 'Abra o processo, marque em que documento ele está (DFD até o parecer jurídico) e adicione cada etapa ao fluxo.', to: '/controle', acao: 'Abrir processos' },
+    { titulo: 'Arquive os concluídos', texto: 'Marque os processos encerrados e clique em "Arquivar". Dá para desarquivar depois.', to: '/arquivados', acao: 'Ver arquivados' },
+  ],
+}
+export const GUIA_LICITACAO = {
+  compras: GUIA_OPERA_LICITACAO,
+  admin: GUIA_OPERA_LICITACAO,
+  viewer: {
+    resumo: 'Você acompanha os processos de licitação em modo consulta, sem alterar nada.',
+    passos: [
+      { titulo: 'Veja o quadro de prioridades', texto: 'Os processos ativos agrupados por prioridade.', to: '/home', acao: 'Quadro de prioridades' },
+      { titulo: 'Consulte um processo', texto: 'Busque por número ou objeto e abra para ver o fluxo e os documentos.', to: '/controle', acao: 'Processos' },
+      { titulo: 'Acompanhe os indicadores', texto: 'Volume, tipo e entradas por mês, para achar gargalos.', to: '/dashboard', acao: 'Indicadores' },
+    ],
+  },
+}
+
 // O caminho de uma contratação, do cadastro ao pagamento (quem faz cada etapa)
 export const CAMINHO = [
   { setor: 'Compras', texto: 'Cadastra a contratação e encaminha à Gestão', perfis: ['compras'] },
@@ -89,5 +113,11 @@ export const GLOSSARIO = [
   ['Empenho', 'Reserva de dinheiro no orçamento para pagar a contratação.'],
   ['Liquidação', 'Conferência final de que o valor é devido, feita pelo Financeiro antes de pagar.'],
   ['Saldo do contrato', 'Quanto ainda pode ser usado. Diminui conforme as ordens de serviço ou os valores liquidados.'],
+  ['DFD', 'Documento de Formalização da Demanda: o pedido inicial que dá partida ao processo de compra.'],
+  ['Estudo técnico preliminar', 'Análise que justifica a necessidade e a melhor solução antes de comprar.'],
+  ['Pesquisa de preço', 'Levantamento dos preços de mercado para estimar o valor da contratação.'],
+  ['Termo de referência', 'Documento que descreve o que será comprado, as regras e as condições.'],
+  ['Prioridade', 'Define a coluna do processo no quadro: Crítico, Estratégico, Alavancável ou Não crítico.'],
+  ['Arquivar', 'Tira o processo da lista ativa sem apagar. Ele continua guardado e pode ser desarquivado.'],
   ['Garantia e reajuste', 'Garantia contratual (seguro, caução) e atualização anual do valor. Ambos geram alertas de prazo.'],
 ]

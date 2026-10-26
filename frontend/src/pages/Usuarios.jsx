@@ -142,8 +142,10 @@ export default function Usuarios() {
         await atualizarUsuario(editingId, { nome, role })
         Swal.fire('Atualizado', 'Os dados do usuário foram atualizados.', 'success')
       } else {
-        await criarUsuario({ nome, email: email.trim().toLowerCase(), password, role })
-        Swal.fire('Criado', `Enviamos um e-mail de confirmação para ${email}. O acesso funciona depois que a pessoa clicar no link.`, 'success')
+        const { precisaConfirmar } = await criarUsuario({ nome, email: email.trim().toLowerCase(), password, role })
+        Swal.fire('Criado', precisaConfirmar
+          ? `Enviamos um e-mail de confirmação para ${email}. O acesso funciona depois que a pessoa clicar no link.`
+          : `${nome} já pode entrar com o e-mail ${email} e a senha informada. Repasse a senha por um canal seguro.`, 'success')
       }
       modalRef.current?.hide()
       loadData()

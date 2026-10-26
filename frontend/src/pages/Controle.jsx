@@ -18,6 +18,8 @@ import { can } from '../utils/permissions'
 import { COLUNAS_EXCEL, COLUNAS_PDF, paraExportar, abrirAnexoComAviso } from '../utils/processosTela'
 import StepFlow from '../components/StepFlow'
 import PhaseSelect from '../components/PhaseSelect'
+import ImportarProcessosModal from '../components/ImportarProcessosModal'
+import PrimeirosPassos from '../components/gc/PrimeirosPassos'
 import { PHASES, phaseNameByKey, DOC_STEPS } from '../utils/phases'
 import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
 import './controle.css'
@@ -78,6 +80,7 @@ export default function Controle() {
   const [selectedIds, setSelectedIds] = useState([])
 
   const [form, setForm] = useState(emptyForm)
+  const [instrucoesImport, setInstrucoesImport] = useState(false)
   const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
   const [file, setFile] = useState(null)
@@ -419,6 +422,15 @@ export default function Controle() {
         </div>
       </header>
 
+      <PrimeirosPassos tipo="licitacao" />
+
+      {instrucoesImport && (
+        <ImportarProcessosModal
+          onClose={() => setInstrucoesImport(false)}
+          onEscolher={() => { setInstrucoesImport(false); fileInputRef.current?.click() }}
+        />
+      )}
+
       <div className="card controle-surface">
         <div className="card-body">
           <div className="controle-toolbar mb-3">
@@ -456,7 +468,7 @@ export default function Controle() {
               <input type="file" accept=".csv, .xlsx, .xls" ref={fileInputRef} hidden onChange={handleImport} />
               {podeEditar && (
                 <>
-                  <button className="btn btn-outline-secondary" onClick={() => fileInputRef.current?.click()}>
+                  <button className="btn btn-outline-secondary" onClick={() => setInstrucoesImport(true)}>
                     <i className="bi bi-upload me-2" />
                     Importar
                   </button>
