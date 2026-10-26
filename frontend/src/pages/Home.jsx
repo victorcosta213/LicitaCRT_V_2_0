@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { can } from '../utils/permissions'
 import { DOC_STEPS, getDocDegree } from '../utils/phases'
 import { normalizePriority } from '../utils/priority'
+import PrimeirosPassos from '../components/gc/PrimeirosPassos'
 import Swal from 'sweetalert2'
 import './home.css'
 
@@ -40,7 +41,7 @@ export default function Home() {
   useAtualizacaoAutomatica(['processos'], () => carregar({ silencioso: true }))
 
   const ativos = useMemo(
-    () => rows.filter((p) => !isClosed(p?.etapa || p?.statusGeral)),
+    () => rows.filter((p) => !p?.arquivado && !isClosed(p?.etapa || p?.statusGeral)),
     [rows]
   )
 
@@ -109,9 +110,13 @@ export default function Home() {
         </div>
       </header>
 
+      <PrimeirosPassos tipo="licitacao" />
+
       {loading && <div className="alert alert-info">Carregando…</div>}
       {!loading && view.length === 0 && (
-        <div className="alert alert-light">Nenhum processo ativo encontrado.</div>
+        <div className="alert alert-light">
+          Nenhum processo ativo ainda.{podeEditar ? <> Cadastre o primeiro em <Link to="/controle">Processos</Link>.</> : ' Eles aparecem aqui quando forem cadastrados.'}
+        </div>
       )}
 
       <section className="home-kanban-board">

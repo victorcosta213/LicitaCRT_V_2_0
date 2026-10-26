@@ -12,6 +12,23 @@ import { PHASES } from './phases'
 const OPT_PRIOR = ['Critico', 'Nao Critico', 'Estrategico', 'Alavancavel']
 const OPT_TIPO = ['Inexigibilidade', 'Dispensa Eletronica', 'Dispensa', 'Pregao', 'Concorrencia', 'Pronto Pagamento', 'ARP']
 
+// Colunas do modelo de planilha, na ordem sugerida. `cabecalho` é o título exato usado no modelo;
+// na leitura, basta o título conter a palavra-chave (acentos e maiúsculas não importam).
+export const COLUNAS_PLANILHA = [
+  { cabecalho: 'numero do Processo', obrigatoria: true, exemplo: '012/2026', ajuda: 'Número que identifica o processo. Não pode se repetir.' },
+  { cabecalho: 'nome do Processo', obrigatoria: true, exemplo: 'Aquisição de material de expediente', ajuda: 'Objeto: o que será contratado.' },
+  { cabecalho: 'Situação no SEI', obrigatoria: false, exemplo: 'Em andamento', ajuda: 'Texto livre com a situação do processo no SEI.' },
+  { cabecalho: 'Unidade Demandante', obrigatoria: false, exemplo: 'Gerência Administrativa', ajuda: 'Setor que pediu a contratação.' },
+  { cabecalho: 'Modalidade', obrigatoria: false, exemplo: 'Pregão', ajuda: 'Pregão, Dispensa, Dispensa Eletrônica, Inexigibilidade, Concorrência, Pronto Pagamento ou ARP. Outro texto é aceito e mantido como está.' },
+  { cabecalho: 'Valor Estimado (R$)', obrigatoria: false, exemplo: '48000,00', ajuda: 'Número, com ou sem "R$". Vírgula para os centavos. Valor ilegível fica em branco.' },
+  { cabecalho: 'Prioridade', obrigatoria: false, exemplo: 'Estratégico', ajuda: 'Crítico, Estratégico, Alavancável ou Não crítico. Em branco, vai para "Sem prioridade".' },
+  { cabecalho: 'Fase Atual', obrigatoria: false, exemplo: 'Cotação de Preços', ajuda: 'Uma das fases da lista abaixo. Fase diferente é aceita como texto. Em branco, entra como "Aberto".' },
+]
+export const LINHAS_EXEMPLO_PROCESSOS = [
+  ['012/2026', 'Aquisição de material de expediente', 'Em andamento', 'Gerência Administrativa', 'Pregão', '48000,00', 'Estratégico', 'Cotação de Preços'],
+  ['013/2026', 'Manutenção dos aparelhos de ar-condicionado', 'Em andamento', 'Gerência Administrativa', 'Dispensa', '12500,00', 'Crítico', ''],
+]
+
 export const norm = (s) => String(s ?? '')
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
   .replace(/\s+/g, ' ').trim().toLowerCase()

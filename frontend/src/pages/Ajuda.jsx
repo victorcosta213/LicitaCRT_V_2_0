@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Card, PageHeader } from '../components/gc/ui'
-import { CAMINHO, GLOSSARIO, GUIA } from '../utils/guia'
+import { CAMINHO, GLOSSARIO, GUIA, GUIA_LICITACAO } from '../utils/guia'
 import { ROLES, normalizeRole } from '../utils/permissions'
 
 export default function Ajuda() {
   const { role } = useAuth()
   const r = normalizeRole(role)
   const guia = GUIA[r]
+  const guiaLic = GUIA_LICITACAO[r]
   const perfil = ROLES[r]?.label
 
   return (
@@ -21,6 +22,20 @@ export default function Ajuda() {
         <Card title={`O seu papel: ${perfil}`} subtitle={guia.resumo}>
           <ol className="guia__passos guia__passos--solto">
             {guia.passos.map((p) => (
+              <li key={p.titulo} className="guia__passo">
+                <span className="guia__num" aria-hidden="true" />
+                <div className="guia__texto"><strong>{p.titulo}</strong><span>{p.texto}</span></div>
+                <Link to={p.to} className="btn btn-sm btn-outline-primary guia__acao">{p.acao}</Link>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
+      {guiaLic && (
+        <Card title="Processos licitatórios" subtitle={guiaLic.resumo}>
+          <ol className="guia__passos guia__passos--solto">
+            {guiaLic.passos.map((p) => (
               <li key={p.titulo} className="guia__passo">
                 <span className="guia__num" aria-hidden="true" />
                 <div className="guia__texto"><strong>{p.titulo}</strong><span>{p.texto}</span></div>
