@@ -7,7 +7,7 @@ import { PGlite } from '@electric-sql/pglite'
 
 const ler = (caminho) => readFileSync(new URL(caminho, import.meta.url), 'utf8')
 const MIGRATIONS = ['20261015_gestao_contratual.sql', '20261016_processos_importacao.sql',
-  '20261017_correcoes_producao.sql', '20261018_fluxo_funcional.sql', '20261019_atualizacao_automatica.sql']
+  '20261017_correcoes_producao.sql', '20261018_fluxo_funcional.sql', '20261019_atualizacao_automatica.sql', '20261020_senha_provisoria.sql']
   .map((f) => ler(`../supabase/migrations/${f}`))
 const [M1, M2, M3] = MIGRATIONS
 const VERIFICACAO = ler('../supabase/verificacao.sql')
@@ -20,7 +20,7 @@ const SUPABASE = `
   create function auth.uid() returns uuid language sql stable as $$
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
-  create table auth.users (id uuid primary key, email text, created_at timestamptz default now());
+  create table auth.users (id uuid primary key, email text, encrypted_password text, created_at timestamptz default now());
   create schema storage;
   create table storage.buckets (id text primary key, name text not null, public boolean not null default false);
   create table storage.objects (
@@ -128,9 +128,9 @@ describe('migrations', () => {
 
   it('o script de verificação roda e confirma os itens resolvidos pela migration', async () => {
     const { rows } = await db.query(VERIFICACAO)
-    expect(rows).toHaveLength(15)
+    expect(rows).toHaveLength(16)
     const status = Object.fromEntries(rows.map((r) => [r.ordem, r.status]))
-    for (const ordem of [1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14]) expect(status[ordem], `item ${ordem}`).toBe('✅')
+    for (const ordem of [1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14, 16]) expect(status[ordem], `item ${ordem}`).toBe('✅')
     expect(rows.find((r) => r.ordem === 12).detalhe).toMatch(/perfis ativos: 10 · processos: 1 · contratos: 2/)
   })
 })
@@ -740,3 +740,76 @@ describe('atualização automática (Realtime)', () => {
     await banco.close()
   }, 60000)
 })
+
+describe('senha provisória (primeiro acesso e redefinição)', () => {
+  const NOVO = uid(60)
+  const OUTRO = uid(61)
+  const precisa = async (usuario) => (await como(usuario, 'select public.gc_precisa_trocar_senha() as v')).rows[0].v
+
+  beforeAll(async () => {
+    await db.exec(`insert into auth.users (id, email, encrypted_password) values
+      ('${NOVO}', 'novo@x', 'hash-provisorio'), ('${OUTRO}', 'outro@x', 'hash-outro')`)
+    await db.exec(`insert into usuarios (id, nome, email, role, ativo) values
+      ('${NOVO}', 'Novo', 'novo@x', 'fiscal', true), ('${OUTRO}', 'Outro', 'outro@x', 'fiscal', true)`)
+  })
+
+  it('só o administrador marca uma senha como provisória', async () => {
+    for (const quem of ['gestor', 'compras', 'fiscal', 'viewer', 'inativo']) {
+      await expect(como(quem, 'select public.gc_marcar_senha_provisoria($1)', [NOVO]), quem).rejects.toThrow(/Somente o administrador/)
+    }
+    expect(await precisa(NOVO)).toBe(false)
+  })
+
+  it('marcar um login que não existe é recusado', async () => {
+    await expect(como('admin', 'select public.gc_marcar_senha_provisoria($1)', [uid(777)])).rejects.toThrow(/não encontrado/)
+  })
+
+  it('depois de marcada, só a própria pessoa fica obrigada a trocar', async () => {
+    await como('admin', 'select public.gc_marcar_senha_provisoria($1)', [NOVO])
+    expect(await precisa(NOVO)).toBe(true)
+    expect(await precisa(OUTRO)).toBe(false)
+    expect(await precisa('admin')).toBe(false)
+  })
+
+  it('os usuários não leem nem gravam a tabela de referência (nem o admin, nem o gestor)', async () => {
+    for (const quem of ['admin', 'gestor', NOVO]) {
+      expect(await contar(quem, 'usuarios_senha_provisoria'), quem).toBe(0)
+    }
+    await expect(como(NOVO, `delete from usuarios_senha_provisoria where usuario_id = $1`, [NOVO]).then((r) => r.affectedRows)).resolves.toBe(0)
+    expect((await db.query('select count(*)::int as n from usuarios_senha_provisoria')).rows[0].n).toBe(1)
+  })
+
+  it('a pessoa não se livra da exigência sem trocar a senha de verdade', async () => {
+    await expect(como(NOVO, 'select public.gc_senha_trocada()')).rejects.toThrow(/ainda é a provisória/)
+    expect(await precisa(NOVO)).toBe(true)
+  })
+
+  it('quem não estava marcado chama a função sem efeito nem erro', async () => {
+    await como(OUTRO, 'select public.gc_senha_trocada()')
+    expect(await precisa(OUTRO)).toBe(false)
+  })
+
+  it('depois que o hash do login muda, a exigência cai', async () => {
+    await db.exec(`update auth.users set encrypted_password = 'hash-novo-escolhido-pela-pessoa' where id = '${NOVO}'`)
+    await como(NOVO, 'select public.gc_senha_trocada()')
+    expect(await precisa(NOVO)).toBe(false)
+  })
+
+  it('redefinir de novo volta a exigir a troca, com a nova referência', async () => {
+    await db.exec(`update auth.users set encrypted_password = 'hash-padrao-de-novo' where id = '${NOVO}'`)
+    await como('admin', 'select public.gc_marcar_senha_provisoria($1)', [NOVO])
+    expect(await precisa(NOVO)).toBe(true)
+    await expect(como(NOVO, 'select public.gc_senha_trocada()')).rejects.toThrow(/ainda é a provisória/)
+    await db.exec(`update auth.users set encrypted_password = 'outro-hash' where id = '${NOVO}'`)
+    await como(NOVO, 'select public.gc_senha_trocada()')
+    expect(await precisa(NOVO)).toBe(false)
+  })
+
+  it('sem login não há acesso às funções', async () => {
+    await expect(db.transaction(async (tx) => {
+      await tx.exec('set local role anon')
+      return tx.query('select public.gc_precisa_trocar_senha()')
+    })).rejects.toThrow(/permission denied/)
+  })
+})
+

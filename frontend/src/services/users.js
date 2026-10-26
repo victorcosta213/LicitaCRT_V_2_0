@@ -14,6 +14,7 @@ export async function getUserProfile(uid) {
 export function mensagemErroUsuario(err) {
   const msg = String(err?.message || '')
   if (/already (been )?registered|já está cadastrado/i.test(msg)) return 'Este e-mail já está cadastrado.'
+  if (err?.code === 'same_password' || /different from the old password/i.test(msg)) return 'A nova senha precisa ser diferente da atual.'
   if (err?.code === 'weak_password' || /password should be|at least/i.test(msg)) return 'Senha fraca: use pelo menos 8 caracteres, misturando letras e números.'
   if (/invalid.*email|email.*invalid/i.test(msg)) return 'E-mail inválido.'
   if (/rate limit|too many/i.test(msg)) return 'Muitas tentativas seguidas. Aguarde alguns minutos e tente de novo.'
@@ -41,7 +42,10 @@ function getSecondaryClient() {
   })
 }
 
-// Devolve { uid, precisaConfirmar }: precisaConfirmar = a pessoa ainda tem de clicar no e-mail para entrar
+// Devolve { uid, precisaConfirmar, trocaObrigatoria }:
+//  precisaConfirmar = a pessoa ainda tem de clicar no e-mail para entrar;
+//  trocaObrigatoria = o sistema vai exigir que ela crie a própria senha no primeiro acesso
+//  (false só se a migration 20261020 ainda não foi aplicada: o usuário é criado do mesmo jeito)
 export async function criarUsuario({ nome, email, password, role }) {
   const secondary = getSecondaryClient()
 
@@ -71,7 +75,36 @@ export async function criarUsuario({ nome, email, password, role }) {
   }])
 
   if (dbErr) throw dbErr
-  return { uid, precisaConfirmar: !authData.session }
+
+  // 3. A senha digitada pelo administrador é provisória: a pessoa cria a dela no primeiro acesso
+  const { error: provErr } = await supabase.rpc('gc_marcar_senha_provisoria', { p_uid: uid })
+  if (provErr) console.error('[users] não foi possível exigir a troca de senha:', provErr)
+  return { uid, precisaConfirmar: !authData.session, trocaObrigatoria: !provErr }
+}
+
+// O administrador devolve a senha de uma pessoa à senha padrão (segredo SENHA_PADRAO da Edge
+// Function resetar-senha); no próximo acesso a pessoa é obrigada a criar uma nova.
+export async function resetarSenha(uid) {
+  const { error } = await supabase.functions.invoke('resetar-senha', { body: { uid } })
+  if (error) throw new Error(await mensagemDaFuncao(error))
+}
+
+async function mensagemDaFuncao(error) {
+  const resposta = error?.context
+  if (resposta?.status === 404) return 'A função de redefinição ainda não foi publicada no Supabase (veja backend/README.md).'
+  try {
+    const corpo = await resposta?.json?.()
+    if (corpo?.erro) return corpo.erro
+  } catch { /* resposta sem corpo legível */ }
+  return 'Não foi possível redefinir a senha. Verifique a conexão e tente de novo.'
+}
+
+// Primeiro acesso: grava a senha escolhida e confirma ao banco que a provisória foi substituída
+export async function trocarSenhaPrimeiroAcesso(novaSenha) {
+  const { error } = await supabase.auth.updateUser({ password: novaSenha })
+  if (error) throw error
+  const { error: confirmaErr } = await supabase.rpc('gc_senha_trocada')
+  if (confirmaErr) throw confirmaErr
 }
 
 export async function atualizarUsuario(uid, { nome, role }) {

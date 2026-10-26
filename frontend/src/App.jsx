@@ -4,6 +4,7 @@ import AppLayout from './AppLayout'
 import Login from './pages/Login'
 import RedefinirSenha from './pages/RedefinirSenha'
 import SemAcesso from './pages/SemAcesso'
+import TrocarSenha from './pages/TrocarSenha'
 import Carregando from './components/Carregando'
 import { useAuth } from './context/AuthContext'
 import { PERFIS_COM_MESA, landingFor, normalizeRole } from './utils/permissions'
@@ -29,10 +30,11 @@ const Ajuda = lazy(() => import('./pages/Ajuda'))
 
 // Logado e com perfil ativo (mesma regra do banco).
 function Private({ children }) {
-  const { user, loading, acesso } = useAuth()
+  const { user, loading, acesso, precisaTrocarSenha } = useAuth()
   if (loading) return <Carregando />
   if (!user) return <Navigate to="/login" replace />
   if (acesso !== 'liberado') return <SemAcesso motivo={acesso} />
+  if (precisaTrocarSenha) return <TrocarSenha />
   return children
 }
 
