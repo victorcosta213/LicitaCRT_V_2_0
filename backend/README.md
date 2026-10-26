@@ -20,11 +20,15 @@ supabase/
                                       fila de e-mails (gc_notificacoes)
     20261019_atualizacao_automatica.sql  liga o Supabase Realtime nas tabelas do sistema: o que um
                                       setor envia ao outro aparece na tela do outro sem F5
+    20261020_senha_provisoria.sql     troca de senha no primeiro acesso e depois de redefinida pelo
+                                      administrador (tabela fechada + 3 funções)
   functions/enviar-notificacoes/      Edge Function que envia os e-mails da fila
+  functions/resetar-senha/            Edge Function: o administrador devolve a senha de alguém à senha padrão
   verificacao.sql                     checagem pós-migração (somente leitura)
 tests/
   migrations.test.js                  roda as migrations num Postgres em memória
   notificacoes.test.js                montagem dos e-mails
+  resetarSenha.test.js                regras da redefinição de senha
 ```
 
 ## Aplicar no Supabase
@@ -44,8 +48,32 @@ transação) e `verificar`. Apague o `.env` ao terminar.
 (o item 15 do `verificacao.sql` confere). Sem ela o sistema continua funcionando: as telas se
 atualizam sozinhas a cada minuto e ao voltar para a aba, só que sem a resposta imediata.
 
+**Senha provisória.** A migration `20261020` faz quem recebe um acesso novo (ou teve a senha
+redefinida) criar a própria senha no primeiro acesso (item 16 do `verificacao.sql`). Os logins
+que já existiam não são afetados. Sem a migration, o sistema funciona: só não exige a troca.
+
 Nova alteração de banco = novo arquivo em `migrations/` com a data no nome
 (`AAAAMMDD_descricao.sql`). Não edite migrations já aplicadas em produção.
+
+## Redefinição de senha pelo administrador
+O botão **Redefinir senha** (Administração → Usuários e perfis) devolve a senha de uma pessoa à
+**senha padrão**; ao entrar, ela é obrigada a criar uma nova. Só o servidor pode trocar a senha
+de outra pessoa, então isso roda numa Edge Function, e a senha padrão fica num **segredo** dela.
+Não use variável `VITE_…` para isso: ela iria dentro do site e ficaria visível a qualquer visitante.
+
+1. Aplique a migration `20261020_senha_provisoria.sql`.
+2. Com a [Supabase CLI](https://supabase.com/docs/guides/cli) (`supabase login` e `supabase link --project-ref <ref do projeto>`):
+   ```
+   supabase secrets set SENHA_PADRAO=<a senha padrão, mínimo de 8 caracteres>
+   supabase functions deploy resetar-senha
+   ```
+3. Para trocar a senha padrão no futuro, rode só o primeiro comando de novo. Quem já foi redefinido
+   continua com a senha antiga até ser redefinido outra vez.
+
+Sem a função publicada, o botão avisa "ainda não foi publicada" e nada é alterado. A função
+exige que quem chama seja **administrador ativo** e nunca devolve a senha na resposta.
+Enquanto uma pessoa não troca a senha padrão, qualquer um que a conheça entra na conta dela:
+redefina só quando ela for entrar logo em seguida.
 
 ## E-mails de tarefa (opcional)
 

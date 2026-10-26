@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   getUserProfile: vi.fn(),
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
+  rpc: vi.fn(),
 }))
 vi.mock('../../src/services/supabase', () => ({
   supabase: {
@@ -16,6 +17,7 @@ vi.mock('../../src/services/supabase', () => ({
       signInWithPassword: h.signInWithPassword,
       signOut: h.signOut,
     },
+    rpc: h.rpc,
   },
 }))
 vi.mock('../../src/services/users', () => ({ getUserProfile: h.getUserProfile }))
@@ -27,9 +29,10 @@ function Sonda() {
   return (
     <>
       <pre data-testid="auth">{JSON.stringify({
-        user: a.user?.id ?? null, role: a.role, acesso: a.acesso, nome: a.nome, loading: a.loading, isAdmin: a.isAdmin,
+        user: a.user?.id ?? null, role: a.role, acesso: a.acesso, nome: a.nome, loading: a.loading, isAdmin: a.isAdmin, trocar: a.precisaTrocarSenha,
       })}</pre>
       <button onClick={a.recarregarPerfil}>recarregar</button>
+      <button onClick={a.senhaTrocada}>senha trocada</button>
     </>
   )
 }
@@ -50,6 +53,7 @@ beforeEach(() => {
   h.getUserProfile.mockReset()
   h.signInWithPassword.mockReset().mockResolvedValue({ error: null })
   h.signOut.mockReset().mockResolvedValue({})
+  h.rpc.mockReset().mockResolvedValue({ data: false, error: null })
 })
 
 describe('AuthContext', () => {
@@ -106,3 +110,52 @@ describe('AuthContext', () => {
     expect(estado()).toMatchObject({ user: null, role: null, acesso: null })
   })
 })
+
+describe('AuthContext: senha provisória', () => {
+  const perfil = { id: 'u1', role: 'fiscal', ativo: true, nome: 'Ana' }
+
+  it('com a senha provisória, a pessoa fica retida até criar a dela', async () => {
+    h.rpc.mockResolvedValue({ data: true, error: null })
+    const e = await montar({ session: sessao, perfil })
+    expect(h.rpc).toHaveBeenCalledWith('gc_precisa_trocar_senha')
+    expect(e).toMatchObject({ acesso: 'liberado', trocar: true })
+  })
+
+  it('depois da troca confirmada, libera o uso do sistema', async () => {
+    h.rpc.mockResolvedValue({ data: true, error: null })
+    await montar({ session: sessao, perfil })
+    await act(async () => { screen.getByText('senha trocada').click() })
+    expect(estado().trocar).toBe(false)
+  })
+
+  it('uma leitura antiga que termina depois da troca não volta a reter a pessoa', async () => {
+    let responder
+    h.rpc.mockReturnValue(new Promise((r) => { responder = r }))
+    h.session = sessao
+    h.getUserProfile.mockResolvedValue(perfil)
+    render(<AuthProvider><Sonda /></AuthProvider>)
+    await waitFor(() => expect(h.rpc).toHaveBeenCalled())
+    await act(async () => { screen.getByText('senha trocada').click() })
+    await act(async () => { responder({ data: true, error: null }) })
+    expect(estado().trocar).toBe(false)
+  })
+
+  it('sem a migration (a consulta falha), ninguém fica trancado para fora', async () => {
+    h.rpc.mockResolvedValue({ data: null, error: { message: 'function public.gc_precisa_trocar_senha() does not exist' } })
+    const e = await montar({ session: sessao, perfil })
+    expect(e).toMatchObject({ acesso: 'liberado', trocar: false })
+  })
+
+  it('perfil inativo ou sem perfil nem consulta a senha provisória', async () => {
+    await montar({ session: sessao, perfil: null })
+    expect(h.rpc).not.toHaveBeenCalled()
+  })
+
+  it('no logout, a exigência é limpa', async () => {
+    h.rpc.mockResolvedValue({ data: true, error: null })
+    await montar({ session: sessao, perfil })
+    await act(async () => { h.listener('SIGNED_OUT', null) })
+    await waitFor(() => expect(estado().trocar).toBe(false))
+  })
+})
+

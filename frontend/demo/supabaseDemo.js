@@ -207,6 +207,10 @@ const atualizar = (tabela, linha, valores) => {
 }
 
 const RPC = {
+  // senha provisória: na demonstração ninguém precisa trocar a senha
+  gc_precisa_trocar_senha: () => false,
+  gc_marcar_senha_provisoria: () => null,
+  gc_senha_trocada: () => null,
   gc_encaminhar_contratacao({ p_contrato, p_tipo_ordem = 'os' }) {
     exigir(['compras', 'admin'].includes(papel()), 'Somente Compras encaminha a contratação à Gestão.')
     const c = achar('gc_contratos', p_contrato)
@@ -269,12 +273,12 @@ export function createClient() {
       await espera()
       if (!RPC[funcao]) return erro(`Função ${funcao} indisponível na demonstração`)
       try {
-        RPC[funcao](args || {})
-        return { data: null, error: null }
+        return { data: RPC[funcao](args || {}) ?? null, error: null }
       } catch (e) {
         return erro(e.message, 'P0001')
       }
     },
+    functions: { invoke: async () => ({ data: { ok: true }, error: null }) },
     auth: {
       getSession: async () => ({ data: { session: sessao() }, error: null }),
       onAuthStateChange(cb) {

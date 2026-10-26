@@ -98,6 +98,12 @@ with checks(ordem, ok, item, detalhe) as (
                       'gc_pendencias', 'gc_parametros', 'processos', 'usuarios']) as t
    where not exists (select 1 from pg_publication_tables
                       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t)
+
+  union all
+  select 16, to_regprocedure('public.gc_senha_trocada()') is not null
+             and to_regprocedure('public.gc_marcar_senha_provisoria(uuid)') is not null
+             and to_regclass('public.usuarios_senha_provisoria') is not null,
+         'Migration 20261020_senha_provisoria aplicada (troca de senha no primeiro acesso)', ''
 )
 select ordem, case when ok then '✅' else '⚠️' end as status, item, detalhe
   from checks

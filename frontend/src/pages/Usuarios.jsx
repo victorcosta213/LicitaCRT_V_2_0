@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import {
-  listarUsuarios, criarUsuario, atualizarUsuario, toggleAtivo, deletarUsuario, mensagemErroUsuario,
+  listarUsuarios, criarUsuario, atualizarUsuario, toggleAtivo, deletarUsuario, resetarSenha, mensagemErroUsuario,
 } from '../services/users'
 import Swal from 'sweetalert2'
 import Modal from 'bootstrap/js/dist/modal'
@@ -110,6 +110,25 @@ export default function Usuarios() {
     }
   }
 
+  const handleResetarSenha = async (u) => {
+    const result = await Swal.fire({
+      title: 'Redefinir a senha?',
+      text: `A senha de ${u.nome || u.email} voltará à senha padrão do sistema. No próximo acesso, a pessoa será obrigada a criar uma nova senha. Redefina só quando ela for entrar logo em seguida.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, redefinir',
+      cancelButtonText: 'Cancelar',
+    })
+    if (!result.isConfirmed) return
+    try {
+      await resetarSenha(u.id)
+      Swal.fire('Senha redefinida', `${u.nome || u.email} já pode entrar com a senha padrão. O sistema pedirá que ela crie uma nova senha.`, 'success')
+    } catch (err) {
+      console.error(err)
+      Swal.fire('Erro', mensagemErroUsuario(err), 'error')
+    }
+  }
+
   const handleDelete = async (u) => {
     const result = await Swal.fire({
       title: 'Tem certeza?',
@@ -142,10 +161,11 @@ export default function Usuarios() {
         await atualizarUsuario(editingId, { nome, role })
         Swal.fire('Atualizado', 'Os dados do usuário foram atualizados.', 'success')
       } else {
-        const { precisaConfirmar } = await criarUsuario({ nome, email: email.trim().toLowerCase(), password, role })
-        Swal.fire('Criado', precisaConfirmar
+        const { precisaConfirmar, trocaObrigatoria } = await criarUsuario({ nome, email: email.trim().toLowerCase(), password, role })
+        const trocar = trocaObrigatoria ? ' No primeiro acesso, ela será obrigada a criar a própria senha.' : ' Atenção: o sistema não conseguiu exigir a troca de senha no primeiro acesso.'
+        Swal.fire('Criado', (precisaConfirmar
           ? `Enviamos um e-mail de confirmação para ${email}. O acesso funciona depois que a pessoa clicar no link.`
-          : `${nome} já pode entrar com o e-mail ${email} e a senha informada. Repasse a senha por um canal seguro.`, 'success')
+          : `${nome} já pode entrar com o e-mail ${email} e a senha informada. Repasse a senha por um canal seguro.`) + trocar, trocaObrigatoria ? 'success' : 'warning')
       }
       modalRef.current?.hide()
       loadData()
@@ -306,6 +326,15 @@ export default function Usuarios() {
                     <button className="btn btn-sm btn-outline-secondary me-2" onClick={() => openEdit(u)} title="Editar">
                       <i className="bi bi-pencil" />
                     </button>
+                    <button
+                      className="btn btn-sm btn-outline-secondary me-2"
+                      onClick={() => handleResetarSenha(u)}
+                      title={u.id === eu?.id ? 'Você não pode redefinir a própria senha por aqui' : 'Redefinir para a senha padrão'}
+                      aria-label={`Redefinir senha de ${u.nome || u.email}`}
+                      disabled={u.id === eu?.id}
+                    >
+                      <i className="bi bi-key" />
+                    </button>
                     {/* o admin não desativa nem apaga a si mesmo (o banco também impede) */}
                     <button
                       className={`btn btn-sm ${u.ativo ? 'btn-outline-warning' : 'btn-outline-success'} me-2`}
@@ -385,7 +414,7 @@ export default function Usuarios() {
                     autoComplete="new-password"
                     disabled={submitting}
                   />
-                  <small className="text-muted">O usuário poderá redefinir a senha depois.</small>
+                  <small className="text-muted">Provisória: no primeiro acesso, a pessoa será obrigada a criar a própria senha.</small>
                 </div>
               )}
 
