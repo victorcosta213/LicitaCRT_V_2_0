@@ -9,6 +9,7 @@ import { salvarVarios } from '../../services/gc'
 import { showConfirm, showError, showSuccess } from '../../utils/alerts'
 import { competenciasFaltantes, fiscalPodeOperar } from '../../utils/contrato'
 import { fmtCompetencia } from '../../utils/format'
+import { isMaster } from '../../utils/permissions'
 
 export default function TabCompetencias({ k }) {
   const { can, salvar, role, user } = useGcActions()
@@ -19,7 +20,7 @@ export default function TabCompetencias({ k }) {
   const rows = k.competencias.map((comp) => ({ k, comp }))
 
   // §12: a NF é registrada pelo fiscal em atuação; a Gestão pode abrir competências em branco
-  const podeRegistrarNF = role === 'admin' || (can('competencia.fiscal') && fiscalPodeOperar(k, user?.id))
+  const podeRegistrarNF = isMaster(role) || (can('competencia.fiscal') && fiscalPodeOperar(k, user?.id))
   const podeAbrir = can('competencia.liberar')
 
   async function gerar() {

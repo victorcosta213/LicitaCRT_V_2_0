@@ -3,13 +3,17 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useGc } from '../context/GcContext'
 import { alertasDoPerfil } from '../utils/contrato'
-import { can, moduloDaRota, modulosFor } from '../utils/permissions'
+import { can, moduloDaRota, modulosFor, normalizeRole } from '../utils/permissions'
 import { useProcessosComPrazo } from './useProcessosComPrazo'
+import { useTarefasTramitacao } from './useTarefasTramitacao'
+import { useAssinaturasPendentes } from './useDocumentos'
+import { useTarefasSolicitacoes } from './useSolicitacoes'
+import { tarefaDeAssinatura } from '../utils/documentosPlataforma'
 
 // Módulos do perfil, módulo/tela abertos e as contagens mostradas no menu
 export function useNavegacao() {
-  const { role, user } = useAuth()
-  const { alertas = [], consolidados = [] } = useGc() || {}
+  const { role, user, profile } = useAuth()
+  const { alertas = [], consolidados = [], params } = useGc() || {}
   const { pathname } = useLocation()
 
   const modulos = useMemo(() => modulosFor(role), [role])
@@ -17,9 +21,21 @@ export function useNavegacao() {
 
   // quem opera as licitações vê também os processos com prazo na mesa
   const processos = useProcessosComPrazo(can(role, 'processo.editar'))
+  // processos que chegaram à minha unidade ou estão parados com ela
+  const tramites = useTarefasTramitacao({
+    ativo: !!role && normalizeRole(role) !== 'viewer', unidadeId: profile?.unidade_id, usuarioId: user?.id,
+    diasParado: Number(params?.tr_dias_parado) || undefined,
+  })
+
+  // documentos que esperam a minha assinatura
+  const assinar = useAssinaturasPendentes({ ativo: !!role && normalizeRole(role) !== 'viewer', usuarioId: user?.id })
+  // solicitações que esperam o Compras, ou que voltaram para a minha unidade corrigir
+  const pedidos = useTarefasSolicitacoes({
+    ativo: !!role && normalizeRole(role) !== 'viewer', ehCompras: can(role, 'compras.analisar'), usuarioId: user?.id, unidadeId: profile?.unidade_id,
+  })
 
   const contagens = useMemo(() => {
-    const minhas = [...alertasDoPerfil(alertas, role, user?.id).filter((a) => a.severidade !== 'info'), ...processos]
+    const minhas = [...alertasDoPerfil(alertas, role, user?.id).filter((a) => a.severidade !== 'info'), ...processos, ...tramites, ...assinar.map(tarefaDeAssinatura), ...pedidos]
     const atos = consolidados.filter((k) => k.c.portaria_status === 'aguardando_publicacao').length
       + consolidados.reduce((s, k) => s + k.b.os.filter((o) => !o.cancelado && o.status === 'aguardando_assinatura').length, 0)
     const criticas = minhas.filter((a) => a.severidade === 'danger').length
@@ -27,10 +43,11 @@ export function useNavegacao() {
       tarefas: minhas.length,
       criticas,
       atos,
-      porItem: { '/mesa': minhas.length, '/gabinete': atos },
-      porModulo: { mesa: minhas.length, gabinete: atos },
+      assinar: assinar.length,
+      porItem: { '/mesa': minhas.length, '/gabinete': atos, '/processos': tramites.length, '/documentos': assinar.length, '/solicitacoes': pedidos.length },
+      porModulo: { mesa: minhas.length, gabinete: atos, processos: tramites.length, documentos: assinar.length, compras: pedidos.length },
     }
-  }, [alertas, consolidados, role, user, processos])
+  }, [alertas, consolidados, role, user, processos, tramites, assinar, pedidos])
 
   // a Ajuda não pertence a um módulo: mantém o módulo à vista e indica a tela na trilha
   const item = pathname === '/ajuda' ? { to: '/ajuda', icon: 'bi-question-circle', label: 'Ajuda' } : atual.item

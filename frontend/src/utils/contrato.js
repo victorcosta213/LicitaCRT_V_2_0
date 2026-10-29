@@ -6,7 +6,7 @@ import {
   num, diasAte, hojeISO, fimDaCompetencia, parseISO, toISO, competenciaISO,
   fmtCompetencia, listaCompetencias, exercicioDe, brl,
 } from './format'
-import { normalizeRole } from './permissions'
+import { isMaster, normalizeRole } from './permissions'
 
 /* ------------------------------------------------------------------ */
 /* Dicionários                                                          */
@@ -271,7 +271,7 @@ export function minhaVez(k, comp, role, usuarioId) {
   const r = normalizeRole(role)
   const dono = comp.status.dono
   if (!dono) return false
-  if (r === 'admin') return true
+  if (isMaster(r)) return true
   if (dono === 'fiscal') return r === 'fiscal' && fiscalPodeOperar(k, usuarioId)
   return r === dono
 }
@@ -721,7 +721,7 @@ export function gerarAlertas(consolidados, params = {}, ref = new Date()) {
 // para quem está em atuação (titular, ou substituto acionado). Admin vê tudo.
 export function alertasDoPerfil(alertas, role, usuarioId) {
   const r = normalizeRole(role)
-  if (r === 'admin') return alertas
+  if (isMaster(r)) return alertas
   return alertas.filter((a) => {
     if (a.perfis && !a.perfis.includes(r)) return false
     if (r === 'fiscal' && a.usuarioId && a.usuarioId !== usuarioId) return false

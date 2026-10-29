@@ -7,7 +7,7 @@ import { PGlite } from '@electric-sql/pglite'
 
 const ler = (caminho) => readFileSync(new URL(caminho, import.meta.url), 'utf8')
 const MIGRATIONS = ['20261015_gestao_contratual.sql', '20261016_processos_importacao.sql',
-  '20261017_correcoes_producao.sql', '20261018_fluxo_funcional.sql', '20261019_atualizacao_automatica.sql', '20261020_senha_provisoria.sql']
+  '20261017_correcoes_producao.sql', '20261018_fluxo_funcional.sql', '20261019_atualizacao_automatica.sql', '20261020_senha_provisoria.sql', '20261021_tramitacao.sql', '20261022_perfil_presidente.sql', '20261023_perfis_setoriais.sql', '20261024_documentos_assinatura.sql', '20261025_solicitacoes_compras.sql', '20261026_fluxo_secretarias.sql']
   .map((f) => ler(`../supabase/migrations/${f}`))
 const [M1, M2, M3] = MIGRATIONS
 const VERIFICACAO = ler('../supabase/verificacao.sql')
@@ -17,6 +17,9 @@ const SUPABASE = `
   create role anon nologin;
   create role authenticated nologin;
   create schema auth;
+  create function auth.jwt() returns jsonb language sql stable as $$
+    select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
+  $$;
   create function auth.uid() returns uuid language sql stable as $$
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
@@ -56,7 +59,8 @@ async function novoBanco({ antes = '', migrations = MIGRATIONS } = {}) {
 const uid = (n) => `00000000-0000-0000-0000-${String(n).padStart(12, '0')}`
 const U = {
   admin: uid(1), compras: uid(2), gestor: uid(3), fiscal: uid(4), fiscal2: uid(5),
-  financeiro: uid(6), viewer: uid(7), inativo: uid(8), editor: uid(9), substituto: uid(10), gabinete: uid(11),
+  financeiro: uid(6), viewer: uid(7), inativo: uid(8), editor: uid(9), substituto: uid(10), gabinete: uid(11), presidente: uid(12),
+  juridico: uid(13), administrativo: uid(14), rh: uid(15), ti: uid(16), secretario: uid(17), secretario2: uid(18),
   semPerfil: uid(99),
 }
 const C1 = uid(101)
@@ -94,7 +98,12 @@ beforeAll(async () => {
       ('${U.inativo}', 'Ex-gestor', 'ex@x', 'gestor', false),
       ('${U.editor}', 'Editor', 'editor@x', 'editor', true),
       ('${U.substituto}', 'Substituto', 'substituto@x', 'fiscal', true),
-      ('${U.gabinete}', 'Gabinete', 'gabinete@x', 'gabinete', true);
+      ('${U.gabinete}', 'Gabinete', 'gabinete@x', 'gabinete', true),
+      ('${U.presidente}', 'Presidente', 'presidente@x', 'presidente', true),
+      ('${U.juridico}', 'Jurídico', 'juridico@x', 'juridico', true),
+      ('${U.administrativo}', 'Administrativo', 'adm@x', 'administrativo', true),
+      ('${U.rh}', 'RH', 'rh@x', 'rh', true),
+      ('${U.ti}', 'TI', 'ti@x', 'ti', true);
     insert into gc_contratos (id, numero, contratada, objeto, valor_inicial, situacao) values
       ('${C1}', '001/2026', 'ACME', 'Limpeza', 120000, 'ativo'),
       ('${C2}', '002/2026', 'Beta', 'Vigilância', 80000, 'ativo');
@@ -110,7 +119,7 @@ describe('migrations', () => {
     const outro = await novoBanco()
     for (const sql of MIGRATIONS) await outro.exec(sql)
     const { rows } = await outro.query(`select count(*)::int as n from gc_parametros`)
-    expect(rows[0].n).toBe(15)
+    expect(rows[0].n).toBe(16)
     await outro.close()
   }, 60000)
 
@@ -128,16 +137,16 @@ describe('migrations', () => {
 
   it('o script de verificação roda e confirma os itens resolvidos pela migration', async () => {
     const { rows } = await db.query(VERIFICACAO)
-    expect(rows).toHaveLength(16)
+    expect(rows).toHaveLength(22)
     const status = Object.fromEntries(rows.map((r) => [r.ordem, r.status]))
-    for (const ordem of [1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14, 16]) expect(status[ordem], `item ${ordem}`).toBe('✅')
-    expect(rows.find((r) => r.ordem === 12).detalhe).toMatch(/perfis ativos: 10 · processos: 1 · contratos: 2/)
+    for (const ordem of [1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22]) expect(status[ordem], `item ${ordem}`).toBe('✅')
+    expect(rows.find((r) => r.ordem === 12).detalhe).toMatch(/perfis ativos: 15 · processos: 1 · contratos: 2/)
   })
 })
 
 describe('perfis no banco (gc_role)', () => {
   it.each([
-    ['admin', 'admin'], ['gestor', 'gestor'], ['viewer', 'viewer'], ['editor', 'compras'], ['gabinete', 'gabinete'],
+    ['admin', 'admin'], ['presidente', 'admin'], ['gestor', 'gestor'], ['viewer', 'viewer'], ['editor', 'compras'], ['gabinete', 'gabinete'],
     ['inativo', 'sem_acesso'], ['semPerfil', 'sem_acesso'],
   ])('%s → %s', async (usuario, papel) => {
     const { rows } = await como(usuario, 'select public.gc_role() as r')
@@ -707,7 +716,7 @@ describe('atualização automática (Realtime)', () => {
 
   const REALTIME = ['gc_contratos', 'gc_responsaveis', 'gc_ordens_servico', 'gc_competencias', 'gc_empenhos',
     'gc_empenho_movs', 'gc_execucoes', 'gc_eventos', 'gc_ocorrencias', 'gc_documentos', 'gc_pendencias',
-    'gc_parametros', 'processos', 'usuarios']
+    'gc_parametros', 'processos', 'usuarios', 'tr_unidades', 'tr_processos', 'tr_tramitacoes', 'doc_documentos', 'doc_assinaturas', 'cp_solicitacoes', 'cp_eventos', 'cp_checklist', 'cp_itens']
   const M5 = MIGRATIONS[4]
   const publicadas = async (banco) => (await banco.query(
     `select tablename from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' order by 1`)).rows.map((r) => r.tablename)
@@ -813,3 +822,1031 @@ describe('senha provisória (primeiro acesso e redefinição)', () => {
   })
 })
 
+describe('tramitação de processos', () => {
+  const unidade = async (sigla) => (await db.query('select id from tr_unidades where sigla = $1', [sigla])).rows[0].id
+  const abrir = (quem, { tipo = 'Requerimento', assunto = 'Compra de cadeiras', destino = null, despacho = 'Para análise', prioridade = 'normal', prazo = null } = {}) =>
+    como(quem, 'select tr_abrir_processo($1, $2, $3, $4, $5, $6, $7, $8) as id', [tipo, assunto, 'Interessado', 'Descrição', prioridade, prazo, destino, despacho])
+  const estado = async (id) => (await db.query('select * from tr_processos where id = $1', [id])).rows[0]
+  const historico = async (id) => (await db.query('select tipo, de_unidade, para_unidade, para_usuario, despacho from tr_tramitacoes where processo_id = $1 order by id', [id])).rows
+  const visiveis = async (quem) => Number((await como(quem, 'select count(*)::int as n from tr_processos')).rows[0].n)
+  let COMP, GCON, FISC, FIN, PRES, ADM, P
+
+  beforeAll(async () => {
+    ;[COMP, GCON, FISC, FIN, PRES, ADM] = await Promise.all(['COMP', 'GCON', 'FISC', 'FIN', 'PRES', 'ADM'].map(unidade))
+    await db.exec(`
+      update usuarios set unidade_id = '${COMP}' where id in ('${U.compras}', '${U.editor}');
+      update usuarios set unidade_id = '${GCON}' where id = '${U.gestor}';
+      update usuarios set unidade_id = '${FISC}' where id = '${U.fiscal}';
+      update usuarios set unidade_id = '${ADM}' where id = '${U.fiscal2}';
+      update usuarios set unidade_id = '${FIN}' where id = '${U.financeiro}';
+      update usuarios set unidade_id = '${PRES}' where id = '${U.gabinete}';`)
+  })
+
+  it('vem com as unidades e o limite de dias parado', async () => {
+    expect((await db.query('select count(*)::int as n from tr_unidades')).rows[0].n).toBe(9)
+    expect((await db.query(`select valor from gc_parametros where chave = 'tr_dias_parado'`)).rows[0].valor).toBe(5)
+  })
+
+  describe('abertura', () => {
+    it('numera por ano em sequência e registra a abertura no histórico', async () => {
+      P = (await abrir('compras', { destino: GCON, prazo: '2026-12-31' })).rows[0].id
+      const p = await estado(P)
+      expect(p.numero).toMatch(/^\d{4}\/000001$/)
+      expect(p).toMatchObject({ unidade_atual: GCON, situacao: 'em_andamento', recebido_em: null, responsavel_atual: null, aberto_por: U.compras })
+      const outro = await estado((await abrir('compras', { destino: GCON })).rows[0].id)
+      expect(outro.numero).toMatch(/^\d{4}\/000002$/)
+      expect(await historico(P)).toEqual([{ tipo: 'abertura', de_unidade: COMP, para_unidade: GCON, para_usuario: null, despacho: 'Para análise' }])
+    })
+
+    it('sem destino, o processo fica na própria unidade, já recebido por quem abriu', async () => {
+      const p = await estado((await abrir('gestor')).rows[0].id)
+      expect(p).toMatchObject({ unidade_atual: GCON, responsavel_atual: U.gestor })
+      expect(p.recebido_em).not.toBeNull()
+    })
+
+    it('recusa quem não pode abrir, quem não tem unidade e dados inválidos', async () => {
+      await expect(abrir('viewer', { destino: GCON })).rejects.toThrow(/não pode abrir/)
+      await expect(abrir('substituto', { destino: GCON })).rejects.toThrow(/definir a sua unidade/)
+      await expect(abrir('compras', { assunto: ' x ' })).rejects.toThrow(/assunto/)
+      await expect(abrir('compras', { tipo: '' })).rejects.toThrow(/tipo/)
+      await expect(abrir('compras', { destino: uid(555) })).rejects.toThrow(/inexistente ou inativa/)
+      await expect(abrir('compras', { prioridade: 'qualquer' })).rejects.toMatchObject({ code: '23514' })
+    })
+
+    it('o administrador abre mesmo sem unidade, desde que informe o destino', async () => {
+      await expect(abrir('admin')).rejects.toThrow(/unidade de destino/)
+      const p = await estado((await abrir('admin', { destino: PRES })).rows[0].id)
+      expect(p.unidade_atual).toBe(PRES)
+    })
+
+    it('unidade desativada não recebe processos', async () => {
+      await db.exec(`update tr_unidades set ativa = false where sigla = 'RH'`)
+      const rh = await unidade('RH')
+      await expect(abrir('compras', { destino: rh })).rejects.toThrow(/inexistente ou inativa/)
+      await db.exec(`update tr_unidades set ativa = true where sigla = 'RH'`)
+    })
+  })
+
+  describe('quem vê cada processo', () => {
+    it('administração, gestão, gabinete e consulta veem todos; quem abriu e a unidade atual também', async () => {
+      const total = Number((await db.query('select count(*)::int as n from tr_processos')).rows[0].n)
+      for (const quem of ['admin', 'gestor', 'gabinete', 'viewer']) expect(await visiveis(quem), quem).toBe(total)
+      expect(await visiveis('compras')).toBeGreaterThanOrEqual(2) // os que abriu
+    })
+
+    it('quem não participou não vê (nem as movimentações)', async () => {
+      expect(await visiveis('fiscal')).toBe(0)
+      expect(await visiveis('financeiro')).toBe(0)
+      expect(Number((await como('fiscal', 'select count(*)::int as n from tr_tramitacoes')).rows[0].n)).toBe(0)
+    })
+
+    it('quem inativo ou sem perfil não vê nada', async () => {
+      expect(await visiveis('inativo')).toBe(0)
+      expect(await visiveis('semPerfil')).toBe(0)
+    })
+  })
+
+  describe('enviar para outra unidade', () => {
+    it('só a unidade onde o processo está pode enviar', async () => {
+      await expect(como('fiscal', 'select tr_tramitar($1, $2, null, $3, null)', [P, FISC, 'tentando'])).rejects.toThrow(/Somente a unidade/)
+      await expect(como('compras', 'select tr_tramitar($1, $2, null, $3, null)', [P, FISC, 'quem abriu não está mais com ele'])).rejects.toThrow(/Somente a unidade/)
+      await expect(como('viewer', 'select tr_tramitar($1, $2, null, $3, null)', [P, FISC, 'consulta'])).rejects.toThrow(/Somente a unidade/)
+    })
+
+    it('exige despacho e destino válido', async () => {
+      await expect(como('gestor', 'select tr_tramitar($1, $2, null, $3, null)', [P, FISC, ' '])).rejects.toThrow(/despacho/)
+      await expect(como('gestor', 'select tr_tramitar($1, null, null, $2, null)', [P, 'Despacho válido'])).rejects.toThrow(/inexistente ou inativa/)
+      await expect(como('gestor', 'select tr_tramitar($1, $2, null, $3, null)', [P, GCON, 'mesma unidade'])).rejects.toThrow(/já está nesta unidade/)
+      await expect(como('gestor', 'select tr_tramitar($1, $2, $3, $4, null)', [P, FISC, U.compras, 'pessoa de outra unidade'])).rejects.toThrow(/não está ativa nessa unidade/)
+    })
+
+    it('move o processo, zera o recebimento e registra no histórico', async () => {
+      await como('gestor', 'select tr_tramitar($1, $2, $3, $4, $5)', [P, FISC, U.fiscal, 'Verificar a especificação', '2026-11-30'])
+      const p = await estado(P)
+      expect(p).toMatchObject({ unidade_atual: FISC, responsavel_atual: U.fiscal, recebido_em: null })
+      expect(String(p.prazo.toISOString?.() ?? p.prazo)).toMatch(/2026-11-30/)
+      const h = await historico(P)
+      expect(h.at(-1)).toEqual({ tipo: 'envio', de_unidade: GCON, para_unidade: FISC, para_usuario: U.fiscal, despacho: 'Verificar a especificação' })
+    })
+
+    it('quem recebeu passa a ver o processo, e quem abriu continua vendo', async () => {
+      expect(await visiveis('fiscal')).toBe(1)
+      expect((await como('compras', 'select 1 from tr_processos where id = $1', [P])).rows).toHaveLength(1)
+    })
+  })
+
+  describe('receber', () => {
+    it('a unidade recebe uma vez; repetir não duplica o histórico', async () => {
+      await expect(como('financeiro', 'select tr_receber($1)', [P])).rejects.toThrow(/Somente a unidade/)
+      await como('fiscal', 'select tr_receber($1)', [P])
+      await como('fiscal', 'select tr_receber($1)', [P])
+      const p = await estado(P)
+      expect(p.recebido_em).not.toBeNull()
+      expect((await historico(P)).filter((h) => h.tipo === 'recebimento')).toHaveLength(1)
+    })
+  })
+
+  describe('alterar dados', () => {
+    it('só a unidade atual altera, com prioridade válida, e fica no histórico', async () => {
+      await expect(como('gestor', 'select tr_atualizar_dados($1, $2, null, null, $3, null)', [P, 'Novo assunto', 'alta'])).rejects.toThrow(/Somente a unidade/)
+      await expect(como('fiscal', 'select tr_atualizar_dados($1, $2, null, null, $3, null)', [P, 'Novo assunto', 'maxima'])).rejects.toThrow(/Prioridade inválida/)
+      await expect(como('fiscal', 'select tr_atualizar_dados($1, $2, null, null, $3, null)', [P, '  ', 'alta'])).rejects.toThrow(/assunto/)
+      await como('fiscal', 'select tr_atualizar_dados($1, $2, $3, null, $4, $5)', [P, 'Compra de cadeiras ergonômicas', 'Fulano', 'alta', '2026-12-15'])
+      expect(await estado(P)).toMatchObject({ assunto: 'Compra de cadeiras ergonômicas', interessado: 'Fulano', prioridade: 'alta' })
+      expect((await historico(P)).at(-1).tipo).toBe('alteracao')
+    })
+  })
+
+  describe('concluir e reabrir', () => {
+    it('exige o motivo, e depois de concluído não envia nem altera', async () => {
+      await expect(como('fiscal', 'select tr_concluir($1, $2)', [P, ' '])).rejects.toThrow(/Informe como/)
+      await expect(como('gestor', 'select tr_concluir($1, $2)', [P, 'não é a unidade'])).rejects.toThrow(/Somente a unidade/)
+      await como('fiscal', 'select tr_concluir($1, $2)', [P, 'Cadeiras entregues e conferidas'])
+      const p = await estado(P)
+      expect(p).toMatchObject({ situacao: 'concluido', motivo_conclusao: 'Cadeiras entregues e conferidas' })
+      expect(p.concluido_em).not.toBeNull()
+      await expect(como('fiscal', 'select tr_tramitar($1, $2, null, $3, null)', [P, GCON, 'devolver'])).rejects.toThrow(/concluído/)
+      await expect(como('fiscal', 'select tr_atualizar_dados($1, $2, null, null, $3, null)', [P, 'Outro', 'normal'])).rejects.toThrow(/concluído/)
+      await expect(como('fiscal', 'select tr_concluir($1, $2)', [P, 'de novo'])).rejects.toThrow(/já está concluído/)
+    })
+
+    it('a gestão reabre mesmo sem estar na unidade; consulta não', async () => {
+      await expect(como('viewer', 'select tr_reabrir($1, $2)', [P, 'quero ver'])).rejects.toThrow(/não pode reabrir/)
+      await expect(como('gestor', 'select tr_reabrir($1, $2)', [P, ''])).rejects.toThrow(/motivo/)
+      await como('gestor', 'select tr_reabrir($1, $2)', [P, 'Faltou uma peça'])
+      expect(await estado(P)).toMatchObject({ situacao: 'em_andamento', concluido_em: null, motivo_conclusao: null, recebido_em: null })
+      expect((await historico(P)).map((h) => h.tipo)).toEqual(['abertura', 'envio', 'recebimento', 'alteracao', 'conclusao', 'reabertura'])
+    })
+  })
+
+  describe('nomes no histórico', () => {
+    it('grava o nome de quem fez cada movimentação, mesmo para quem não lê a tabela de usuários', async () => {
+      const h = (await db.query('select tipo, criada_por_nome, para_usuario_nome from tr_tramitacoes where processo_id = $1 order by id', [P])).rows
+      expect(h[0]).toMatchObject({ tipo: 'abertura', criada_por_nome: 'Compras' })
+      expect(h[1]).toMatchObject({ tipo: 'envio', criada_por_nome: 'Gestor', para_usuario_nome: 'Fiscal' })
+      expect(h[2]).toMatchObject({ tipo: 'recebimento', criada_por_nome: 'Fiscal' })
+      const p = await estado(P)
+      expect(p.aberto_por_nome).toBe('Compras')
+    })
+
+    it('o responsável atual acompanha quem recebeu', async () => {
+      const novo = (await abrir('gestor', { destino: FISC })).rows[0].id
+      expect((await estado(novo)).responsavel_nome).toBeNull()
+      await como('fiscal', 'select tr_receber($1)', [novo])
+      expect((await estado(novo)).responsavel_nome).toBe('Fiscal')
+    })
+
+    it('lista as pessoas ativas da unidade; consulta e inativos não usam', async () => {
+      const nomes = (await como('gestor', 'select * from tr_pessoas_da_unidade($1)', [FISC])).rows.map((r) => r.nome)
+      expect(nomes).toEqual(['Fiscal'])
+      expect((await como('viewer', 'select * from tr_pessoas_da_unidade($1)', [FISC])).rows).toEqual([])
+    })
+  })
+
+  describe('proteções', () => {
+    it('ninguém grava direto nas tabelas, nem o dono do processo', async () => {
+      await expect(como('compras', `insert into tr_processos (numero, tipo, assunto) values ('9999/000001', 'x', 'direto')`)).rejects.toThrow(/row-level security|permission denied/)
+      expect((await como('compras', `update tr_processos set assunto = 'alterado direto' where id = $1`, [P]).catch(() => ({ affectedRows: 0 }))).affectedRows).toBe(0)
+      expect((await como('admin', `delete from tr_tramitacoes where processo_id = $1`, [P]).catch(() => ({ affectedRows: 0 }))).affectedRows).toBe(0)
+      expect((await historico(P)).length).toBe(6)
+    })
+
+    it('só o administrador cria e altera unidades; todos leem', async () => {
+      await expect(como('compras', `insert into tr_unidades (sigla, nome) values ('X', 'Nova')`)).rejects.toThrow(/row-level security|permission denied/)
+      await como('admin', `insert into tr_unidades (sigla, nome) values ('OUV', 'Ouvidoria')`)
+      expect((await como('admin', `update tr_unidades set nome = 'Ouvidoria Geral' where sigla = 'OUV'`)).affectedRows).toBe(1)
+      expect((await como('fiscal', `update tr_unidades set nome = 'X' where sigla = 'OUV'`).catch(() => ({ affectedRows: 0 }))).affectedRows).toBe(0)
+      expect(Number((await como('fiscal', 'select count(*)::int as n from tr_unidades')).rows[0].n)).toBeGreaterThanOrEqual(10)
+    })
+
+    it('sem login as funções não executam; e ninguém chama o gerador de número direto', async () => {
+      await expect(db.transaction(async (tx) => {
+        await tx.exec('set local role anon')
+        return tx.query('select tr_receber($1)', [P])
+      })).rejects.toThrow(/permission denied/)
+      await expect(como('compras', 'select tr_proximo_numero()')).rejects.toThrow(/permission denied/)
+    })
+
+    it('o administrador pode atuar em qualquer processo', async () => {
+      await como('admin', 'select tr_tramitar($1, $2, null, $3, null)', [P, ADM, 'Encaminhado pela administração'])
+      expect((await estado(P)).unidade_atual).toBe(ADM)
+    })
+  })
+})
+
+describe('perfil presidente (usuário mestre)', () => {
+  let UNI, COMP2
+  beforeAll(async () => {
+    UNI = (await db.query(`select id from tr_unidades where sigla = 'FIN'`)).rows[0].id
+    COMP2 = (await db.query(`select id from tr_unidades where sigla = 'COMP'`)).rows[0].id
+  })
+
+  it('o perfil gravado continua "presidente", mas as regras o tratam como administrador', async () => {
+    expect((await db.query('select role from usuarios where id = $1', [U.presidente])).rows[0].role).toBe('presidente')
+    expect((await como('presidente', 'select public.gc_role() as r')).rows[0].r).toBe('admin')
+  })
+
+  it('presidente desativado perde o acesso, como qualquer outro', async () => {
+    await db.exec(`update usuarios set ativo = false where id = '${U.presidente}'`)
+    expect((await como('presidente', 'select public.gc_role() as r')).rows[0].r).toBe('sem_acesso')
+    expect(await contar('presidente', 'gc_contratos')).toBe(0)
+    await db.exec(`update usuarios set ativo = true where id = '${U.presidente}'`)
+  })
+
+  it('vê tudo: contratações, processos, histórico e todos os perfis', async () => {
+    const total = async (t) => Number((await db.query(`select count(*)::int as n from ${t}`)).rows[0].n)
+    for (const t of ['gc_contratos', 'gc_competencias', 'usuarios', 'tr_processos', 'tr_tramitacoes', 'processos']) {
+      expect(await contar('presidente', t), t).toBe(await total(t))
+    }
+    expect(await contar('presidente', 'tr_processos')).toBeGreaterThan(0)
+  })
+
+  it('faz o que cada setor faz: cadastra contratação e abre processo sem ter unidade', async () => {
+    const r = await como('presidente', `insert into gc_contratos (numero, contratada, objeto, valor_inicial) values ('P01/2026', 'X', 'Y', 10) returning id`)
+    expect(r.rows).toHaveLength(1)
+    const id = (await como('presidente', 'select tr_abrir_processo($1, $2, null, null, $3, null, $4, $5) as id',
+      ['Requerimento', 'Processo aberto pelo presidente', 'normal', UNI, 'Para análise'])).rows[0].id
+    expect(id).toBeTruthy()
+  })
+
+  it('movimenta qualquer processo, mesmo fora da sua unidade, e o histórico registra o nome dele', async () => {
+    const id = (await db.query(`select id from tr_processos where aberto_por_nome = 'Presidente' limit 1`)).rows[0].id
+    await como('presidente', 'select tr_receber($1)', [id])
+    await como('presidente', 'select tr_tramitar($1, $2, null, $3, null)', [id, COMP2, 'Encaminhado pela presidência'])
+    const h = (await db.query('select tipo, criada_por_nome, despacho from tr_tramitacoes where processo_id = $1 order by id', [id])).rows
+    expect(h.map((x) => x.tipo)).toEqual(['abertura', 'recebimento', 'envio'])
+    expect(h.every((x) => x.criada_por_nome === 'Presidente')).toBe(true)
+  })
+
+  it('administra: cria usuários e unidades, altera parâmetros e redefine senhas', async () => {
+    await como('presidente', `insert into usuarios (id, nome, email, role, ativo) values ('${uid(70)}', 'Novo', 'novo70@x', 'fiscal', true)`)
+    await como('presidente', `insert into tr_unidades (sigla, nome) values ('GAB2', 'Gabinete 2')`)
+    expect((await como('presidente', `update gc_parametros set valor = '"gestor"' where chave = 'atesto_por'`)).affectedRows).toBe(1)
+    await db.exec(`insert into auth.users (id, email, encrypted_password) values ('${uid(70)}', 'novo70@x', 'h') on conflict do nothing`)
+    await como('presidente', 'select public.gc_marcar_senha_provisoria($1)', [uid(70)])
+  })
+
+  it('o perfil é aceito no cadastro de usuários (e perfis inventados continuam recusados)', async () => {
+    await como('admin', `insert into usuarios (id, nome, email, role, ativo) values ('${uid(71)}', 'Outro Presidente', 'p71@x', 'presidente', true)`)
+    await expect(como('admin', `insert into usuarios (id, nome, email, role, ativo) values ('${uid(72)}', 'X', 'x72@x', 'superadmin', true)`))
+      .rejects.toMatchObject({ code: '23514' })
+  })
+
+  it('ninguém se promove a presidente (só o administrador/presidente define perfis)', async () => {
+    expect((await como('gestor', `update usuarios set role = 'presidente' where id = $1`, [U.gestor])).affectedRows).toBe(0)
+    expect((await db.query('select role from usuarios where id = $1', [U.gestor])).rows[0].role).toBe('gestor')
+  })
+
+  it('o gestor, sem ser presidente, continua sem poder administrar', async () => {
+    await expect(como('gestor', `insert into tr_unidades (sigla, nome) values ('NAO', 'Não')`)).rejects.toThrow(/row-level security|permission denied/)
+    await expect(como('gestor', 'select public.gc_marcar_senha_provisoria($1)', [uid(70)])).rejects.toThrow(/Somente o administrador/)
+  })
+})
+
+describe('perfis setoriais (Jurídico, Administrativo, RH e TI)', () => {
+  it('cada um vale pelo próprio perfil', async () => {
+    for (const p of ['juridico', 'administrativo', 'rh', 'ti']) {
+      expect((await como(p, 'select public.gc_role() as r')).rows[0].r, p).toBe(p)
+    }
+  })
+
+  it('o perfil é aceito no cadastro de usuários', async () => {
+    await como('admin', `insert into usuarios (id, nome, email, role, ativo) values ('${uid(80)}', 'Nova', 'n80@x', 'juridico', true)`)
+  })
+
+  it('o Jurídico acompanha as contratações em modo leitura, sem gravar', async () => {
+    const total = Number((await db.query('select count(*)::int as n from gc_contratos')).rows[0].n)
+    expect(await contar('juridico', 'gc_contratos')).toBe(total)
+    expect(await contar('juridico', 'processos')).toBeGreaterThan(0)
+    await expect(como('juridico', `insert into gc_contratos (numero, contratada, objeto, valor_inicial) values ('J1/2026', 'X', 'Y', 1)`)).rejects.toThrow(/row-level security/)
+    expect((await como('juridico', `update gc_contratos set objeto = 'alterado' where id = $1`, [C1])).affectedRows).toBe(0)
+  })
+
+  it.each(['rh', 'ti', 'administrativo'])('%s não vê contratações nem processos licitatórios', async (perfil) => {
+    for (const tabela of ['gc_contratos', 'gc_competencias', 'gc_responsaveis', 'gc_ordens_servico', 'gc_empenhos', 'processos']) {
+      expect(await contar(perfil, tabela), `${perfil} em ${tabela}`).toBe(0)
+    }
+  })
+
+  it.each(['rh', 'ti', 'administrativo'])('%s também não grava contratações', async (perfil) => {
+    await expect(como(perfil, `insert into gc_contratos (numero, contratada, objeto, valor_inicial) values ('Z/2026', 'X', 'Y', 1)`)).rejects.toThrow(/row-level security/)
+  })
+
+  it('quem era fiscal ou viewer continua com o mesmo alcance', async () => {
+    const total = Number((await db.query('select count(*)::int as n from gc_contratos')).rows[0].n)
+    const doFiscal = Number((await db.query('select count(distinct contrato_id)::int as n from gc_responsaveis where usuario_id = $1 and ativo', [U.fiscal])).rows[0].n)
+    expect(await contar('viewer', 'gc_contratos')).toBe(total)
+    expect(await contar('fiscal', 'gc_contratos')).toBe(doFiscal)
+  })
+
+  it.each(['juridico', 'administrativo', 'rh', 'ti'])('%s abre processo administrativo, mas só se tiver unidade', async (perfil) => {
+    const dest = (await db.query(`select id from tr_unidades where sigla = 'GCON'`)).rows[0].id
+    await expect(como(perfil, 'select tr_abrir_processo($1, $2, null, null, $3, null, $4, null)', ['Requerimento', 'Teste de perfil', 'normal', dest]))
+      .rejects.toThrow(/definir a sua unidade/)
+    const sigla = { juridico: 'JUR', administrativo: 'ADM', rh: 'RH', ti: 'TI' }[perfil]
+    await db.exec(`update usuarios set unidade_id = (select id from tr_unidades where sigla = '${sigla}') where id = '${U[perfil]}'`)
+    const r = await como(perfil, 'select tr_abrir_processo($1, $2, null, null, $3, null, $4, null) as id', ['Requerimento', `Aberto por ${perfil}`, 'normal', dest])
+    expect(r.rows[0].id).toBeTruthy()
+  })
+
+  it('a consulta continua sem poder abrir processos', async () => {
+    await expect(como('viewer', 'select tr_abrir_processo($1, $2, null, null, $3, null, null, null)', ['Requerimento', 'Teste', 'normal'])).rejects.toThrow(/não pode abrir/)
+  })
+})
+
+describe('documentos e assinatura eletrônica', () => {
+  const CORPO = [{ t: 'titulo', x: 'OFÍCIO' }, { t: 'p', x: 'Solicitamos providências.' }]
+  const sigla = (n) => (n === 'oficio' ? 'OF' : 'DS')
+  const criar = (quem, { modelo = 'oficio', titulo = 'Ofício de teste', processo = null, corpo = CORPO, conteudo = { assunto: 'x' } } = {}) =>
+    como(quem, 'select doc_criar($1, $2, 1, $3, $4, $5::jsonb, $6::jsonb) as id', [sigla(modelo), modelo, titulo, processo, JSON.stringify(conteudo), JSON.stringify(corpo)])
+  const doc = async (id) => (await db.query('select * from doc_documentos where id = $1', [id])).rows[0]
+  const assinaturas = async (id) => (await db.query('select usuario_id, status, versao, hash, ip, agente, motivo_recusa, metodo from doc_assinaturas where documento_id = $1 order by id', [id])).rows
+  const enviar = (quem, id, assinantes) => como(quem, 'select doc_enviar_assinatura($1, $2::jsonb)', [id, JSON.stringify(assinantes.map(([u, papel]) => ({ usuario_id: U[u] ?? u, papel })))])
+  // executa como o usuário, com a senha digitada há `segundosAtras` segundos (null = sem login por senha)
+  const comoAssinando = (quem, sql, params = [], { segundosAtras = 5, headers = {} } = {}) => db.transaction(async (tx) => {
+    await tx.query(`select set_config('request.jwt.claim.sub', $1, true)`, [U[quem]])
+    const claims = { sub: U[quem], amr: segundosAtras === null ? [] : [{ method: 'password', timestamp: Math.floor(Date.now() / 1000) - segundosAtras }] }
+    await tx.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify(claims)])
+    await tx.query(`select set_config('request.headers', $1, true)`, [JSON.stringify({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1', 'user-agent': 'Teste/1.0', ...headers })])
+    await tx.exec('set local role authenticated')
+    return tx.query(sql, params)
+  })
+  const assinar = (quem, id, opcoes) => comoAssinando(quem, 'select doc_assinar($1)', [id], opcoes)
+  const verificar = (codigo) => db.transaction(async (tx) => {
+    await tx.exec('set local role anon')
+    return (await tx.query('select public.doc_verificar($1) as r', [codigo])).rows[0].r
+  })
+  const semGuarda = async (fn) => {
+    await db.exec('alter table doc_documentos disable trigger trg_doc_guard')
+    try { return await fn() } finally { await db.exec('alter table doc_documentos enable trigger trg_doc_guard') }
+  }
+
+  let COMP, JUR, PROC, ID
+  beforeAll(async () => {
+    COMP = (await db.query(`select id from tr_unidades where sigla = 'COMP'`)).rows[0].id
+    JUR = (await db.query(`select id from tr_unidades where sigla = 'JUR'`)).rows[0].id
+    await db.exec(`update usuarios set unidade_id = '${JUR}' where id = '${U.juridico}'`)
+    PROC = (await como('compras', 'select tr_abrir_processo($1, $2, null, null, $3, null, $4, null) as id', ['Contratação', 'Processo dos documentos', 'normal', COMP])).rows[0].id
+  })
+
+  describe('criação e edição', () => {
+    it('numera por tipo e ano, em sequência, e grava a unidade e o autor', async () => {
+      ID = (await criar('compras')).rows[0].id
+      const d = await doc(ID)
+      expect(d.numero).toMatch(/^OF-\d{4}\/000001$/)
+      expect(d).toMatchObject({ status: 'rascunho', versao: 1, unidade_id: COMP, criado_por: U.compras, criado_por_nome: 'Compras', hash: null, codigo_verificacao: null })
+      expect((await doc((await criar('compras')).rows[0].id)).numero).toMatch(/^OF-\d{4}\/000002$/)
+      expect((await doc((await criar('compras', { modelo: 'despacho' })).rows[0].id)).numero).toMatch(/^DS-\d{4}\/000001$/)
+    })
+
+    it('a consulta não cria; modelo e título precisam ser válidos', async () => {
+      await expect(criar('viewer')).rejects.toThrow(/não pode criar/)
+      await expect(criar('compras', { titulo: ' ' })).rejects.toThrow(/título/)
+      await expect(como('compras', `select doc_criar('x', 'oficio', 1, 'Título', null, '{}', '[]')`)).rejects.toThrow(/Modelo inválido/)
+      await expect(como('compras', `select doc_criar('OF', 'Oficio Inválido', 1, 'Título', null, '{}', '[]')`)).rejects.toThrow(/Modelo inválido/)
+    })
+
+    it('só vincula a processo que a pessoa pode ver', async () => {
+      await expect(criar('financeiro', { processo: PROC })).rejects.toThrow(/não tem acesso a este processo/)
+      expect((await criar('compras', { processo: PROC })).rows[0].id).toBeTruthy()
+    })
+
+    it('o autor e a sua unidade editam o rascunho; os demais, não', async () => {
+      await como('compras', 'select doc_salvar($1, $2, $3::jsonb, $4::jsonb)', [ID, 'Ofício revisado', '{"assunto":"y"}', JSON.stringify(CORPO)])
+      expect((await doc(ID)).titulo).toBe('Ofício revisado')
+      await db.exec(`update usuarios set unidade_id = '${COMP}' where id = '${U.editor}'`)
+      await como('editor', 'select doc_salvar($1, $2, $3::jsonb, $4::jsonb)', [ID, 'Revisado pela unidade', '{}', JSON.stringify(CORPO)])
+      await expect(como('financeiro', 'select doc_salvar($1, $2, $3::jsonb, $4::jsonb)', [ID, 'Invasor', '{}', '[]'])).rejects.toThrow(/não pode mais ser editado/)
+      await expect(como('viewer', 'select doc_salvar($1, $2, $3::jsonb, $4::jsonb)', [ID, 'Consulta', '{}', '[]'])).rejects.toThrow(/não pode mais ser editado/)
+    })
+
+    it('ninguém grava direto nas tabelas', async () => {
+      await expect(como('compras', `insert into doc_documentos (numero, sigla, modelo, titulo) values ('OF-2026/999999', 'OF', 'oficio', 'direto')`)).rejects.toThrow(/row-level security|permission denied/)
+      expect((await como('compras', `update doc_documentos set titulo = 'direto' where id = $1`, [ID]).catch(() => ({ affectedRows: 0 }))).affectedRows).toBe(0)
+      expect((await como('admin', `delete from doc_documentos where id = $1`, [ID]).catch(() => ({ affectedRows: 0 }))).affectedRows).toBe(0)
+    })
+  })
+
+  describe('quem vê o documento', () => {
+    it('autor, unidade, administração e quem vê o processo; os demais, não', async () => {
+      const ligado = (await criar('compras', { processo: PROC })).rows[0].id
+      const solto = (await criar('compras')).rows[0].id
+      const ve = async (quem, id) => (await como(quem, 'select 1 from doc_documentos where id = $1', [id])).rows.length === 1
+      for (const quem of ['compras', 'editor', 'admin', 'presidente']) expect(await ve(quem, solto), `${quem} vê o avulso`).toBe(true)
+      for (const quem of ['financeiro', 'fiscal', 'rh', 'viewer', 'gestor']) expect(await ve(quem, solto), `${quem} não vê o avulso`).toBe(false)
+      // vinculado a processo: segue a regra do processo (gestão, gabinete e consulta veem todos os processos)
+      for (const quem of ['gestor', 'gabinete', 'viewer']) expect(await ve(quem, ligado), `${quem} vê o do processo`).toBe(true)
+      for (const quem of ['financeiro', 'fiscal', 'rh']) expect(await ve(quem, ligado), `${quem} não vê o do processo`).toBe(false)
+    })
+
+    it('inativo e sem perfil não veem nada', async () => {
+      expect(await contar('inativo', 'doc_documentos')).toBe(0)
+      expect(await contar('semPerfil', 'doc_documentos')).toBe(0)
+    })
+  })
+
+  describe('enviar para assinatura', () => {
+    let D
+    beforeAll(async () => { D = (await criar('compras', { titulo: 'Ofício para assinatura', processo: PROC })).rows[0].id })
+
+    it('exige texto, signatários válidos e sem repetição', async () => {
+      const vazio = (await criar('compras', { corpo: [] })).rows[0].id
+      await expect(enviar('compras', vazio, [['gabinete', 'Presidente']])).rejects.toThrow(/vazio/)
+      await expect(enviar('compras', D, [])).rejects.toThrow(/de 1 a 10 pessoas/)
+      await expect(enviar('compras', D, [['gabinete', 'A'], ['gabinete', 'B']])).rejects.toThrow(/mais de uma vez/)
+      await expect(enviar('compras', D, [['viewer', 'Consulta']])).rejects.toThrow(/não pode assinar/)
+      await expect(enviar('compras', D, [['inativo', 'Ex']])).rejects.toThrow(/não pode assinar/)
+      await expect(enviar('compras', D, [['gabinete', ' ']])).rejects.toThrow(/papel/)
+      await expect(enviar('financeiro', D, [['gabinete', 'Presidente']])).rejects.toThrow(/não pode ser enviado/)
+      expect((await doc(D)).status).toBe('rascunho') // nada ficou pela metade
+      expect(await assinaturas(D)).toEqual([])
+    })
+
+    it('congela o conteúdo, grava o hash e gera o código de verificação', async () => {
+      await enviar('compras', D, [['gabinete', 'Presidente'], ['juridico', 'Jurídico']])
+      const d = await doc(D)
+      expect(d.status).toBe('aguardando_assinatura')
+      expect(d.hash).toMatch(/^[0-9a-f]{64}$/)
+      expect(d.hash).toBe((await db.query('select doc_hash($1, $2, $3::jsonb) as h', [d.numero, d.titulo, JSON.stringify(d.corpo)])).rows[0].h)
+      expect(d.codigo_verificacao).toMatch(/^[0-9A-F]{12}$/)
+      expect((await assinaturas(D)).map((a) => [a.usuario_id, a.status])).toEqual([[U.gabinete, 'pendente'], [U.juridico, 'pendente']])
+    })
+
+    it('registra no histórico do processo', async () => {
+      const h = (await db.query(`select despacho from tr_tramitacoes where processo_id = $1 and tipo = 'documento' order by id`, [PROC])).rows.map((r) => r.despacho)
+      expect(h.some((t) => /enviado para assinatura/.test(t))).toBe(true)
+    })
+
+    it('depois de enviado, ninguém altera o texto (nem por dentro do banco)', async () => {
+      await expect(como('compras', 'select doc_salvar($1, $2, $3::jsonb, $4::jsonb)', [D, 'Outro', '{}', '[]'])).rejects.toThrow(/não pode mais ser editado/)
+      await expect(db.exec(`update doc_documentos set corpo = '[{"t":"p","x":"fraude"}]'::jsonb where id = '${D}'`)).rejects.toThrow(/não pode ser alterado/)
+      await expect(db.exec(`update doc_documentos set titulo = 'Fraude' where id = '${D}'`)).rejects.toThrow(/não pode ser alterado/)
+      await expect(db.exec(`delete from doc_documentos where id = '${D}'`)).rejects.toThrow(/não são apagados/)
+    })
+
+    it('o signatário passa a ver o documento, mesmo de outra unidade', async () => {
+      expect((await como('gabinete', 'select 1 from doc_documentos where id = $1', [D])).rows).toHaveLength(1)
+      expect((await como('juridico', 'select 1 from doc_assinaturas where documento_id = $1', [D])).rows.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('assinar', () => {
+    let D
+    beforeAll(async () => {
+      D = (await criar('compras', { titulo: 'Para assinar', processo: PROC })).rows[0].id
+      await enviar('compras', D, [['gabinete', 'Presidente'], ['juridico', 'Jurídico']])
+    })
+
+    it('só assina quem foi escolhido', async () => {
+      await expect(assinar('financeiro', D)).rejects.toThrow(/não tem assinatura pendente/)
+      await expect(assinar('compras', D)).rejects.toThrow(/não tem assinatura pendente/)
+    })
+
+    it('sem a senha digitada agora há pouco, não assina (mesmo logado)', async () => {
+      await expect(assinar('gabinete', D, { segundosAtras: null })).rejects.toThrow(/Confirme a sua senha/)
+      await expect(assinar('gabinete', D, { segundosAtras: 600 })).rejects.toThrow(/Confirme a sua senha/)
+      expect((await assinaturas(D)).every((a) => a.status === 'pendente')).toBe(true)
+    })
+
+    it('assina com a senha recente e o servidor grava hash, IP, navegador e método', async () => {
+      await assinar('gabinete', D)
+      const a = (await assinaturas(D)).find((x) => x.usuario_id === U.gabinete)
+      expect(a).toMatchObject({ status: 'assinada', ip: '203.0.113.7', agente: 'Teste/1.0', hash: (await doc(D)).hash })
+      expect(a.metodo).toMatch(/avançada/)
+      expect((await doc(D)).status).toBe('aguardando_assinatura') // falta o Jurídico
+    })
+
+    it('não assina duas vezes', async () => {
+      await expect(assinar('gabinete', D)).rejects.toThrow(/não tem assinatura pendente/)
+    })
+
+    it('com todas as assinaturas, o documento fica assinado e o histórico do processo registra', async () => {
+      await assinar('juridico', D)
+      const d = await doc(D)
+      expect(d.status).toBe('assinado')
+      expect(d.assinado_em).not.toBeNull()
+      const h = (await db.query(`select despacho from tr_tramitacoes where processo_id = $1 and tipo = 'documento' order by id`, [PROC])).rows.map((r) => r.despacho)
+      expect(h.some((t) => /assinado por todos os signatários/.test(t))).toBe(true)
+    })
+
+    it('a assinatura feita não pode ser alterada nem desfeita', async () => {
+      await expect(db.exec(`update doc_assinaturas set status = 'pendente' where documento_id = '${D}' and usuario_id = '${U.gabinete}'`)).rejects.toThrow(/não pode ser alterada/)
+      await expect(db.exec(`update doc_assinaturas set hash = 'x' where documento_id = '${D}' and usuario_id = '${U.gabinete}'`)).rejects.toThrow(/não pode ser alterada/)
+      await expect(db.exec(`delete from doc_assinaturas where documento_id = '${D}'`)).rejects.toThrow(/não são apagadas/)
+    })
+
+    it('se o conteúdo foi adulterado por baixo dos panos, a assinatura é recusada', async () => {
+      const T = (await criar('compras', { titulo: 'Adulterado' })).rows[0].id
+      await enviar('compras', T, [['gabinete', 'Presidente']])
+      await semGuarda(() => db.exec(`update doc_documentos set corpo = '[{"t":"p","x":"texto trocado"}]'::jsonb where id = '${T}'`))
+      await expect(assinar('gabinete', T)).rejects.toThrow(/não confere/)
+      expect((await doc(T)).status).toBe('aguardando_assinatura')
+    })
+  })
+
+  describe('recusar e cancelar', () => {
+    it('a recusa devolve o documento para edição, em nova versão, e as outras assinaturas caem', async () => {
+      const R = (await criar('compras', { titulo: 'Será recusado' })).rows[0].id
+      await enviar('compras', R, [['gabinete', 'Presidente'], ['juridico', 'Jurídico']])
+      await expect(como('gabinete', 'select doc_recusar($1, $2)', [R, ' '])).rejects.toThrow(/motivo/)
+      await expect(como('financeiro', 'select doc_recusar($1, $2)', [R, 'não sou signatário'])).rejects.toThrow(/não tem assinatura pendente/)
+      await como('gabinete', 'select doc_recusar($1, $2)', [R, 'Faltou o anexo'])
+      const d = await doc(R)
+      expect(d).toMatchObject({ status: 'rascunho', versao: 2, hash: null })
+      expect((await assinaturas(R)).map((a) => a.status)).toEqual(['recusada', 'cancelada'])
+      expect((await assinaturas(R))[0].motivo_recusa).toBe('Faltou o anexo')
+      // volta a ser editável e pode ser reenviado; as assinaturas novas são da versão 2
+      await como('compras', 'select doc_salvar($1, $2, $3::jsonb, $4::jsonb)', [R, 'Corrigido', '{}', JSON.stringify(CORPO)])
+      await enviar('compras', R, [['gabinete', 'Presidente']])
+      expect((await assinaturas(R)).filter((a) => a.versao === 2).map((a) => a.status)).toEqual(['pendente'])
+      await assinar('gabinete', R)
+      expect((await doc(R)).status).toBe('assinado')
+    })
+
+    it('só o autor ou a administração cancela, com motivo; o documento fica registrado como cancelado', async () => {
+      const C = (await criar('compras', { titulo: 'Cancelável' })).rows[0].id
+      await enviar('compras', C, [['gabinete', 'Presidente']])
+      await expect(como('gabinete', 'select doc_cancelar($1, $2)', [C, 'não é meu'])).rejects.toThrow(/Só quem criou/)
+      await expect(como('compras', 'select doc_cancelar($1, $2)', [C, ' '])).rejects.toThrow(/motivo/)
+      await como('compras', 'select doc_cancelar($1, $2)', [C, 'Emitido por engano'])
+      expect(await doc(C)).toMatchObject({ status: 'cancelado', motivo_cancelamento: 'Emitido por engano' })
+      expect((await assinaturas(C)).map((a) => a.status)).toEqual(['cancelada'])
+      await expect(assinar('gabinete', C)).rejects.toThrow(/não está aguardando assinatura/)
+      await expect(como('compras', 'select doc_cancelar($1, $2)', [C, 'de novo'])).rejects.toThrow(/já está cancelado/)
+    })
+
+    it('documento assinado também pode ser cancelado (a assinatura fica no registro)', async () => {
+      const A = (await criar('compras', { titulo: 'Assinado e cancelado' })).rows[0].id
+      await enviar('compras', A, [['gabinete', 'Presidente']])
+      await assinar('gabinete', A)
+      await como('admin', 'select doc_cancelar($1, $2)', [A, 'Substituído por outro'])
+      expect((await doc(A)).status).toBe('cancelado')
+      expect((await assinaturas(A)).map((a) => a.status)).toEqual(['assinada'])
+    })
+  })
+
+  describe('conferência pública', () => {
+    let D, CODIGO
+    beforeAll(async () => {
+      D = (await criar('compras', { titulo: 'Ofício confidencial' })).rows[0].id
+      await enviar('compras', D, [['gabinete', 'Presidente']])
+      CODIGO = (await doc(D)).codigo_verificacao
+    })
+
+    it('sem login, confere pelo código, com ou sem hífens e em qualquer caixa', async () => {
+      await assinar('gabinete', D)
+      for (const forma of [CODIGO, CODIGO.toLowerCase(), `${CODIGO.slice(0, 4)}-${CODIGO.slice(4, 8)}-${CODIGO.slice(8)}`, ` ${CODIGO} `]) {
+        const r = await verificar(forma)
+        expect(r).toMatchObject({ encontrado: true, situacao: 'assinado', integro: true })
+      }
+    })
+
+    it('mostra número, hash e quem assinou, mas nunca o título nem o conteúdo', async () => {
+      const r = await verificar(CODIGO)
+      expect(r.numero).toMatch(/^OF-/)
+      expect(r.hash).toMatch(/^[0-9a-f]{64}$/)
+      expect(r.assinaturas).toEqual([expect.objectContaining({ nome: 'Gabinete', papel: 'Presidente', situacao: 'assinada' })])
+      expect(JSON.stringify(r)).not.toMatch(/confidencial|Solicitamos/)
+    })
+
+    it('código desconhecido não revela nada', async () => {
+      expect(await verificar('ZZZZZZZZZZZZ')).toEqual({ encontrado: false })
+      expect(await verificar('')).toEqual({ encontrado: false })
+      expect(await verificar(null)).toEqual({ encontrado: false })
+    })
+
+    it('se o texto for adulterado depois, a conferência acusa que não está íntegro', async () => {
+      await semGuarda(() => db.exec(`update doc_documentos set corpo = '[{"t":"p","x":"adulterado"}]'::jsonb where id = '${D}'`))
+      expect((await verificar(CODIGO)).integro).toBe(false)
+    })
+
+    it('documento cancelado aparece como cancelado', async () => {
+      await como('compras', 'select doc_cancelar($1, $2)', [D, 'Cancelado após conferência'])
+      expect(await verificar(CODIGO)).toMatchObject({ situacao: 'cancelado' })
+    })
+
+    it('a conferência é a única função aberta a quem não está logado', async () => {
+      for (const [sql, params] of [
+        ['select doc_criar($1, $1, 1, $1, null, null, null)', ['x']], ['select doc_pessoas()', []], ['select doc_assinar($1::uuid)', [uid(1)]],
+      ]) {
+        await expect(db.transaction(async (tx) => {
+          await tx.exec('set local role anon')
+          return tx.query(sql, params)
+        }), sql).rejects.toThrow(/permission denied/)
+      }
+    })
+  })
+
+  describe('apoio', () => {
+    it('lista as pessoas que podem assinar, sem consulta e sem inativos; a consulta não usa', async () => {
+      const nomes = (await como('compras', 'select * from doc_pessoas()')).rows.map((r) => r.nome)
+      expect(nomes).toEqual(expect.arrayContaining(['Gabinete', 'Jurídico', 'Presidente']))
+      expect(nomes).not.toContain('Viewer')
+      expect(nomes).not.toContain('Ex-gestor')
+      expect((await como('viewer', 'select * from doc_pessoas()')).rows).toEqual([])
+    })
+
+    it('define o tipo de contratação do processo, com valores válidos, só pela unidade do processo', async () => {
+      await como('compras', 'select tr_definir_contratacao($1, $2, $3)', [PROC, 'pregao', 'servicos-continuos-demo'])
+      expect((await db.query('select contratacao_modalidade, contratacao_objeto from tr_processos where id = $1', [PROC])).rows[0])
+        .toEqual({ contratacao_modalidade: 'pregao', contratacao_objeto: 'servicos-continuos-demo' })
+      await expect(como('compras', 'select tr_definir_contratacao($1, $2, $3)', [PROC, 'leilao', null])).rejects.toThrow(/Forma de contratação inválida/)
+      await expect(como('compras', 'select tr_definir_contratacao($1, $2, $3)', [PROC, null, 'foguete'])).rejects.toThrow(/Tipo de objeto inválido/)
+      await expect(como('financeiro', 'select tr_definir_contratacao($1, $2, $3)', [PROC, 'pregao', null])).rejects.toThrow(/Somente a unidade/)
+      await como('compras', 'select tr_definir_contratacao($1, null, null)', [PROC])
+      expect((await db.query('select contratacao_modalidade from tr_processos where id = $1', [PROC])).rows[0].contratacao_modalidade).toBeNull()
+    })
+  })
+})
+
+describe('solicitações ao Compras e processos de contratação', () => {
+  // DFD assinada da secretaria de `quem` (o secretário é o único que cria DFD)
+  const novoDfd = async (quem, { assinado = true } = {}) => {
+    const id = (await como(quem, `select doc_criar('DFD', 'dfd', 1, 'DFD de cadeiras', null, '{}'::jsonb, '[{"t":"p","x":"DFD"}]'::jsonb) as id`)).rows[0].id
+    if (assinado) await db.query(`update doc_documentos set status = 'assinado', assinado_em = now() where id = $1`, [id])
+    return id
+  }
+  const enviar = async (quem, d = {}) => {
+    const documento = 'documento' in d ? d.documento : await novoDfd(quem).catch(() => null)
+    return como(quem, 'select cp_enviar_solicitacao($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) as id', [
+      d.tipo ?? 'dfd', documento, d.objeto ?? 'Aquisição de 20 cadeiras ergonômicas', d.quantidade ?? '20 unidades',
+      d.justificativa ?? 'As cadeiras atuais estão quebradas e causam afastamentos.', d.objeto_tipo ?? 'bens-permanentes',
+      d.valor ?? 15000, d.data ?? '2026-12-01', d.prioridade ?? 'alta', d.pca ?? 'sim',
+    ])
+  }
+  const sol = async (id) => (await db.query('select * from cp_solicitacoes where id = $1', [id])).rows[0]
+  const eventos = async (id) => (await db.query('select tipo, texto, criada_por_nome from cp_eventos where solicitacao_id = $1 order by id', [id])).rows
+  const aceitar = (quem, id, modalidade = 'pregao', objeto = null) =>
+    como(quem, 'select cp_aceitar_solicitacao($1, $2, $3, null, $4) as id', [id, modalidade, objeto, 'Seguir com o ETP'])
+
+  let COMP, SAUDE, EDUC
+  beforeAll(async () => {
+    const u = async (s) => (await db.query('select id from tr_unidades where sigla = $1', [s])).rows[0].id
+    await db.exec(`insert into tr_unidades (sigla, nome) values ('SMS', 'Secretaria de Saúde'), ('SEMED', 'Secretaria de Educação') on conflict do nothing`)
+    COMP = await u('COMP'); SAUDE = await u('SMS'); EDUC = await u('SEMED')
+    await db.exec(`
+      insert into usuarios (id, nome, email, role, ativo, unidade_id) values
+        ('${U.secretario}', 'Secretária de Saúde', 'saude@x', 'secretario', true, '${SAUDE}'),
+        ('${U.secretario2}', 'Secretário de Educação', 'educ@x', 'secretario', true, '${EDUC}')
+      on conflict (id) do nothing;
+      update usuarios set unidade_id = '${COMP}' where id = '${U.compras}';
+      update usuarios set unidade_id = '${SAUDE}' where id = '${U.rh}';`)
+  })
+
+  describe('o secretário envia a DFD', () => {
+    it('numera, grava a secretaria, quem pediu e o histórico', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      const s = await sol(id)
+      expect(s.numero).toMatch(/^SOL-\d{4}\/000001$/)
+      expect(s).toMatchObject({ status: 'enviada', tipo: 'dfd', unidade_id: SAUDE, solicitante: U.secretario, solicitante_nome: 'Secretária de Saúde', prioridade: 'alta' })
+      expect(await eventos(id)).toEqual([{ tipo: 'envio', texto: null, criada_por_nome: 'Secretária de Saúde' }])
+    })
+
+    it('valida o essencial e as escolhas', async () => {
+      await expect(enviar('secretario', { objeto: 'abc' })).rejects.toThrow(/Descreva o que precisa/)
+      await expect(enviar('secretario', { justificativa: 'curta' })).rejects.toThrow(/por que a contratação/)
+      await expect(enviar('secretario', { prioridade: 'maxima' })).rejects.toThrow(/Prioridade inválida/)
+      await expect(enviar('secretario', { objeto_tipo: 'foguete' })).rejects.toThrow(/Tipo de objeto inválido/)
+      await expect(enviar('secretario', { pca: 'talvez' })).rejects.toThrow(/Plano de Contratações/)
+      await expect(enviar('secretario', { valor: -1 })).rejects.toThrow(/negativo/)
+    })
+
+    it('só o secretário cria a DFD e faz o pedido; os outros setores, não', async () => {
+      for (const quem of ['rh', 'compras', 'gestor', 'juridico', 'financeiro']) {
+        await expect(como(quem, `select doc_criar('DFD', 'dfd', 1, 'DFD', null, '{}'::jsonb, '[]'::jsonb)`), quem).rejects.toThrow(/Somente o secretário cria a DFD/)
+        await expect(enviar(quem, { documento: null }), quem).rejects.toThrow(/Somente o secretário envia/)
+      }
+      await expect(enviar('viewer', { documento: null })).rejects.toThrow(/Somente o secretário envia/)
+      // os demais documentos continuam livres para todos os perfis de trabalho
+      await expect(como('rh', `select doc_criar('OF', 'oficio', 1, 'Ofício', null, '{}'::jsonb, '[]'::jsonb)`)).resolves.toBeTruthy()
+    })
+
+    it('sem DFD assinada não há pedido; a DFD não pode estar em outro processo ou pedido', async () => {
+      await expect(enviar('secretario', { tipo: 'solicitacao', documento: null })).rejects.toThrow(/feito com a DFD assinada/)
+      await expect(enviar('secretario', { documento: null })).rejects.toThrow(/Escolha o DFD/)
+      const rascunho = await novoDfd('secretario', { assinado: false })
+      await expect(enviar('secretario', { documento: rascunho })).rejects.toThrow(/precisa estar assinado/)
+      const oficio = (await como('secretario', `select doc_criar('OF', 'oficio', 1, 'Ofício', null, '{}'::jsonb, '[]'::jsonb) as id`)).rows[0].id
+      await expect(enviar('secretario', { documento: oficio })).rejects.toThrow(/não é um DFD/)
+      const deOutra = await novoDfd('secretario2')
+      await expect(enviar('secretario', { documento: deOutra })).rejects.toThrow(/DFD não encontrado/)
+      const dfd = await novoDfd('secretario')
+      await enviar('secretario', { documento: dfd })
+      await expect(enviar('secretario', { documento: dfd })).rejects.toThrow(/já foi enviado/)
+    })
+
+    it('quem vê: a secretaria, o Compras e quem acompanha; outra secretaria não', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      for (const quem of ['secretario', 'rh', 'compras', 'gestor', 'gabinete', 'viewer', 'admin', 'presidente']) {
+        expect((await como(quem, 'select 1 from cp_solicitacoes where id = $1', [id])).rows, quem).toHaveLength(1)
+      }
+      for (const quem of ['secretario2', 'financeiro', 'juridico']) {
+        expect((await como(quem, 'select 1 from cp_solicitacoes where id = $1', [id])).rows, quem).toHaveLength(0)
+        expect((await como(quem, 'select 1 from cp_eventos where solicitacao_id = $1', [id])).rows, quem).toHaveLength(0)
+      }
+    })
+
+    it('o Compras lê a DFD anexada antes mesmo de aceitar', async () => {
+      const dfd = await novoDfd('secretario')
+      expect((await como('compras', 'select 1 from doc_documentos where id = $1', [dfd])).rows).toHaveLength(0)
+      await enviar('secretario', { documento: dfd })
+      expect((await como('compras', 'select 1 from doc_documentos where id = $1', [dfd])).rows).toHaveLength(1)
+      expect((await como('secretario2', 'select 1 from doc_documentos where id = $1', [dfd])).rows).toHaveLength(0)
+    })
+
+    it('ninguém grava direto nas tabelas', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      const nada = (p) => p.then((r) => r.affectedRows).catch(() => 0)
+      await expect(como('secretario', `insert into cp_solicitacoes (numero, tipo, objeto, justificativa) values ('X', 'solicitacao', 'abcdef', 'abcdefghijk')`)).rejects.toThrow(/row-level security|permission denied/)
+      expect(await nada(como('compras', `update cp_solicitacoes set status = 'aceita' where id = $1`, [id]))).toBe(0)
+      expect(await nada(como('admin', `delete from cp_eventos where solicitacao_id = $1`, [id]))).toBe(0)
+      await expect(como('compras', `insert into cp_checklist (processo_id, item, situacao) values ($1, 'edital', 'juntado')`, [uid(1)])).rejects.toThrow(/row-level security|permission denied|foreign key/)
+      expect((await sol(id)).status).toBe('enviada')
+      expect(await eventos(id)).toHaveLength(1)
+    })
+  })
+
+  describe('o Compras analisa', () => {
+    it('só o Compras (e a administração) devolve, recusa e aceita', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      for (const quem of ['secretario', 'gestor', 'financeiro', 'viewer']) {
+        await expect(como(quem, 'select cp_devolver_solicitacao($1, $2)', [id, 'Ajustar']), quem).rejects.toThrow(/Somente o Compras/)
+        await expect(aceitar(quem, id), quem).rejects.toThrow(/Somente o Compras/)
+      }
+    })
+
+    it('devolve com o motivo; o secretário refaz a DFD e reenvia; volta para análise', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      await expect(como('compras', 'select cp_devolver_solicitacao($1, $2)', [id, ''])).rejects.toThrow(/precisa ser ajustado/)
+      await como('compras', 'select cp_devolver_solicitacao($1, $2)', [id, 'Informe a quantidade por sala.'])
+      expect(await sol(id)).toMatchObject({ status: 'devolvida', motivo: 'Informe a quantidade por sala.', analisada_por_nome: 'Compras' })
+      await expect(aceitar('compras', id)).rejects.toThrow(/aguardando análise/)
+
+      const nova = await novoDfd('secretario')
+      const reenviar = (quem, doc = nova) => como(quem, 'select cp_reenviar_solicitacao($1, $2, $3, $4, $5, $6, null, null, null, $7, null, $8)',
+        [id, 'dfd', doc, 'Aquisição de 20 cadeiras ergonômicas', '10 na sala 1 e 10 na sala 2', 'As cadeiras atuais estão quebradas.', 'normal', 'Quantidade detalhada.'])
+      await expect(reenviar('secretario2')).rejects.toThrow(/Só o secretário que fez/)
+      await expect(reenviar('rh')).rejects.toThrow(/Só o secretário que fez/) // mesma secretaria, mas não é secretário
+      await reenviar('secretario')
+      expect(await sol(id)).toMatchObject({ status: 'enviada', documento_id: nova, quantidade: '10 na sala 1 e 10 na sala 2', prioridade: 'normal' })
+      expect((await eventos(id)).map((e) => e.tipo)).toEqual(['envio', 'devolucao', 'reenvio'])
+      await expect(reenviar('secretario')).rejects.toThrow(/Só uma solicitação devolvida/)
+    })
+
+    it('recusa com motivo e não deixa mais mexer', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      await como('compras', 'select cp_recusar_solicitacao($1, $2)', [id, 'Item já disponível no almoxarifado.'])
+      expect(await sol(id)).toMatchObject({ status: 'recusada', motivo: 'Item já disponível no almoxarifado.' })
+      await expect(como('secretario', 'select cp_cancelar_solicitacao($1, $2)', [id, 'Não precisa'])).rejects.toThrow(/não pode mais ser cancelada/)
+      await expect(aceitar('compras', id)).rejects.toThrow(/aguardando análise/)
+    })
+
+    it('a secretaria cancela enquanto não foi aceita', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      await expect(como('secretario2', 'select cp_cancelar_solicitacao($1, $2)', [id, 'Errado'])).rejects.toThrow(/Só quem fez/)
+      await como('secretario', 'select cp_cancelar_solicitacao($1, $2)', [id, 'Pedido duplicado'])
+      expect((await sol(id)).status).toBe('cancelada')
+    })
+
+    describe('aceitar abre o processo de contratação', () => {
+      let S, PROC, DFD
+      beforeAll(async () => {
+        DFD = await novoDfd('secretario')
+        S = (await enviar('secretario', { documento: DFD, prioridade: 'urgente' })).rows[0].id
+      })
+
+      it('valida a forma de contratação e o tipo de objeto', async () => {
+        await expect(aceitar('compras', S, null)).rejects.toThrow(/Escolha a forma de contratação/)
+        await expect(aceitar('compras', S, 'leilao')).rejects.toThrow(/Escolha a forma de contratação/)
+        await expect(aceitar('compras', S, 'pregao', 'foguete')).rejects.toThrow(/Tipo de objeto inválido/)
+        expect((await sol(S)).status).toBe('enviada')
+      })
+
+      it('cria o processo no Compras, com a contratação definida, e liga a solicitação', async () => {
+        PROC = (await aceitar('compras', S, 'pregao')).rows[0].id
+        const p = (await db.query('select * from tr_processos where id = $1', [PROC])).rows[0]
+        expect(p).toMatchObject({
+          tipo: 'Contratação', assunto: 'Aquisição de 20 cadeiras ergonômicas', unidade_atual: COMP, responsavel_atual: U.compras,
+          contratacao_modalidade: 'pregao', contratacao_objeto: 'bens-permanentes', prioridade: 'urgente', interessado: 'SMS — Secretaria de Saúde',
+        })
+        expect(p.recebido_em).not.toBeNull()
+        expect(p.descricao).toMatch(/Justificativa da demanda: As cadeiras/)
+        expect(await sol(S)).toMatchObject({ status: 'aceita', processo_id: PROC })
+        expect((await eventos(S)).at(-1)).toMatchObject({ tipo: 'aceite', texto: `Processo ${p.numero} aberto.` })
+      })
+
+      it('a DFD passa a fazer parte do processo e o histórico registra', async () => {
+        expect((await db.query('select processo_id from doc_documentos where id = $1', [DFD])).rows[0].processo_id).toBe(PROC)
+        const h = (await db.query('select tipo, de_unidade, para_unidade, despacho from tr_tramitacoes where processo_id = $1 order by id', [PROC])).rows
+        expect(h[0]).toMatchObject({ tipo: 'abertura', de_unidade: SAUDE, para_unidade: COMP })
+        expect(h[0].despacho).toMatch(/Aberto a partir da solicitação SOL-.*Seguir com o ETP/)
+        expect(h[1]).toMatchObject({ tipo: 'documento' })
+        expect(h[1].despacho).toMatch(/^DFD DFD-\d{4}\/\d+ juntado ao processo\.$/)
+      })
+
+      it('a secretaria acompanha o processo; outra secretaria não', async () => {
+        expect((await como('secretario', 'select 1 from tr_processos where id = $1', [PROC])).rows).toHaveLength(1)
+        expect((await como('secretario2', 'select 1 from tr_processos where id = $1', [PROC])).rows).toHaveLength(0)
+      })
+
+      it('registra o processo no quadro do módulo licitatório (que o secretário não lê)', async () => {
+        const numero = (await db.query('select numero from tr_processos where id = $1', [PROC])).rows[0].numero
+        expect((await db.query('select numero, objeto, etapa, tipo, modalidade, unidade_demandante, valor_estimado from processos where tr_processo_id = $1', [PROC])).rows[0])
+          .toEqual({ numero, objeto: 'Aquisição de 20 cadeiras ergonômicas', etapa: 'Aberto', tipo: 'Pregao', modalidade: 'Pregão', unidade_demandante: 'Secretaria de Saúde', valor_estimado: '15000.00' })
+        expect(await contar('secretario', 'processos')).toBe(0)
+        expect(await contar('compras', 'processos')).toBeGreaterThan(0)
+      })
+
+      it('não aceita duas vezes', async () => {
+        await expect(aceitar('compras', S)).rejects.toThrow(/aguardando análise/)
+      })
+
+      it('a secretaria acompanha tudo depois que o processo sai do Compras: onde está, histórico, documentos e assinaturas', async () => {
+        const JUR = (await db.query(`select id from tr_unidades where sigla = 'JUR'`)).rows[0].id
+        const OF = (await como('compras', `select doc_criar('OF', 'oficio', 1, 'Ofício ao Jurídico', $1, '{}'::jsonb, '[{"t":"p","x":"x"}]'::jsonb) as id`, [PROC])).rows[0].id
+        await como('compras', `select doc_enviar_assinatura($1, '[{"usuario_id":"${U.juridico}","papel":"Parecerista"}]'::jsonb)`, [OF])
+        await como('compras', 'select tr_tramitar($1, $2, null, $3, null)', [PROC, JUR, 'Para parecer jurídico'])
+        expect((await como('secretario', 'select unidade_atual, recebido_em from tr_processos where id = $1', [PROC])).rows[0]).toEqual({ unidade_atual: JUR, recebido_em: null })
+        const h = (await como('secretario', 'select tipo, despacho from tr_tramitacoes where processo_id = $1 order by id', [PROC])).rows
+        expect(h.at(-1)).toEqual({ tipo: 'envio', despacho: 'Para parecer jurídico' })
+        expect((await como('secretario', 'select 1 from doc_documentos where id = $1', [OF])).rows).toHaveLength(1)
+        expect((await como('secretario', `select status from doc_assinaturas where documento_id = $1`, [OF])).rows).toEqual([{ status: 'pendente' }])
+        expect((await como('secretario2', 'select 1 from tr_processos where id = $1', [PROC])).rows).toHaveLength(0)
+        // devolve ao Compras para os testes seguintes
+        await como('juridico', 'select tr_receber($1)', [PROC])
+        await como('juridico', 'select tr_tramitar($1, $2, null, $3, null)', [PROC, COMP, 'Parecer emitido'])
+        await como('compras', 'select tr_receber($1)', [PROC])
+      })
+
+      describe('roteiro de documentos do processo', () => {
+        const marcar = (quem, item, situacao, ref) => como(quem, 'select cp_marcar_item($1, $2, $3, $4)', [PROC, item, situacao, ref])
+        const marcas = async () => (await db.query('select item, situacao, referencia, marcado_por_nome from cp_checklist where processo_id = $1 order by item', [PROC])).rows
+
+        it('marca como juntado (com referência) ou "não se aplica" (com justificativa)', async () => {
+          await expect(marcar('compras', 'publicacao-edital', 'juntado', '')).rejects.toThrow(/onde o documento está/)
+          await expect(marcar('compras', 'garantia', 'nao_se_aplica', 'não')).rejects.toThrow(/Justifique/)
+          await expect(marcar('compras', 'Item Inválido', 'juntado', 'fls. 10')).rejects.toThrow(/Item inválido/)
+          await expect(marcar('compras', 'edital', 'feito', 'fls. 10')).rejects.toThrow(/Situação inválida/)
+          await marcar('compras', 'publicacao-edital', 'juntado', 'PNCP nº 123/2026')
+          await marcar('compras', 'garantia', 'nao_se_aplica', 'Edital não exige garantia contratual.')
+          expect(await marcas()).toEqual([
+            { item: 'garantia', situacao: 'nao_se_aplica', referencia: 'Edital não exige garantia contratual.', marcado_por_nome: 'Compras' },
+            { item: 'publicacao-edital', situacao: 'juntado', referencia: 'PNCP nº 123/2026', marcado_por_nome: 'Compras' },
+          ])
+          const h = (await db.query(`select despacho from tr_tramitacoes where processo_id = $1 and tipo = 'documento' order by id`, [PROC])).rows.map((r) => r.despacho)
+          expect(h).toContain('Documento juntado (publicacao-edital): PNCP nº 123/2026')
+        })
+
+        it('remarcar atualiza; desfazer apaga e registra', async () => {
+          await marcar('compras', 'publicacao-edital', 'juntado', 'PNCP nº 124/2026')
+          expect((await marcas()).find((m) => m.item === 'publicacao-edital').referencia).toBe('PNCP nº 124/2026')
+          await como('compras', 'select cp_desmarcar_item($1, $2)', [PROC, 'garantia'])
+          expect((await marcas()).map((m) => m.item)).toEqual(['publicacao-edital'])
+        })
+
+        it('só a unidade onde o processo está marca; quem acompanha só lê', async () => {
+          await expect(marcar('secretario', 'edital', 'juntado', 'fls. 10')).rejects.toThrow(/Somente a unidade/)
+          await expect(como('secretario', 'select cp_desmarcar_item($1, $2)', [PROC, 'publicacao-edital'])).rejects.toThrow(/Somente a unidade/)
+          expect((await como('secretario', 'select item from cp_checklist where processo_id = $1', [PROC])).rows).toHaveLength(1)
+          expect((await como('secretario2', 'select item from cp_checklist where processo_id = $1', [PROC])).rows).toHaveLength(0)
+        })
+
+        it('processo concluído não aceita marcação', async () => {
+          await como('compras', 'select tr_concluir($1, $2)', [PROC, 'Contratação concluída'])
+          await expect(marcar('compras', 'edital', 'juntado', 'fls. 10')).rejects.toThrow(/concluído/)
+          await como('compras', 'select tr_reabrir($1, $2)', [PROC, 'Faltou uma peça'])
+        })
+      })
+    })
+
+    it('processo sem DFD só pela administração (para lançar processos antigos)', async () => {
+      const registrar = (quem, unidade = EDUC) => como(quem, 'select cp_registrar_processo($1, $2, $3, $4, $5, $6, $7, null, null) as id',
+        ['Contratação de suporte de rede', unidade, 'Processo iniciado em papel.', 'dispensa', 'tic', 'normal', 9000])
+      for (const quem of ['compras', 'secretario']) await expect(registrar(quem), quem).rejects.toThrow(/começa pela DFD do secretário/)
+      await expect(registrar('admin', null)).rejects.toThrow(/unidade demandante/)
+      const id = (await registrar('admin')).rows[0].id
+      expect((await db.query('select tipo, contratacao_modalidade, contratacao_objeto, unidade_atual, interessado from tr_processos where id = $1', [id])).rows[0])
+        .toEqual({ tipo: 'Contratação', contratacao_modalidade: 'dispensa', contratacao_objeto: 'tic', unidade_atual: COMP, interessado: 'SEMED — Secretaria de Educação' })
+      expect((await db.query('select tipo from processos where tr_processo_id = $1', [id])).rows[0].tipo).toBe('Dispensa')
+    })
+
+    it('o administrador sem unidade aceita e o processo abre no Compras', async () => {
+      const id = (await enviar('secretario')).rows[0].id
+      const proc = (await aceitar('admin', id, 'dispensa')).rows[0].id
+      expect((await db.query('select unidade_atual from tr_processos where id = $1', [proc])).rows[0].unidade_atual).toBe(COMP)
+    })
+  })
+
+  it('anônimo não chama nenhuma função', async () => {
+    for (const sql of ['select cp_enviar_solicitacao(null, null, null, null, null, null, null, null, null, null)', 'select cp_registrar_processo(null, null, null, null, null, null, null, null, null)',
+      'select doc_criar_arquivo(null, null, null, null, null, null, null, null)', 'select doc_encaminhar(null, null, null)']) {
+      await expect(db.transaction(async (tx) => {
+        await tx.exec('set local role anon')
+        return tx.query(sql)
+      }), sql).rejects.toThrow(/permission denied/)
+    }
+  })
+})
+
+describe('fluxo das secretarias: catálogo, arquivos e encaminhamento', () => {
+  let PRES, SAUDE
+  beforeAll(async () => {
+    PRES = (await db.query(`select id from tr_unidades where sigla = 'PRES'`)).rows[0].id
+    SAUDE = (await db.query(`select id from tr_unidades where sigla = 'SMS'`)).rows[0].id
+    await db.exec(`update usuarios set unidade_id = '${PRES}' where id = '${U.presidente}'`)
+  })
+
+  describe('catálogo de itens', () => {
+    const inserir = (quem, nome = 'Computador desktop') => como(quem,
+      `insert into cp_itens (codigo, nome, especificacao, unidade_medida, objeto_tipo, valor_referencia) values ($1, $2, 'i5, 16 GB, SSD 512 GB', 'unidade', 'bens-permanentes', 4500) returning id`,
+      [`C-${nome}-${quem}`, nome])
+
+    it('só a administração cadastra e altera; todos leem', async () => {
+      const id = (await inserir('admin')).rows[0].id
+      await inserir('presidente', 'Monitor 24 polegadas')
+      for (const quem of ['compras', 'secretario', 'gestor']) await expect(inserir(quem), quem).rejects.toThrow(/row-level security|permission denied/)
+      expect((await como('compras', `update cp_itens set nome = 'x' where id = $1`, [id]).catch(() => ({ affectedRows: 0 }))).affectedRows).toBe(0)
+      await como('admin', `update cp_itens set ativo = false where id = $1`, [id])
+      expect((await como('secretario', 'select ativo from cp_itens where id = $1', [id])).rows[0].ativo).toBe(false)
+      expect((await como('admin', 'delete from cp_itens where id = $1', [id]).catch(() => ({ affectedRows: 0 }))).affectedRows).toBe(0)
+      expect((await db.query('select 1 from cp_itens where id = $1', [id])).rows).toHaveLength(1)
+    })
+
+    it('valida o tipo de objeto e o valor', async () => {
+      await expect(como('admin', `insert into cp_itens (nome, especificacao, objeto_tipo) values ('X', 'Y', 'foguete')`)).rejects.toThrow(/check constraint/)
+      await expect(como('admin', `insert into cp_itens (nome, especificacao, valor_referencia) values ('X', 'Y', -1)`)).rejects.toThrow(/check constraint/)
+    })
+  })
+
+  describe('arquivo enviado como documento', () => {
+    const SHA = 'a'.repeat(64)
+    const criar = (quem, o = {}) => como(quem, 'select doc_criar_arquivo($1, $2, $3, $4, $5, $6, $7, $8) as id', [
+      o.titulo ?? 'Proposta da empresa', o.descricao ?? 'Proposta recebida por e-mail', o.processo ?? null,
+      o.path ?? `${U[quem]}/abc-proposta.pdf`, o.nome ?? 'proposta.pdf', 'application/pdf', o.tamanho ?? 1000, o.sha ?? SHA])
+    const doc = async (id) => (await db.query('select * from doc_documentos where id = $1', [id])).rows[0]
+    let ID
+
+    it('vira documento ANX, com o SHA-256 do arquivo no conteúdo que será assinado', async () => {
+      ID = (await criar('compras')).rows[0].id
+      const d = await doc(ID)
+      expect(d.numero).toMatch(/^ANX-\d{4}\/000001$/)
+      expect(d).toMatchObject({ modelo: 'arquivo', status: 'rascunho', arquivo_path: `${U.compras}/abc-proposta.pdf` })
+      expect(d.corpo.at(-1)).toEqual({ t: 'arquivo', nome: 'proposta.pdf', tipo: 'application/pdf', tamanho: 1000, sha256: SHA })
+    })
+
+    it('valida o caminho (pasta da própria pessoa), o código e o tamanho', async () => {
+      await expect(criar('compras', { path: `${U.gestor}/x.pdf` })).rejects.toThrow(/Arquivo inválido/)
+      await expect(criar('compras', { path: `${U.compras}/y.pdf`, sha: 'xyz' })).rejects.toThrow(/Código do arquivo inválido/)
+      await expect(criar('compras', { path: `${U.compras}/z.pdf`, tamanho: 30 * 1024 * 1024 })).rejects.toThrow(/até 20 MB/)
+      await expect(criar('viewer', { path: `${U.viewer}/v.pdf` })).rejects.toThrow(/não pode enviar/)
+      await expect(como('compras', `select doc_criar('ANX', 'arquivo', 1, 'Falso', null, '{}'::jsonb, '[]'::jsonb)`)).rejects.toThrow(/envio de arquivo/)
+    })
+
+    it('ao salvar, só título e descrição mudam: o bloco do arquivo é preservado', async () => {
+      const falso = JSON.stringify([{ t: 'arquivo', nome: 'outro.pdf', sha256: 'b'.repeat(64) }])
+      await como('compras', 'select doc_salvar($1, $2, $3::jsonb, $4::jsonb)', [ID, 'Proposta revisada', '{"descricao":"Nova descrição"}', falso])
+      const d = await doc(ID)
+      expect(d.titulo).toBe('Proposta revisada')
+      expect(d.corpo.at(-1)).toMatchObject({ nome: 'proposta.pdf', sha256: SHA })
+      expect(d.corpo[1].x).toBe('Nova descrição')
+    })
+
+    it('o caminho do arquivo nunca muda', async () => {
+      await expect(db.exec(`update doc_documentos set arquivo_path = 'x/y.pdf' where id = '${ID}'`)).rejects.toThrow(/não pode ser alterada/)
+    })
+  })
+
+  describe('encaminhar documento (ofício do Prefeito à secretaria)', () => {
+    const encaminhar = (quem, id, unidade, despacho = 'Providenciar a DFD dos computadores.') =>
+      como(quem, 'select doc_encaminhar($1, $2, $3) as id', [id, unidade, despacho])
+    let OF
+
+    beforeAll(async () => {
+      OF = (await como('presidente', `select doc_criar('OF', 'oficio', 1, 'Ofício', null, '{"assunto":"Compra de computadores para as UBS"}'::jsonb, '[{"t":"p","x":"x"}]'::jsonb) as id`)).rows[0].id
+    })
+
+    it('só documento assinado é encaminhado, com despacho', async () => {
+      await expect(encaminhar('presidente', OF, SAUDE)).rejects.toThrow(/Só um documento assinado/)
+      await db.query(`update doc_documentos set status = 'assinado', assinado_em = now() where id = $1`, [OF])
+      await expect(encaminhar('presidente', OF, SAUDE, 'x')).rejects.toThrow(/Escreva o despacho/)
+      await expect(encaminhar('presidente', OF, null)).rejects.toThrow(/Unidade de destino/)
+    })
+
+    it('abre um processo de comunicação para a secretaria, que passa a ver o ofício', async () => {
+      expect((await como('secretario', 'select 1 from doc_documentos where id = $1', [OF])).rows).toHaveLength(0)
+      const proc = (await encaminhar('presidente', OF, SAUDE)).rows[0].id
+      expect((await db.query('select tipo, assunto, unidade_atual, recebido_em from tr_processos where id = $1', [proc])).rows[0])
+        .toEqual({ tipo: 'Comunicação oficial', assunto: 'Compra de computadores para as UBS', unidade_atual: SAUDE, recebido_em: null })
+      expect((await db.query('select processo_id from doc_documentos where id = $1', [OF])).rows[0].processo_id).toBe(proc)
+      expect((await como('secretario', 'select 1 from doc_documentos where id = $1', [OF])).rows).toHaveLength(1)
+      expect((await como('secretario2', 'select 1 from doc_documentos where id = $1', [OF])).rows).toHaveLength(0)
+    })
+
+    it('documento já num processo: encaminhar move o processo (só quem está com ele)', async () => {
+      await como('secretario', 'select tr_receber(p.id) from tr_processos p join doc_documentos d on d.processo_id = p.id where d.id = $1', [OF])
+      await expect(encaminhar('compras', OF, PRES, 'Devolver ao gabinete')).rejects.toThrow(/Documento não encontrado|Somente a unidade/)
+      const proc = (await encaminhar('secretario', OF, PRES, 'Ciente; DFD em elaboração.')).rows[0].id
+      expect((await db.query('select unidade_atual from tr_processos where id = $1', [proc])).rows[0].unidade_atual).toBe(PRES)
+    })
+  })
+})

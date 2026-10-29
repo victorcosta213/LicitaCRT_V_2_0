@@ -58,6 +58,13 @@ describe('Usuários: redefinir senha', () => {
     expect(h.resetar).not.toHaveBeenCalled()
   })
 
+  it('o perfil Presidente / Prefeito é oferecido no cadastro, com a sua descrição', async () => {
+    render(<Usuarios />)
+    await screen.findByRole('button', { name: 'Redefinir senha de Ana Ribeiro' })
+    // o formulário fica fechado (oculto) até o botão "Novo usuário"
+    expect(screen.getByRole('option', { name: /Presidente \/ Prefeito — Usuário mestre/, hidden: true })).toBeInTheDocument()
+  })
+
   it('o administrador não redefine a própria senha por aqui', async () => {
     render(<Usuarios />)
     expect(await screen.findByRole('button', { name: 'Redefinir senha de Administração' })).toBeDisabled()

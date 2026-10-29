@@ -1,23 +1,30 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { GUIA, GUIA_LICITACAO } from '../../utils/guia'
+import { GUIA, GUIA_DOCUMENTOS, GUIA_LICITACAO, GUIA_SOLICITACOES, GUIA_TRAMITACAO } from '../../utils/guia'
 import { normalizeRole } from '../../utils/permissions'
 
 // a chave das contratações segue a antiga, para não reabrir o guia de quem já o ocultou
-const chave = (r, tipo) => (tipo === 'licitacao' ? `guia-aberto-licitacao-${r}` : `guia-aberto-${r}`)
-const lerAberto = (r, tipo) => {
-  try { return localStorage.getItem(chave(r, tipo)) !== '0' } catch { return true }
+const GUIAS = { licitacao: GUIA_LICITACAO, tramitacao: GUIA_TRAMITACAO, documentos: GUIA_DOCUMENTOS, solicitacoes: GUIA_SOLICITACOES }
+const TITULOS = { licitacao: 'Por onde começar nas licitações', tramitacao: 'Como tramitar um processo', documentos: 'Como criar e assinar um documento', solicitacoes: 'Como funciona a solicitação ao Compras' }
+const chave = (r, tipo) => (tipo ? `guia-aberto-${tipo}-${r}` : `guia-aberto-${r}`)
+// sem escolha guardada, vale `padrao` (aberto para quem está começando)
+const lerAberto = (r, tipo, padrao) => {
+  try {
+    const v = localStorage.getItem(chave(r, tipo))
+    return v === null ? padrao : v !== '0'
+  } catch { return padrao }
 }
 
 // "Por onde começar": passos numerados do perfil, com um botão em cada um.
-// Pode ser recolhido; a escolha fica guardada neste navegador.
-// tipo: 'licitacao' mostra o guia dos processos licitatórios; sem tipo, o das contratações.
-export default function PrimeirosPassos({ tipo }) {
+// Pode ser recolhido; a escolha fica guardada neste navegador. `abertoPorPadrao` vale enquanto não houver escolha.
+// tipo: 'licitacao' (processos licitatórios) ou 'tramitacao' (processos administrativos); sem tipo, o das contratações.
+export default function PrimeirosPassos({ tipo, abertoPorPadrao = true }) {
   const { role } = useAuth()
   const r = normalizeRole(role)
-  const guia = (tipo === 'licitacao' ? GUIA_LICITACAO : GUIA)[r]
-  const [aberto, setAberto] = useState(() => lerAberto(r, tipo))
+  const guia = (GUIAS[tipo] || GUIA)[r]
+  const titulo = TITULOS[tipo] || 'Por onde começar'
+  const [aberto, setAberto] = useState(() => lerAberto(r, tipo, abertoPorPadrao))
   if (!guia) return null
 
   const alternar = () => {
@@ -27,10 +34,10 @@ export default function PrimeirosPassos({ tipo }) {
   }
 
   return (
-    <section className="guia card mb-4" aria-label={tipo === 'licitacao' ? 'Por onde começar nas licitações' : 'Por onde começar'}>
+    <section className="guia card mb-4" aria-label={titulo}>
       <div className="guia__cab">
         <div className="min-w-0">
-          <h2 className="guia__titulo"><i className="bi bi-compass me-2" aria-hidden="true" />{tipo === 'licitacao' ? 'Por onde começar nas licitações' : 'Por onde começar'}</h2>
+          <h2 className="guia__titulo"><i className="bi bi-compass me-2" aria-hidden="true" />{titulo}</h2>
           <p className="guia__resumo">{guia.resumo}</p>
         </div>
         <button type="button" className="btn btn-sm btn-outline-secondary" onClick={alternar} aria-expanded={aberto}>

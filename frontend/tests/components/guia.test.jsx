@@ -11,7 +11,7 @@ vi.mock('../../src/context/GcContext', () => ({ useGc: () => ({ alertas: [], con
 
 import PrimeirosPassos from '../../src/components/gc/PrimeirosPassos'
 import Ajuda from '../../src/pages/Ajuda'
-import { CAMINHO, GLOSSARIO, GUIA, GUIA_LICITACAO } from '../../src/utils/guia'
+import { CAMINHO, GLOSSARIO, GUIA, GUIA_LICITACAO, GUIA_TRAMITACAO } from '../../src/utils/guia'
 import { ROLES, menuFor } from '../../src/utils/permissions'
 
 const como = (role, ui) => {
@@ -53,10 +53,23 @@ describe('guia de uso', () => {
   it('os perfis do módulo de licitações têm guia, com atalhos para telas que existem', () => {
     const app = readFileSync('src/App.jsx', 'utf8')
     const rotas = [...app.matchAll(/path="([^"]+)"/g)].map((m) => m[1])
-    expect(Object.keys(GUIA_LICITACAO).sort()).toEqual(['admin', 'compras', 'viewer'])
+    expect(Object.keys(GUIA_LICITACAO).sort()).toEqual(['admin', 'compras', 'presidente', 'viewer'])
     for (const [r, g] of Object.entries(GUIA_LICITACAO)) {
       const telas = menuFor(r).licitacoes.map((i) => i.to)
       for (const p of g.passos) {
+        expect(rotas, `${r}: ${p.to}`).toContain(p.to.split('?')[0])
+        expect(telas, `${r}: ${p.to}`).toContain(p.to.split('?')[0])
+      }
+    }
+  })
+
+  it('todo perfil tem o guia da tramitação, com atalhos para telas que ele realmente tem', () => {
+    const app = readFileSync('src/App.jsx', 'utf8')
+    const rotas = [...app.matchAll(/path="([^"]+)"/g)].map((m) => m[1])
+    for (const r of Object.keys(ROLES).filter((k) => k !== 'editor')) {
+      expect(GUIA_TRAMITACAO[r]?.passos.length, r).toBeGreaterThan(0)
+      const telas = Object.values(menuFor(r)).flat().map((i) => i.to)
+      for (const p of GUIA_TRAMITACAO[r].passos) {
         expect(rotas, `${r}: ${p.to}`).toContain(p.to.split('?')[0])
         expect(telas, `${r}: ${p.to}`).toContain(p.to.split('?')[0])
       }
@@ -98,6 +111,28 @@ describe('Por onde começar', () => {
     expect(localStorage.getItem('guia-aberto-compras')).toBeNull()
   })
 
+  it('na tramitação mostra o guia próprio, com escolha guardada à parte', async () => {
+    const ui = userEvent.setup()
+    como('fiscal', <PrimeirosPassos tipo="tramitacao" />)
+    const guia = screen.getByRole('region', { name: 'Como tramitar um processo' })
+    expect(within(guia).getByText('Abra um processo')).toBeInTheDocument()
+    expect(within(guia).getByRole('link', { name: 'Aguardando recebimento' })).toHaveAttribute('href', '/processos?vista=receber')
+    expect(within(guia).queryByText('Veja onde está travando')).not.toBeInTheDocument()
+    await ui.click(within(guia).getByRole('button', { name: 'Ocultar guia' }))
+    expect(localStorage.getItem('guia-aberto-tramitacao-fiscal')).toBe('0')
+    expect(localStorage.getItem('guia-aberto-fiscal')).toBeNull()
+  })
+
+  it('sem escolha guardada vale o padrão: recolhido quando já há o que fazer; a escolha da pessoa sempre prevalece', () => {
+    const { unmount } = como('compras', <PrimeirosPassos tipo="tramitacao" abertoPorPadrao={false} />)
+    expect(screen.getByRole('button', { name: 'Mostrar guia' })).toBeInTheDocument()
+    expect(screen.queryByText('Abra um processo')).not.toBeInTheDocument()
+    unmount()
+    localStorage.setItem('guia-aberto-tramitacao-compras', '1')
+    como('compras', <PrimeirosPassos tipo="tramitacao" abertoPorPadrao={false} />)
+    expect(screen.getByText('Abra um processo')).toBeInTheDocument()
+  })
+
   it('funciona mesmo sem armazenamento no navegador', () => {
     const lido = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('bloqueado') })
     como('gestor', <PrimeirosPassos />)
@@ -119,6 +154,15 @@ describe('página Ajuda', () => {
     como('compras', <Ajuda />)
     expect(screen.getByText('Processos licitatórios')).toBeInTheDocument()
     expect(screen.getByText('DFD')).toBeInTheDocument()
+  })
+
+  it('todo perfil vê a seção de tramitação, e a gestão também o passo do acompanhamento', () => {
+    const { unmount } = como('fiscal', <Ajuda />)
+    expect(screen.getByText('Tramitação de processos')).toBeInTheDocument()
+    expect(screen.queryByText('Veja onde está travando')).not.toBeInTheDocument()
+    unmount()
+    como('gestor', <Ajuda />)
+    expect(screen.getAllByText('Veja onde está travando').length).toBeGreaterThan(0)
   })
 
   it('quem não usa as licitações não vê essa seção', () => {

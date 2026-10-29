@@ -1,0 +1,76 @@
+/* Tramitação de processos: onde está, por onde passou e histórico */
+
+.onde-esta { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem 2.5rem; }
+.onde-esta__sigla { font: 700 2.4rem/1 var(--fonte-cond); color: var(--azul-tinta); letter-spacing: .02em; }
+.onde-esta__nome { color: var(--tinta-2); margin-top: .25rem; }
+.onde-esta__dados { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: .75rem 1.5rem; margin: 0; flex: 1 1 340px; }
+.onde-esta__dados dt { font: 600 .72rem/1.2 var(--fonte-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-3); }
+.onde-esta__dados dd { margin: .2rem 0 0; }
+.onde-esta__motivo { grid-column: 1 / -1; }
+
+.permanencias { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.permanencias__item { display: grid; grid-template-columns: 11rem 1fr 5.5rem; align-items: center; gap: .9rem; }
+.permanencias__rotulo { display: flex; flex-direction: column; min-width: 0; }
+.permanencias__barra { height: .6rem; background: var(--folha-3); border-radius: 99px; overflow: hidden; }
+.permanencias__barra span { display: block; height: 100%; background: var(--azul-borda); border-radius: 99px; }
+.permanencias__item--atual .permanencias__barra span { background: var(--azul); }
+.permanencias__dias { text-align: right; font-weight: 600; }
+
+.linha-tempo { list-style: none; margin: 0; padding: 0; }
+.linha-tempo__item { position: relative; display: grid; grid-template-columns: 2rem 1fr; gap: .9rem; padding-bottom: 1.1rem; }
+.linha-tempo__item:not(:last-child)::before {
+  content: ''; position: absolute; left: .95rem; top: 2rem; bottom: 0; width: 2px; background: var(--traco);
+}
+.linha-tempo__icone {
+  display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+  background: var(--azul-lavado); color: var(--azul-tinta); border: 1px solid var(--azul-borda);
+}
+.linha-tempo__titulo { font-weight: 600; }
+.linha-tempo__despacho { margin-top: .15rem; color: var(--tinta-2); white-space: pre-wrap; }
+.linha-tempo__meta { margin-top: .15rem; font-size: .82rem; color: var(--tinta-3); }
+
+/* painel de acompanhamento */
+.unidade-linha { display: grid; grid-template-columns: 4.5rem 1fr 4rem 4rem 4rem 5rem; align-items: center; gap: .75rem; padding: .55rem .25rem; border-bottom: 1px solid var(--traco); }
+.unidade-linha--cab { font: 600 .72rem/1.2 var(--fonte-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--tinta-3); border-bottom-color: var(--traco-forte); }
+.unidade-linha__barra { height: .55rem; background: var(--folha-3); border-radius: 99px; overflow: hidden; }
+.unidade-linha__barra span { display: block; height: 100%; background: var(--azul); }
+.unidade-linha a { text-decoration: none; font-weight: 700; }
+
+@media (max-width: 767.98px) {
+  .permanencias__item { grid-template-columns: 1fr auto; }
+  .permanencias__barra { grid-column: 1 / -1; order: 3; }
+  .unidade-linha { grid-template-columns: 3.5rem 1fr 3rem 3rem; }
+  .unidade-linha > :nth-child(5), .unidade-linha > :nth-child(6) { display: none; }
+}
+
+/* visão geral da autoridade */
+.painel-busca { display: flex; align-items: center; gap: .5rem; position: relative; min-width: min(100%, 26rem); }
+.painel-busca i { position: absolute; left: .9rem; color: var(--tinta-3); pointer-events: none; }
+.painel-busca .form-control { padding-left: 2.3rem; }
+
+.setores { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .75rem; }
+.setor {
+  display: grid; grid-template-columns: 1fr auto; gap: .15rem .5rem; align-content: start; height: 100%;
+  padding: .8rem .9rem; border: 1px solid var(--traco); border-left: 4px solid var(--azul-borda); border-radius: 6px;
+  background: var(--folha); color: inherit; text-decoration: none;
+}
+.setor:hover { border-color: var(--azul); background: var(--azul-lavado); color: inherit; }
+.setor--parado { border-left-color: var(--ocre); }
+.setor--atrasado { border-left-color: var(--vermelho); }
+.setor__sigla { font: 700 1.15rem/1.1 var(--fonte-cond); color: var(--azul-tinta); letter-spacing: .02em; }
+.setor__total { grid-row: span 2; font: 700 2rem/1 var(--fonte-cond); align-self: center; }
+.setor__nome { font-size: .8rem; color: var(--tinta-3); }
+.setor__chips { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .35rem; }
+.setor__media { grid-column: 1 / -1; font-size: .78rem; color: var(--tinta-3); }
+
+.movimentos { list-style: none; margin: 0; padding: 0; }
+.movimento { display: grid; grid-template-columns: 2rem 1fr auto; gap: .8rem; align-items: start; padding: .7rem 1.1rem; border-bottom: 1px solid var(--traco); }
+.movimento:last-child { border-bottom: 0; }
+.movimento__icone { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--azul-lavado); color: var(--azul-tinta); }
+.movimento__despacho { margin-top: .1rem; color: var(--tinta-2); font-size: .9rem; }
+.movimento__quando { font-size: .82rem; color: var(--tinta-3); white-space: nowrap; }
+
+@media (max-width: 575.98px) {
+  .movimento { grid-template-columns: 2rem 1fr; }
+  .movimento__quando { grid-column: 2; }
+}

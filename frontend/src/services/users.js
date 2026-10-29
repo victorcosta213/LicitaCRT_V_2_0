@@ -46,7 +46,7 @@ function getSecondaryClient() {
 //  precisaConfirmar = a pessoa ainda tem de clicar no e-mail para entrar;
 //  trocaObrigatoria = o sistema vai exigir que ela crie a própria senha no primeiro acesso
 //  (false só se a migration 20261020 ainda não foi aplicada: o usuário é criado do mesmo jeito)
-export async function criarUsuario({ nome, email, password, role }) {
+export async function criarUsuario({ nome, email, password, role, unidade_id }) {
   const secondary = getSecondaryClient()
 
   // 1. Cria o login. Com a confirmação de e-mail ligada no Supabase, ele envia o link; desligada,
@@ -72,6 +72,8 @@ export async function criarUsuario({ nome, email, password, role }) {
     email,
     role,
     ativo: true,
+    // só envia a unidade quando escolhida (antes da migration da tramitação a coluna não existe)
+    ...(unidade_id ? { unidade_id } : {}),
   }])
 
   if (dbErr) throw dbErr
@@ -107,10 +109,11 @@ export async function trocarSenhaPrimeiroAcesso(novaSenha) {
   if (confirmaErr) throw confirmaErr
 }
 
-export async function atualizarUsuario(uid, { nome, role }) {
+export async function atualizarUsuario(uid, { nome, role, unidade_id }) {
   const payload = {}
   if (nome !== undefined) payload.nome = nome
   if (role !== undefined) payload.role = role
+  if (unidade_id !== undefined) payload.unidade_id = unidade_id || null
   payload.updated_at = new Date().toISOString()
 
   const { error } = await supabase.from('usuarios').update(payload).eq('id', uid)

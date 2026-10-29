@@ -28,6 +28,13 @@ export function AuthProvider({ children }) {
     }
     const mesmoUsuario = userIdRef.current === u.id
     userIdRef.current = u.id
+    // outra pessoa: nada do perfil anterior fica valendo enquanto o novo é lido
+    if (!mesmoUsuario) {
+      setProfile(null)
+      setAcesso(null)
+      setPrecisaTrocarSenha(false)
+      setLoading(true)
+    }
     setUser(u)
     const leitura = ++leituraRef.current
     try {
@@ -84,11 +91,12 @@ export function AuthProvider({ children }) {
 
   const role = acesso === 'liberado' ? (profile?.role || 'viewer') : null
   const isAdmin = role === 'admin'
+  const isMaster = role === 'admin' || role === 'presidente'
 
   return (
     <AuthCtx.Provider value={{
       user, role, profile, acesso, nome: profile?.nome || user?.email || '',
-      isAdmin, loading, login, logout, recarregarPerfil, precisaTrocarSenha, senhaTrocada,
+      isAdmin, isMaster, loading, login, logout, recarregarPerfil, precisaTrocarSenha, senhaTrocada,
     }}>
       {children}
     </AuthCtx.Provider>

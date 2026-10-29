@@ -79,17 +79,52 @@ describe('landingFor e menuFor', () => {
   const rotas = (perfil) => Object.values(menuFor(perfil)).flat().map((i) => i.to)
 
   it('somente admin vê Usuários e Parâmetros', () => {
-    expect(rotas('admin')).toEqual(expect.arrayContaining(['/usuarios', '/parametros']))
-    for (const p of PERFIS) expect(rotas(p)).not.toContain('/usuarios')
+    expect(rotas('admin')).toEqual(expect.arrayContaining(['/usuarios', '/parametros', '/unidades']))
+    for (const p of PERFIS) { expect(rotas(p)).not.toContain('/usuarios'); expect(rotas(p)).not.toContain('/unidades') }
   })
 
   it('fiscal tem a mesa e "Minhas fiscalizações"; não vê painéis financeiros nem o módulo licitatório', () => {
-    expect(rotas('fiscal')).toEqual(['/mesa', '/alertas', '/contratos', '/competencias', '/relatorios'])
+    expect(rotas('fiscal')).toEqual(['/mesa', '/alertas', '/processos', '/documentos', '/documentos/novo', '/documentos/verificar', '/solicitacoes', '/compras/roteiros', '/contratos', '/competencias', '/relatorios'])
     expect(menuFor('fiscal').contratos[0].label).toBe('Minhas fiscalizações')
   })
 
-  it('Gabinete vê apenas os atos para assinatura', () => {
-    expect(rotas('gabinete')).toEqual(['/gabinete'])
+  it('Gabinete vê os processos, o acompanhamento e os atos para assinatura', () => {
+    expect(rotas('gabinete')).toEqual(['/processos', '/acompanhamento', '/documentos', '/documentos/novo', '/documentos/verificar', '/solicitacoes', '/solicitacoes/acompanhamento', '/compras/processos', '/itens', '/compras/roteiros', '/gabinete'])
+  })
+
+  it.each(['juridico', 'administrativo', 'rh', 'ti'])('%s: abre processos e documentos, mas só o Jurídico vê as contratações', (p) => {
+    const rotas = Object.values(menuFor(p)).flat().map((i) => i.to)
+    expect(rotas).toEqual(expect.arrayContaining(['/mesa', '/processos', '/documentos', '/documentos/novo']))
+    for (const proibida of ['/gestao', '/financeiro', '/controle', '/home', '/gabinete', '/usuarios', '/parametros', '/unidades', '/painel', '/acompanhamento']) {
+      expect(rotas, `${p} ${proibida}`).not.toContain(proibida)
+    }
+    expect(rotas.includes('/contratos')).toBe(p === 'juridico')
+    expect(landingFor(p)).toBe('/mesa')
+  })
+
+  it('RH, TI e Administrativo não recebem alertas de contratos; o Jurídico recebe', () => {
+    for (const p of ['rh', 'ti', 'administrativo']) expect(Object.values(menuFor(p)).flat().map((i) => i.to)).not.toContain('/alertas')
+    expect(Object.values(menuFor('juridico')).flat().map((i) => i.to)).toContain('/alertas')
+  })
+
+  it('só a consulta não cria documentos; ela só os lê', () => {
+    expect(can('viewer', 'documento.criar')).toBe(false)
+    for (const p of ['compras', 'gestor', 'fiscal', 'financeiro', 'gabinete', 'juridico', 'administrativo', 'rh', 'ti', 'admin', 'presidente']) expect(can(p, 'documento.criar'), p).toBe(true)
+    expect(Object.values(menuFor('viewer')).flat().map((i) => i.to)).not.toContain('/documentos/novo')
+    expect(Object.values(menuFor('viewer')).flat().map((i) => i.to)).toContain('/documentos')
+  })
+
+  it('a tela mais específica vence: Novo documento não marca "Documentos"', () => {
+    const modulos = modulosFor('compras')
+    expect(moduloDaRota(modulos, '/documentos/novo').item.label).toBe('Novo documento')
+    expect(moduloDaRota(modulos, '/documentos/abc').item.label).toBe('Documentos')
+    expect(moduloDaRota(modulos, '/documentos/verificar/ABC').item.label).toBe('Verificar autenticidade')
+  })
+
+  it('todo perfil vê Processos; só gestão, gabinete, consulta e administração veem o Acompanhamento', () => {
+    for (const p of ['gestor', 'fiscal', 'financeiro', 'compras', 'gabinete', 'viewer', 'admin']) expect(rotas(p), p).toContain('/processos')
+    for (const p of ['gestor', 'gabinete', 'viewer', 'admin']) expect(rotas(p), p).toContain('/acompanhamento')
+    for (const p of ['fiscal', 'financeiro', 'compras']) expect(rotas(p), p).not.toContain('/acompanhamento')
   })
 
   it('compras vê o módulo licitatório', () => {
@@ -111,13 +146,17 @@ describe('módulos (o menu mostra só as telas do módulo aberto)', () => {
   const chaves = (perfil) => modulosFor(perfil).map((m) => m.key)
 
   it.each([
-    ['gestor', ['mesa', 'contratos', 'financeiro']],
-    ['fiscal', ['mesa', 'contratos']],
-    ['financeiro', ['mesa', 'financeiro', 'contratos']],
-    ['compras', ['mesa', 'licitacoes', 'contratos']],
-    ['gabinete', ['gabinete']],
-    ['viewer', ['contratos', 'financeiro', 'licitacoes']],
-    ['admin', ['mesa', 'contratos', 'financeiro', 'licitacoes', 'gabinete', 'admin']],
+    ['gestor', ['mesa', 'processos', 'documentos', 'compras', 'contratos', 'financeiro']],
+    ['fiscal', ['mesa', 'processos', 'documentos', 'compras', 'contratos']],
+    ['financeiro', ['mesa', 'processos', 'documentos', 'financeiro', 'contratos', 'compras']],
+    ['compras', ['mesa', 'compras', 'processos', 'documentos', 'licitacoes', 'contratos']],
+    ['gabinete', ['processos', 'documentos', 'compras', 'gabinete']],
+    ['juridico', ['mesa', 'processos', 'documentos', 'compras', 'contratos']],
+    ['administrativo', ['mesa', 'processos', 'documentos', 'compras']],
+    ['rh', ['mesa', 'processos', 'documentos', 'compras']],
+    ['ti', ['mesa', 'processos', 'documentos', 'compras']],
+    ['viewer', ['processos', 'documentos', 'compras', 'contratos', 'financeiro', 'licitacoes']],
+    ['admin', ['mesa', 'processos', 'documentos', 'compras', 'contratos', 'financeiro', 'licitacoes', 'gabinete', 'admin']],
   ])('%s: %j', (perfil, esperado) => {
     expect(chaves(perfil)).toEqual(esperado)
   })
@@ -133,7 +172,7 @@ describe('módulos (o menu mostra só as telas do módulo aberto)', () => {
   })
 
   it('para o fiscal, o módulo de contratações é a Fiscalização', () => {
-    expect(modulosFor('fiscal')[1]).toMatchObject({ key: 'contratos', label: 'Fiscalização' })
+    expect(modulosFor('fiscal').find((m) => m.key === 'contratos')).toMatchObject({ key: 'contratos', label: 'Fiscalização' })
   })
 
   it('a rota aberta indica o módulo e a tela (a ficha fica em Contratações)', () => {

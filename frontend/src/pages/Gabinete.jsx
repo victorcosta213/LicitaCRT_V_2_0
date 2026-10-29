@@ -3,6 +3,9 @@ import { useGc } from '../context/GcContext'
 import { Empty, GcGate, PageHeader, Pill } from '../components/gc/ui'
 import PrimeirosPassos from '../components/gc/PrimeirosPassos'
 import DocumentoModal from '../components/gc/DocumentoModal'
+import AssinaturasPendentes from '../components/documentos/AssinaturasPendentes'
+import { useAssinaturasPendentes } from '../components/useDocumentos'
+import { useAuth } from '../context/AuthContext'
 import { PublicacaoModal } from '../components/gc/Formalizacao'
 import { OSAssinaturas } from '../components/gc/OSTable'
 import { INSTRUMENTO, TIPO_ORDEM } from '../utils/contrato'
@@ -12,6 +15,9 @@ import { fmtDate } from '../utils/format'
 // Atos encaminhados ao Gabinete: portaria (assinatura/publicação) e OS/OC (assinatura)
 export default function Gabinete() {
   const { consolidados, params } = useGc()
+  const { user } = useAuth()
+  // documentos (assinatura eletrônica) à espera do Gabinete
+  const docsParaAssinar = useAssinaturasPendentes({ ativo: true, usuarioId: user?.id })
   const [doc, setDoc] = useState(null)
   const [publicar, setPublicar] = useState(null)
   const [assinar, setAssinar] = useState(null)
@@ -32,6 +38,8 @@ export default function Gabinete() {
           ? 'Nenhum ato aguardando o Gabinete.'
           : <>Há <mark>{total} {total === 1 ? 'ato' : 'atos'}</mark> aguardando o Gabinete: portarias de designação e Ordens de Serviço/Compra.</>}
       />
+
+      {docsParaAssinar.length > 0 && <AssinaturasPendentes itens={docsParaAssinar} />}
 
       <PrimeirosPassos />
 

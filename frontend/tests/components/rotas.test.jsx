@@ -17,6 +17,8 @@ const PAGINAS = vi.hoisted(() => ({
   Competencias: '/competencias', Financeiro: '/financeiro', GestaoPainel: '/gestao', Alertas: '/alertas',
   Relatorios: '/relatorios', Parametros: '/parametros', Login: '/login', Usuarios: '/usuarios',
   RedefinirSenha: '/redefinir-senha', Gabinete: '/gabinete', Mesa: '/mesa',
+  Painel: '/painel', Documentos: '/documentos', DocumentoNovo: '/documentos/novo', DocumentoDetalhe: '/documentos/:id', Verificar: '/documentos/verificar', Processos: '/processos', ProcessoDetalhe: '/processos/:id', Acompanhamento: '/acompanhamento', Unidades: '/unidades',
+  Solicitacoes: '/solicitacoes', SolicitacaoNova: '/solicitacoes/nova', SolicitacaoDetalhe: '/solicitacoes/:id', ProcessosContratacao: '/compras/processos', Roteiros: '/compras/roteiros', CatalogoItens: '/itens', AcompanhamentoPedidos: '/solicitacoes/acompanhamento',
 }))
 vi.mock('../../src/pages/Home', () => ({ default: () => 'PAGINA:Home' }))
 vi.mock('../../src/pages/Dashboard', () => ({ default: () => 'PAGINA:Dashboard' }))
@@ -36,6 +38,22 @@ vi.mock('../../src/pages/Usuarios', () => ({ default: () => 'PAGINA:Usuarios' })
 vi.mock('../../src/pages/RedefinirSenha', () => ({ default: () => 'PAGINA:RedefinirSenha' }))
 vi.mock('../../src/pages/Gabinete', () => ({ default: () => 'PAGINA:Gabinete' }))
 vi.mock('../../src/pages/Mesa', () => ({ default: () => 'PAGINA:Mesa' }))
+vi.mock('../../src/pages/Painel', () => ({ default: () => 'PAGINA:Painel' }))
+vi.mock('../../src/pages/Documentos', () => ({ default: () => 'PAGINA:Documentos' }))
+vi.mock('../../src/pages/DocumentoNovo', () => ({ default: () => 'PAGINA:DocumentoNovo' }))
+vi.mock('../../src/pages/DocumentoDetalhe', () => ({ default: () => 'PAGINA:DocumentoDetalhe' }))
+vi.mock('../../src/pages/Verificar', () => ({ default: ({ publico }) => (publico ? 'PAGINA:VerificarPublico' : 'PAGINA:Verificar') }))
+vi.mock('../../src/pages/Processos', () => ({ default: () => 'PAGINA:Processos' }))
+vi.mock('../../src/pages/ProcessoDetalhe', () => ({ default: () => 'PAGINA:ProcessoDetalhe' }))
+vi.mock('../../src/pages/Acompanhamento', () => ({ default: () => 'PAGINA:Acompanhamento' }))
+vi.mock('../../src/pages/Unidades', () => ({ default: () => 'PAGINA:Unidades' }))
+vi.mock('../../src/pages/Solicitacoes', () => ({ default: () => 'PAGINA:Solicitacoes' }))
+vi.mock('../../src/pages/SolicitacaoNova', () => ({ default: () => 'PAGINA:SolicitacaoNova' }))
+vi.mock('../../src/pages/SolicitacaoDetalhe', () => ({ default: () => 'PAGINA:SolicitacaoDetalhe' }))
+vi.mock('../../src/pages/ProcessosContratacao', () => ({ default: () => 'PAGINA:ProcessosContratacao' }))
+vi.mock('../../src/pages/Roteiros', () => ({ default: () => 'PAGINA:Roteiros' }))
+vi.mock('../../src/pages/CatalogoItens', () => ({ default: () => 'PAGINA:CatalogoItens' }))
+vi.mock('../../src/pages/AcompanhamentoPedidos', () => ({ default: () => 'PAGINA:AcompanhamentoPedidos' }))
 
 import App from '../../src/App'
 
@@ -84,7 +102,7 @@ describe('autenticação', () => {
 })
 
 describe('tela inicial por perfil', () => {
-  it.each(['gestor', 'fiscal', 'financeiro', 'compras', 'gabinete', 'viewer', 'admin', 'editor'])('%s', async (role) => {
+  it.each(['gestor', 'fiscal', 'financeiro', 'compras', 'gabinete', 'viewer', 'admin', 'editor', 'presidente', 'juridico', 'administrativo', 'rh', 'ti'])('%s', async (role) => {
     expect(await abrir('/', { role })).toBe(`PAGINA:${paginaDaRota(landingFor(role))}`)
   })
 
@@ -100,13 +118,73 @@ describe('tela inicial por perfil', () => {
 })
 
 describe('todo item de menu abre a tela (menu e rotas coerentes)', () => {
-  for (const role of ['admin', 'gestor', 'fiscal', 'financeiro', 'compras', 'gabinete', 'viewer']) {
+  for (const role of ['admin', 'presidente', 'gestor', 'fiscal', 'financeiro', 'compras', 'gabinete', 'juridico', 'administrativo', 'rh', 'ti', 'viewer']) {
     it(role, async () => {
       for (const { to } of Object.values(menuFor(role)).flat()) {
         expect(await abrir(to, { role }), `${role} → ${to}`).toBe(`PAGINA:${paginaDaRota(to)}`)
       }
     })
   }
+})
+
+describe('perfil presidente (usuário mestre)', () => {
+  it('entra na Visão geral', async () => {
+    expect(await abrir('/', { role: 'presidente' })).toBe('PAGINA:Painel')
+  })
+
+  it.each(['/mesa', '/gestao', '/financeiro', '/gabinete', '/controle', '/competencias', '/usuarios', '/parametros', '/unidades', '/acompanhamento', '/processos'])(
+    'acessa %s', async (rota) => {
+      expect((await abrir(rota, { role: 'presidente' })).startsWith('PAGINA:')).toBe(true)
+      expect(await abrir(rota, { role: 'presidente' })).toBe(`PAGINA:${paginaDaRota(rota)}`)
+    })
+
+  it('a Visão geral é só dele: os demais perfis voltam para a sua tela inicial', async () => {
+    expect(await abrir('/painel', { role: 'gestor' })).toBe('PAGINA:Mesa')
+    expect(await abrir('/painel', { role: 'viewer' })).toBe('PAGINA:Home')
+    expect(await abrir('/painel', { role: 'gabinete' })).toBe('PAGINA:Gabinete')
+  })
+
+  it('o administrador também pode abrir a Visão geral pelo endereço', async () => {
+    expect(await abrir('/painel', { role: 'admin' })).toBe('PAGINA:Painel')
+  })
+})
+
+describe('documentos e verificação', () => {
+  it('a conferência de autenticidade abre sem login, no endereço público', async () => {
+    expect(await abrir('/verificar', { user: null, acesso: null })).toBe('PAGINA:VerificarPublico')
+    expect(await abrir('/verificar/ABCD1234EFGH', { user: null, acesso: null })).toBe('PAGINA:VerificarPublico')
+  })
+
+  it('dentro do sistema, a mesma conferência fica em Documentos', async () => {
+    expect(await abrir('/documentos/verificar', { role: 'compras' })).toBe('PAGINA:Verificar')
+  })
+
+  it('o resto de Documentos exige login', async () => {
+    expect(await abrir('/documentos', { user: null, acesso: null })).toBe('PAGINA:Login')
+    expect(await abrir('/documentos/novo', { user: null, acesso: null })).toBe('PAGINA:Login')
+  })
+
+  it.each(['compras', 'gestor', 'fiscal', 'financeiro', 'gabinete', 'juridico', 'administrativo', 'rh', 'ti', 'presidente', 'admin'])('%s cria documentos', async (role) => {
+    expect(await abrir('/documentos/novo', { role })).toBe('PAGINA:DocumentoNovo')
+  })
+
+  it('a consulta lê os documentos, mas é levada de volta ao tentar criar', async () => {
+    expect(await abrir('/documentos', { role: 'viewer' })).toBe('PAGINA:Documentos')
+    expect(await abrir('/documentos/novo', { role: 'viewer' })).toBe('PAGINA:Home')
+  })
+})
+
+describe('perfis setoriais', () => {
+  it.each(['juridico', 'administrativo', 'rh', 'ti'])('%s entra na Minha mesa e não acessa telas dos outros setores', async (role) => {
+    expect(await abrir('/', { role })).toBe('PAGINA:Mesa')
+    for (const bloqueada of ['/financeiro', '/gestao', '/controle', '/gabinete', '/usuarios', '/parametros', '/unidades', '/painel', '/acompanhamento']) {
+      expect(await abrir(bloqueada, { role }), `${role} ${bloqueada}`).toBe('PAGINA:Mesa')
+    }
+  })
+
+  it('o Jurídico lê as contratações; RH, TI e Administrativo não têm a tela de contratações no menu', async () => {
+    expect(await abrir('/contratos', { role: 'juridico' })).toBe('PAGINA:Contratos')
+  })
 })
 
 describe('bloqueios de acesso', () => {

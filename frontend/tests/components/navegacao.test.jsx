@@ -37,7 +37,7 @@ beforeEach(() => { document.title = '' })
 describe('navegação por módulos', () => {
   it('o trilho mostra só os módulos do perfil', () => {
     abrir('/gestao', 'gestor')
-    expect(modulos()).toEqual(['Mesa', 'Contratos', 'Financeiro'])
+    expect(modulos()).toEqual(['Mesa', 'Processos', 'Documentos', 'Compras', 'Contratos', 'Financeiro'])
   })
 
   it('o menu lateral mostra só as telas do módulo aberto', () => {
@@ -54,7 +54,7 @@ describe('navegação por módulos', () => {
 
   it('módulo de uma tela só dispensa o menu lateral (Gabinete)', () => {
     abrir('/gabinete', 'gabinete')
-    expect(modulos()).toEqual(['Gabinete'])
+    expect(modulos()).toEqual(['Processos', 'Documentos', 'Compras', 'Gabinete'])
     expect(screen.queryByRole('complementary', { name: /^Telas de/ })).not.toBeInTheDocument()
   })
 

@@ -111,6 +111,28 @@ describe('AuthContext', () => {
   })
 })
 
+describe('AuthContext: troca de usuário sem passar pelo login', () => {
+  it('enquanto o perfil da nova pessoa é lido, nada do perfil anterior continua valendo', async () => {
+    await montar({ session: sessao, perfil: { id: 'u1', role: 'gestor', ativo: true, nome: 'Ana' } })
+    expect(estado()).toMatchObject({ user: 'u1', role: 'gestor', loading: false })
+
+    let responder
+    h.getUserProfile.mockReturnValue(new Promise((resolve) => { responder = resolve }))
+    await act(async () => { h.listener('SIGNED_IN', { user: { id: 'u2', email: 'pres@crt08.gov.br' } }) })
+    expect(estado()).toMatchObject({ user: 'u2', role: null, acesso: null, loading: true })
+
+    await act(async () => { responder({ id: 'u2', role: 'presidente', ativo: true, nome: 'Marcos' }) })
+    await waitFor(() => expect(estado()).toMatchObject({ user: 'u2', role: 'presidente', acesso: 'liberado', loading: false }))
+  })
+
+  it('renovar o token da mesma pessoa não a tira da tela', async () => {
+    await montar({ session: sessao, perfil: { id: 'u1', role: 'gestor', ativo: true, nome: 'Ana' } })
+    h.getUserProfile.mockResolvedValue({ id: 'u1', role: 'gestor', ativo: true, nome: 'Ana' })
+    await act(async () => { h.listener('TOKEN_REFRESHED', { user: { id: 'u1', email: 'ana@crt08.gov.br' } }) })
+    expect(estado()).toMatchObject({ user: 'u1', role: 'gestor', loading: false })
+  })
+})
+
 describe('AuthContext: senha provisória', () => {
   const perfil = { id: 'u1', role: 'fiscal', ativo: true, nome: 'Ana' }
 

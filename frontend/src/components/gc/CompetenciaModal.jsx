@@ -6,6 +6,7 @@ import { OCORRENCIA_ABERTA, TIPO_OCORRENCIA, conferenciaGestao, fiscalPodeOperar
 import { minutaAtesto } from '../../utils/documentos'
 import { brl, fmtCompetencia, fmtDate, hojeISO, num } from '../../utils/format'
 import { pedirTexto, showError, showSuccess } from '../../utils/alerts'
+import { isMaster } from '../../utils/permissions'
 
 // Formulário único da competência. O fiscal registra NF, fiscalização, ocorrência,
 // glosa, documentação e atesto; a Gestão confere, devolve ou libera ao Financeiro.
@@ -13,7 +14,7 @@ export default function CompetenciaModal({ k, comp, onClose }) {
   const { salvar, can, role, nome, user, params } = useGcActions()
   const [doc, setDoc] = useState(null)
 
-  const admin = role === 'admin'
+  const admin = isMaster(role)
   const souFiscal = can('competencia.fiscal')
   const podeFiscal = admin || (souFiscal && fiscalPodeOperar(k, user?.id))
   const podeGestao = can('competencia.liberar')

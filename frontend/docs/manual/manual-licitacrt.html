@@ -65,7 +65,7 @@
 <div class="pagina">
 
 <div class="nao-impressao">
-  Para enviar a um setor: abra este arquivo com <code>?setor=compras</code>, <code>gestao</code>, <code>fiscal</code>, <code>financeiro</code>, <code>gabinete</code>, <code>admin</code> ou <code>consulta</code> no final do endereço e use <b>Imprimir → Salvar como PDF</b>. Sem o parâmetro, aparece o manual completo.
+  Para enviar a um setor: abra este arquivo com <code>?setor=compras</code>, <code>gestao</code>, <code>fiscal</code>, <code>financeiro</code>, <code>gabinete</code>, <code>admin</code>, <code>presidente</code> ou <code>consulta</code> no final do endereço e use <b>Imprimir → Salvar como PDF</b>. Sem o parâmetro, aparece o manual completo.
 </div>
 
 <!-- ===================== CAPA ===================== -->
@@ -143,7 +143,61 @@
   <p>Podem aparecer também os sinalizadores <span class="carimbo c-vm">Com ocorrência</span>, <span class="carimbo c-am">Com glosa</span> e <span class="carimbo c-vm">Devolvida pela Gestão</span>.</p>
 </section>
 
+<!-- ===================== COMUM 3 ===================== -->
+<section class="secao" data-setor="comum">
+  <h2>3. Processos e tramitação</h2>
+  <p>Além das contratações, o sistema acompanha qualquer <b>processo administrativo</b>: requerimentos, pedidos de compra, pagamentos, prestações de contas e outros. Cada processo tem um <b>número de protocolo</b> (por exemplo, 2026/000012), está sempre em <b>uma unidade</b> (setor) e guarda o histórico de tudo o que aconteceu com ele. Está no módulo <b>Processos</b>.</p>
+
+  <h3>Passo a passo</h3>
+  <ol class="passos">
+    <li><b>Abrir:</b> Processos → <span class="btn p">Novo processo</span>. Escolha o tipo, escreva o assunto, a unidade que vai cuidar dele primeiro e o despacho (o que ela deve fazer).</li>
+    <li><b>Receber:</b> quando alguém envia um processo para a sua unidade, ele aparece na <b>Minha mesa</b>. Abra e clique em <span class="btn p">Receber processo</span>. Isso registra que a unidade já está com ele.</li>
+    <li><b>Enviar:</b> no processo, <span class="btn p">Enviar para outra unidade</span>. Escolha a unidade (e, se quiser, a pessoa) e escreva o <b>despacho</b>. O processo passa a ser da outra unidade na hora.</li>
+    <li><b>Alterar dados:</b> corrija assunto, prioridade ou prazo. A alteração fica no histórico.</li>
+    <li><b>Concluir:</b> informe como foi resolvido. Um processo concluído pode ser <b>reaberto</b> com um motivo.</li>
+  </ol>
+
+  <table>
+    <tr><th style="width:26%">Estado</th><th>O que significa</th></tr>
+    <tr><td><span class="carimbo c-az">Aguardando recebimento</span></td><td>Chegou à unidade e ninguém abriu ainda.</td></tr>
+    <tr><td><span class="carimbo c-vd">Em análise</span></td><td>A unidade recebeu e está trabalhando.</td></tr>
+    <tr><td><span class="carimbo c-am">Parado</span></td><td>Está há vários dias na mesma unidade sem nenhuma movimentação (o limite é definido pela administração; padrão: 5 dias).</td></tr>
+    <tr><td><span class="carimbo c-vm">Atrasado</span></td><td>Passou do prazo final do processo.</td></tr>
+    <tr><td><span class="carimbo c-cz">Concluído</span></td><td>Foi resolvido e encerrado.</td></tr>
+  </table>
+
+  <div class="dica"><b>Quem vê cada processo</b>Você vê os processos que abriu, os que estão na sua unidade e os que já passaram por ela. A Gestão, o Gabinete e a Consulta veem todos. O sistema atualiza a tela sozinho quando alguém movimenta um processo.</div>
+
+  <h3>Gestão e autoridade: onde está travando</h3>
+  <p>Em <b>Processos → Acompanhamento</b> (Gestão, Gabinete, Consulta e Administração) você vê: quantos processos estão em andamento, parados, atrasados e aguardando recebimento; <b>onde eles estão</b>, unidade por unidade, com o tempo médio de espera; e a lista <b>do que está travado</b>, do mais antigo para o mais novo. Clique numa unidade ou num número para abrir a lista correspondente.</p>
+</section>
+
 <!-- ===================== COMPRAS ===================== -->
+<section class="secao" data-setor="fluxo">
+  <h2>O fluxo do órgão: Prefeito → Secretários → Compras</h2>
+  <p class="sub">Prefeito · Secretários · Compras · Jurídico · Financeiro · Gestão de contratos</p>
+  <ol class="passos">
+    <li><b>Prefeito:</b> faz o ofício ou o despacho em Documentos, assina e clica em <span class="btn p">Encaminhar</span>, escolhendo a secretaria.</li>
+    <li><b>Secretário:</b> faz a DFD <b>quando a secretaria precisar</b>, por iniciativa própria (Minha mesa → <span class="btn p">Nova DFD</span>). Se a demanda veio do Prefeito, recebe o ofício em Processos e usa <span class="btn p">Fazer a DFD deste pedido</span>: a DFD já cita o ofício.</li>
+    <li><b>DFD:</b> o secretário procura os itens no <b>catálogo</b> (a especificação vem pronta), informa só as quantidades e preenche a justificativa, a memória de cálculo, o plano de contratações, a data e a prioridade. A estimativa preliminar do valor é calculada sozinha. Só o secretário faz a DFD.</li>
+    <li><b>Assinatura:</b> ao terminar as assinaturas, o sistema já abre o <b>envio ao Compras</b>; os dados do pedido saem da própria DFD.</li>
+    <li><b>Compras:</b> recebe em <b>DFDs recebidas</b>, analisa e aceita escolhendo a forma de contratação. ETP, pesquisa de preços e TR já começam com o objeto e os itens da DFD. Quando precisar, <span class="btn p">Enviar para outra unidade</span> (Jurídico, Financeiro, Gestão).</li>
+    <li><b>Arquivos:</b> proposta, certidão, nota fiscal: em qualquer processo, <span class="btn p">Enviar arquivo</span>. O arquivo vira documento, pode ser assinado e é conferido pelo código SHA-256 sempre que é aberto.</li>
+  </ol>
+  <h3>Acompanhar os pedidos (Secretário)</h3>
+  <p>Em Compras → <b>Acompanhar meus pedidos</b>, cada pedido mostra:</p>
+  <ul>
+    <li>a <b>etapa</b> (pedido enviado, análise do Compras, planejamento, seleção/instrução, contrato, concluído);</li>
+    <li><b>onde está agora</b> (setor, há quantos dias, com quem) e <b>por onde passou</b>, com os dias em cada setor;</li>
+    <li><b>o que está travando</b>: fila de análise do Compras, processo enviado e ainda não recebido, parado no setor, documento aguardando a assinatura de alguém (com o nome), próximo documento obrigatório que falta e prazo vencido;</li>
+    <li>o <b>último movimento</b>, com o despacho.</li>
+  </ul>
+  <p>Os números do topo (Travados, No Compras, Devolvidos, Em andamento, Concluídos) filtram a lista. Dentro de cada processo, o bloco <b>O que está travando</b> mostra o mesmo para quem acompanha.</p>
+  <div class="dica"><b>Catálogo de itens</b>A administração cadastra os itens em Compras → Catálogo de itens (nome, especificação sem marca, unidade e valor de referência). Item que deixar de ser usado é desativado, não apagado; as DFDs antigas guardam o item como estava.</div>
+  <div class="aviso"><b>Pedido devolvido</b>A DFD assinada não muda. Se o Compras devolver, use <span class="btn p">Refazer a DFD</span>: uma nova DFD nasce copiando a anterior; corrija, assine e, no envio, escolha que ela responde ao pedido devolvido.</div>
+  <p class="small">Perfis Gabinete, Visualizador, RH, TI e Administrativo estão em espera: não aparecem no cadastro, mas quem já os tem continua com acesso. As atribuições do Gabinete (portaria, OS/OC) passam ao Prefeito.</p>
+</section>
+
 <section class="secao" data-setor="compras">
   <h2>Setor de Compras</h2>
   <p class="sub">Perfil <b>Compras</b> · Tela inicial: Minha mesa · Módulos: Mesa, Licitações, Contratações</p>
@@ -429,7 +483,12 @@
   <ul>
     <li>Cria os acessos, define o <b>perfil</b> de cada pessoa e ativa/desativa.</li>
     <li>Mantém os <b>parâmetros</b>: prazos de alerta, listas de opções e dados que saem nos documentos.</li>
+    <li>Mantém as <b>unidades</b> (setores) por onde os processos tramitam e liga cada pessoa à sua.</li>
   </ul>
+
+  <h3>Unidades</h3>
+  <p>Administração → <b>Unidades</b>. São os setores por onde os processos passam (Compras, Jurídico, Financeiro etc.). O sistema já vem com algumas: ajuste os nomes, crie as que faltam e desative as que não existem. A <b>sigla</b> não muda depois de criada.</p>
+  <div class="aviso"><b>Ligue cada pessoa à sua unidade</b>Em Usuários e perfis, escolha a <b>Unidade</b> de cada pessoa. Sem unidade, ela não abre nem recebe processos. Para o limite de dias que define um processo como parado, use Administração → Parâmetros.</div>
 
   <h3>Usuários e perfis</h3>
   <figure><img src="imagens/usuarios.png" alt="Usuários e perfis"><figcaption>Administração → Usuários e perfis.</figcaption></figure>
@@ -458,6 +517,7 @@
     <tr><td>Financeiro</td><td>Empenhos, liquidação, pagamento e saldos.</td></tr>
     <tr><td>Gabinete</td><td>Assina/publica portarias e assina OS/OC; vê só esses atos.</td></tr>
     <tr><td>Administrador</td><td>Tudo, mais usuários e parâmetros.</td></tr>
+    <tr><td>Presidente / Prefeito</td><td>Usuário mestre: acompanha todos os processos e setores e pode fazer tudo no sistema, inclusive administrar usuários. Entra na <b>Visão geral</b>.</td></tr>
     <tr><td>Visualizador</td><td>Somente consulta.</td></tr>
   </table>
   <div class="dica"><b>Para ser fiscal de uma contratação</b>O usuário precisa ter o perfil <b>Fiscal</b> e ser designado na contratação pela Gestão. Sem os dois, ele não vê a contratação.</div>
@@ -476,6 +536,100 @@
 </section>
 
 <!-- ===================== CONSULTA ===================== -->
+<section class="secao" data-setor="presidente">
+  <h2>Presidente / Prefeito</h2>
+  <p class="sub">Perfil <b>Presidente / Prefeito</b> · Usuário mestre · Módulos: Visão geral, Processos e todos os demais</p>
+
+  <h3>O que você faz no sistema</h3>
+  <ul>
+    <li>Acompanha, de relance, <b>todos os processos</b>: por setor, o que está parado ou atrasado e quem mexeu por último.</li>
+    <li>Abre qualquer processo e vê <b>por onde ele passou</b>, quanto tempo ficou em cada setor, cada despacho e <b>quem fez cada movimento</b>.</li>
+    <li>Acompanha as contratações: contratos em execução, vigências que vencem, fila do Financeiro e alertas urgentes.</li>
+    <li>Pode <b>fazer tudo</b>: receber, enviar, alterar, concluir e reabrir processos; atuar em qualquer etapa das contratações; e administrar usuários, unidades e parâmetros.</li>
+  </ul>
+
+  <h3>Visão geral (a sua tela inicial)</h3>
+  <ol class="passos">
+    <li><b>Processos:</b> quantos estão em andamento, parados, atrasados, aguardando recebimento e concluídos no mês. Cada número leva à lista correspondente.</li>
+    <li><b>Por setor:</b> um cartão por setor, com o total de processos, quantos parados e atrasados e a espera média. A borda do cartão fica <b>amarela</b> (há parados) ou <b>vermelha</b> (há atrasados). Clique no setor para ver só os dele.</li>
+    <li><b>Precisam de atenção:</b> os processos parados ou atrasados, do mais antigo para o mais novo.</li>
+    <li><b>Últimas movimentações:</b> a frase de cada movimento, por exemplo "Ana enviou 2026/000012 de GCON para FIN", com o despacho e há quanto tempo.</li>
+    <li><b>Achar um processo:</b> digite o protocolo ou parte do assunto no campo do alto e clique em <span class="btn p">Procurar</span>.</li>
+  </ol>
+
+  <div class="dica"><b>Quem mexeu em quê</b>Dentro de cada processo, o <b>Histórico</b> traz cada movimento com o nome de quem fez, o despacho e a data e hora. Ele não pode ser apagado nem alterado.</div>
+  <div class="aviso"><b>Cuidado: o seu perfil faz tudo</b>Tudo o que você fizer fica registrado com o seu nome. Como o perfil também administra usuários, a administração do sistema pode manter só o necessário nesse perfil.</div>
+</section>
+
+<section class="secao" data-setor="comum">
+  <h2>Documentos e assinatura eletrônica</h2>
+  <p class="sub">Todos os perfis que redigem · Menu Documentos</p>
+
+  <h3>Criar um documento</h3>
+  <ol class="passos">
+    <li>Em <b>Documentos</b>, clique em <span class="btn p">Novo documento</span> e escolha o modelo: ofício, despacho, memorando, ata, declaração, parecer jurídico e os documentos da <b>Lei 14.133/2021</b> (DFD, ETP, mapa de riscos, TR, edital, contrato, justificativas de dispensa e inexigibilidade, termos aditivos, entre outros). Cada perfil vê os modelos do seu setor.</li>
+    <li>Preencha o formulário. À direita, a prévia mostra como o documento vai ficar. O que ainda falta aparece como <b>[preencher: …]</b> e o envio fica bloqueado até estar tudo completo.</li>
+    <li>O texto é salvo sozinho. Clique em <span class="btn p">Enviar para assinatura</span>, escolha quem assina e o papel de cada um.</li>
+  </ol>
+  <div class="dica"><b>Dentro de um processo</b>Na tela do processo, a lista "Documentos do processo" cria o documento já ligado a ele. Para licitações, "Artefatos do processo" mostra o que a modalidade exige (pregão, concorrência, dispensa, inexigibilidade, adesão a ata) e o que já foi feito.</div>
+
+  <h3>Assinar</h3>
+  <ol class="passos">
+    <li>Quem deve assinar vê o aviso na <b>Mesa de trabalho</b> e na lista de documentos ("Assine"). Abra, <b>leia o texto</b> e clique em <span class="btn p">Assinar</span>.</li>
+    <li>Digite a <b>sua senha</b> de novo e marque que leu o documento. A senha confirma que é você mesmo.</li>
+    <li>Ao assinar, ficam gravados o nome, o papel, a data e hora, o IP e o navegador. Depois do envio, o texto fica <b>congelado</b>: para mudar, um signatário recusa e o documento volta a rascunho.</li>
+  </ol>
+
+  <h3>Conferir se é autêntico</h3>
+  <p>O rodapé do documento assinado traz um <b>código de verificação</b> e um link. Qualquer pessoa, <b>sem precisar de login</b>, confere em <code>/verificar</code>: o sistema informa se o documento é autêntico, quem assinou e se o conteúdo continua íntegro. O texto do documento não é exibido nessa consulta.</p>
+  <div class="aviso"><b>Que tipo de assinatura é esta</b>É uma assinatura eletrônica <b>avançada</b> (Lei 14.063/2020): identifica a pessoa por login e senha e deixa o registro com data, IP e código. Vale entre as partes que aceitam esse meio. Quando a lei ou o contrato exigir assinatura <b>qualificada</b> (certificado ICP-Brasil ou gov.br), é preciso um serviço de assinatura adicional.</div>
+  <div class="aviso"><b>Os modelos precisam de revisão jurídica</b>Os textos-base seguem a Lei 14.133/2021, mas devem ser revisados pelo jurídico do órgão antes do uso oficial.</div>
+</section>
+
+<section class="secao" data-setor="compras">
+  <h2>Solicitações ao Compras e processos de contratação</h2>
+  <p class="sub">Todos os setores pedem · Compras analisa e abre o processo · Menu Compras</p>
+
+  <h3>O setor pede (qualquer perfil)</h3>
+  <ol class="passos">
+    <li>Faça o <b>DFD</b> em Documentos → Novo documento → DFD: o que precisa, quanto, por quê e para quando. Envie para a chefia assinar.</li>
+    <li>Com o DFD assinado, clique em <span class="btn p">Enviar ao Compras</span> (no próprio DFD) ou em Compras → <b>Nova solicitação</b>. Os campos vêm preenchidos com o que está no DFD.</li>
+    <li>Sem DFD, use a <b>solicitação simples</b>: o Compras pode pedir o DFD depois.</li>
+    <li>Se o Compras <b>devolver para ajuste</b>, a tarefa aparece na sua Mesa. Abra, clique em <span class="btn p">Corrigir e reenviar</span> e diga o que mudou.</li>
+    <li>Aceita, a solicitação vira um <b>processo de contratação</b> que o seu setor acompanha.</li>
+  </ol>
+
+  <h3>O Compras analisa e abre o processo</h3>
+  <ol class="passos">
+    <li>Em Compras → <b>Solicitações recebidas</b>, a vista "Aguardando análise" mostra as urgentes e as mais antigas primeiro.</li>
+    <li>Abra, leia o DFD e a justificativa. Falta algo? <span class="btn p">Devolver para ajuste</span> com o motivo. Não cabe? <span class="btn p">Recusar</span>.</li>
+    <li>Para aceitar, clique em <span class="btn p">Aceitar e abrir processo</span>, escolha a <b>forma de contratação</b> (pregão, concorrência, dispensa, inexigibilidade ou adesão a ata) e o <b>tipo de objeto</b>. Ao lado aparece o roteiro de documentos que o processo vai precisar.</li>
+    <li>O sistema abre o processo no Compras, junta o DFD e registra o processo no quadro do módulo licitatório.</li>
+    <li>Demanda que chegou por fora (papel, e-mail)? Use <span class="btn p">Registrar processo</span>.</li>
+  </ol>
+
+  <h3>O roteiro de documentos (Lei 14.133/2021)</h3>
+  <p>Dentro do processo, o <b>Roteiro de documentos da contratação</b> lista o que cada etapa exige, com a base legal e quem costuma fazer:</p>
+  <ul>
+    <li><b>Licitação (pregão e concorrência):</b> DFD, ETP, mapa de riscos, pesquisa de preços, TR (ou projeto básico, em obras), adequação orçamentária, designação do agente/pregoeiro, edital, parecer jurídico, publicação no PNCP, sessão, habilitação, homologação, contrato, publicação do contrato e designação dos fiscais.</li>
+    <li><b>Dispensa e inexigibilidade (art. 72):</b> DFD, estimativa de despesa, parecer jurídico, adequação orçamentária, habilitação do contratado, razão da escolha e justificativa de preço, autorização e divulgação do ato. Na inexigibilidade, a comprovação da inviabilidade de competição.</li>
+    <li><b>Adesão a ata (art. 86, §2º):</b> justificativa da vantagem, compatibilidade de preços e aceite do órgão gerenciador e do fornecedor.</li>
+  </ul>
+  <p>O que é feito na plataforma tem o botão <span class="btn p">Criar</span>, que abre o modelo já ligado ao processo. O que vem de fora (propostas, certidões, publicação no PNCP) é marcado com <span class="btn p">Registrar juntada</span>, informando onde está. Itens opcionais podem ser marcados como <b>Não se aplica</b>, com justificativa. Tudo fica no histórico do processo.</p>
+  <p>Em Compras → <b>Processos de contratação</b>, cada processo mostra quantos documentos obrigatórios estão prontos e qual é o próximo. Em <b>Documentos por tipo de processo</b> qualquer pessoa consulta o roteiro de cada forma de contratação.</p>
+  <div class="aviso"><b>Roteiro de apoio</b>O roteiro segue a Lei 14.133/2021, mas o regulamento do órgão pode exigir peças a mais. Confirme com o jurídico.</div>
+</section>
+
+<section class="secao" data-setor="setoriais">
+  <h2>Perfis setoriais: Jurídico, Administrativo, RH e TI</h2>
+  <ul>
+    <li><b>Jurídico</b>: emite o <b>parecer jurídico</b> (art. 53 da Lei 14.133/2021) e outros documentos; consulta as contratações e recebe os processos enviados ao setor.</li>
+    <li><b>Administrativo, RH e TI</b>: tramitam processos do próprio setor, criam ofícios, despachos e memorandos e assinam. Não veem as contratações nem os valores dos contratos.</li>
+    <li><b>Compras</b>: além disso, cria os artefatos de cada tipo de processo (ETP, TR, edital, contrato) a partir de modelos que mudam conforme o objeto (bens, serviços, obras, TI…) e a modalidade.</li>
+  </ul>
+  <p>A <b>Mesa de trabalho</b> de cada perfil mostra o que ele precisa fazer: processos recebidos e documentos para assinar.</p>
+</section>
+
 <section class="secao" data-setor="consulta">
   <h2>Consulta (Visualizador)</h2>
   <p class="sub">Perfil <b>Visualizador</b> · Somente leitura</p>
@@ -517,9 +671,9 @@
 
 </div>
 <script>
-  // ?setor=compras|gestao|fiscal|financeiro|gabinete|admin|consulta — mostra só o guia daquele setor
+  // ?setor=compras|gestao|fiscal|financeiro|gabinete|admin|presidente|consulta — mostra só o guia daquele setor
   (function () {
-    var NOMES = { compras: 'Compras', gestao: 'Gestão de Contratos', fiscal: 'Fiscais de Contrato', financeiro: 'Financeiro', gabinete: 'Gabinete', admin: 'Administração do sistema', consulta: 'Consulta (Visualizador)' };
+    var NOMES = { compras: 'Compras', gestao: 'Gestão de Contratos', fiscal: 'Fiscais de Contrato', financeiro: 'Financeiro', gabinete: 'Gabinete', admin: 'Administração do sistema', presidente: 'Presidente / Prefeito', consulta: 'Consulta (Visualizador)' };
     var s = new URLSearchParams(location.search).get('setor');
     if (!s || !NOMES[s]) return;
     document.getElementById('nome-setor').textContent = NOMES[s];

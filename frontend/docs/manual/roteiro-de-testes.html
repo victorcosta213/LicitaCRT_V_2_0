@@ -244,6 +244,91 @@
 <tr><td class="n">12.9</td><td>Licitações → <b>Indicadores</b>; mude o período e a fase.</td><td>Os 4 números e os 3 gráficos (tipo, prioridade, por mês) acompanham os filtros.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
 </table>
 
+<h3>T18 · Tramitação de processos</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">18.1</td><td><span class="perfil">Administrador</span> → Administração → <b>Unidades</b>. Veja a lista e crie a unidade <code>OUV</code> — <code>Ouvidoria</code>.</td><td>A lista traz as unidades com a quantidade de pessoas. A nova aparece como Ativa. A sigla não pode ser editada depois.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">18.2</td><td><span class="perfil">Compras</span> → Processos → <span class="btn">Novo processo</span>: tipo Solicitação de compra, assunto <code>TESTE projetor</code>, enviar para <b>Gestão de Contratos</b>, despacho <code>Verificar a especificação</code>.</td><td>Abre a tela do processo com o protocolo (ex.: 2026/000001), estado <b>Aguardando recebimento</b> na unidade GCON. Compras não vê botões para enviar ou concluir.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">18.3</td><td><span class="perfil">Gestão</span> → Minha mesa.</td><td>Aparece a tarefa "Processo aguardando o seu recebimento". Ao abrir e clicar em <b>Receber processo</b>, o estado passa a Em análise.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">18.4</td><td>Ainda na Gestão: <b>Enviar para outra unidade</b> → Financeiro. Tente primeiro enviar <b>sem</b> despacho; depois escreva <code>Verificar a dotação</code>.</td><td>Sem despacho o sistema recusa. Com ele, o processo vai para FIN, o histórico mostra o envio com o despacho e quem enviou, e os botões de ação somem para a Gestão.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">18.5</td><td><span class="perfil">Financeiro</span> → Minha mesa → abra o processo → <b>Receber</b> → <b>Concluir</b> (<code>Dotação confirmada</code>).</td><td>O processo fica Concluído, com o motivo, e o histórico tem abertura, envio, recebimento e conclusão.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">18.6</td><td><span class="perfil">Fiscal</span> → Processos. Depois <span class="perfil">Visualizador</span> → Processos.</td><td>O Fiscal (que nunca participou) não vê o processo. O Visualizador vê, mas sem nenhum botão de ação.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">18.7</td><td><span class="perfil">Gestão</span> → Processos → <b>Acompanhamento</b>.</td><td>Indicadores (em andamento, parados, atrasados, aguardando, concluídos no mês = 1) e a tabela "Onde estão os processos". Clicar numa unidade abre a lista filtrada.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">18.8</td><td><span class="perfil">Gestão</span> → abra o processo concluído → <b>Reabrir</b> (motivo <code>Faltou uma peça</code>).</td><td>Volta a Em andamento, aguardando recebimento, e o histórico registra a reabertura.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T19 · Perfil Presidente / Prefeito</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">19.1</td><td>Em <span class="perfil">Administrador</span> → Usuários e perfis, crie uma pessoa com o perfil <b>Presidente / Prefeito</b> (na demonstração: troque para o perfil "Presidente / Prefeito" na barra de baixo).</td><td>O perfil aparece na lista com destaque escuro. Ao entrar, a tela inicial é a <b>Visão geral</b>.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">19.2</td><td><span class="perfil">Presidente</span> → Visão geral, depois de executar o T18 (alguns processos abertos e movimentados).</td><td>Mostra os indicadores, um cartão por setor com o total e a espera média, a lista "Precisam de atenção" e as "Últimas movimentações" com o nome de quem mexeu.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">19.3</td><td>Clique num cartão de setor.</td><td>Abre a lista de processos só daquele setor, com a faixa "Mostrando só a unidade…" e o botão "Ver todas".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">19.4</td><td>Digite parte do assunto de um processo em <b>Achar um processo</b> e clique em Procurar.</td><td>Abre a lista já filtrada pela busca.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">19.5</td><td>Abra um processo.</td><td>Mostra onde está agora, por onde passou (tempo em cada unidade) e o histórico com quem fez cada movimento, o despacho e a data.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">19.6</td><td>Ainda como presidente, receba, envie, altere, conclua e reabra um processo que está em outro setor.</td><td>Todas as ações estão disponíveis e ficam registradas no histórico com o nome do presidente.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">19.7</td><td>Abra Administração → Usuários e perfis, Unidades e Parâmetros.</td><td>As três telas abrem (o presidente é usuário mestre). Um perfil comum (ex.: Gestão) é levado de volta à sua tela inicial se tentar abrir essas telas.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T20 · Documentos e assinatura eletrônica</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">20.1</td><td><span class="perfil">Compras</span> → Documentos → <b>Novo documento</b>. Escolha <b>Ofício</b>.</td><td>O catálogo mostra os modelos por categoria (sem o Parecer jurídico). O ofício abre como rascunho com a marca "RASCUNHO".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.2</td><td>Sem preencher nada, veja o botão <b>Enviar para assinatura</b>.</td><td>Está bloqueado e a tela lista o que falta.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.3</td><td>Preencha todos os campos e espere 2 segundos.</td><td>A prévia acompanha o texto, aparece "Salvo às…" e o botão de envio é liberado.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.4</td><td>Envie para assinatura escolhendo o <b>Gabinete</b> como Presidente.</td><td>O documento passa a "Aguardando assinatura", sem formulário, e mostra o código de verificação.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.5</td><td><span class="perfil">Gabinete</span> → Documentos (vista "Para assinar") → abra o documento → <b>Assinar</b>.</td><td>O botão fica desabilitado até digitar a senha e marcar que leu.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.6</td><td>Assine com a senha correta.</td><td>O rodapé mostra "assinado eletronicamente por…", o código, o link e o SHA-256. O documento não pode mais ser editado.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.7</td><td>Em outra aba, abra <code>/verificar</code> sem login e digite o código.</td><td>Mostra "Documento autêntico e assinado", "Íntegro" e quem assinou, sem o texto. Um código inventado mostra "Código não encontrado".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.8</td><td>Repita o envio e, como signatário, clique em <b>Recusar assinatura</b> com um motivo.</td><td>O documento volta a rascunho, o motivo aparece em "Versões anteriores" e o autor pode corrigir e reenviar.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.9</td><td>Como autor, <b>cancele</b> um documento com motivo.</td><td>Fica com a marca "CANCELADO" e o motivo; continua na lista e na verificação pública como cancelado.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.10</td><td><span class="perfil">Compras</span> → abra um processo → <b>Artefatos do processo</b>.</td><td>Lista o que a modalidade exige, com a base legal, e marca o que já foi feito. Criar um item abre o modelo ligado ao processo.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">20.11</td><td>Crie um <b>ETP</b> e um <b>TR</b> com tipos de objeto diferentes (bens, serviços contínuos, obras).</td><td>Os campos e os textos mudam conforme o tipo (por exemplo, obras pedem projeto e matriz de riscos).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T21 · Perfis setoriais</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">21.1</td><td><span class="perfil">Jurídico</span> → Documentos → Novo documento.</td><td>Aparece o <b>Parecer jurídico</b>. O Jurídico consulta as contratações.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">21.2</td><td><span class="perfil">RH</span>, <span class="perfil">TI</span> ou <span class="perfil">Administrativo</span>: tente abrir <code>/gestao</code> ou os contratos.</td><td>São levados de volta à sua tela inicial e não veem valores de contratos.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">21.3</td><td>Ainda como RH: abra a Mesa de trabalho.</td><td>Mostra "Processos recebidos" e "Documentos para assinar".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T22 · Solicitações ao Compras e processo de contratação</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">22.1</td><td><span class="perfil">RH</span> → Documentos → Novo documento → <b>DFD</b>. Preencha, envie para a chefia e assine.</td><td>O DFD fica assinado e aparece o botão <b>Enviar ao Compras</b>.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.2</td><td>Clique em <b>Enviar ao Compras</b> e confira o formulário.</td><td>Objeto, quantidade, justificativa e prioridade vêm do DFD. Ao enviar, a solicitação fica "Aguardando análise".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.3</td><td><span class="perfil">Compras</span> → Mesa.</td><td>Aparece a tarefa "Solicitação aguardando análise do Compras".</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.4</td><td>Abra a solicitação → <b>Devolver para ajuste</b> com um motivo.</td><td>Fica "Devolvida para ajuste"; o motivo aparece no histórico.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.5</td><td><span class="perfil">RH</span> → Mesa → abra a tarefa → <b>Corrigir e reenviar</b>.</td><td>Volta para "Aguardando análise", com a resposta no histórico. Outro setor (ex.: TI) não vê a solicitação.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.6</td><td><span class="perfil">Compras</span> → <b>Aceitar e abrir processo</b>: escolha Pregão e Bens permanentes.</td><td>O modal mostra o roteiro de documentos. Ao abrir, vai para o processo, com "Aberto a partir da solicitação" e o DFD contado como pronto.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.7</td><td>No roteiro, em "Divulgação do edital no PNCP", clique em <b>Registrar juntada</b> e informe o número.</td><td>Fica "Juntado", com quem marcou e quando; o contador sobe e o histórico registra.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.8</td><td>Compras → <b>Processos de contratação</b> e depois Licitações → Processos.</td><td>O processo aparece com a forma, "x de y" documentos e o próximo; também está no quadro do módulo licitatório.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.9</td><td><span class="perfil">RH</span> → abra a solicitação aceita.</td><td>Mostra "Processo aberto" e o link para acompanhar o processo.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.10</td><td>Compras → <b>Registrar processo</b> (sem solicitação), Dispensa.</td><td>Abre o processo no Compras com o roteiro do art. 72.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">22.11</td><td>Compras → <b>Documentos por tipo de processo</b>: Concorrência + Obras; depois Pregão + Obras.</td><td>Obras pedem projeto básico em vez de TR; Pregão + Obras mostra o aviso do art. 29.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
+<h3>T23 · Fluxo Prefeito → Secretário → Compras</h3>
+<table class="teste">
+<tr><th>Nº</th><th>Passos</th><th>Esperado</th><th>Resultado</th><th>Obs.</th></tr>
+<tr><td class="n">23.1</td><td><span class="perfil">Administrador</span> → Compras → <b>Catálogo de itens</b> → Novo item (ex.: Computador desktop, especificação, unidade, valor).</td><td>O item aparece na lista. Compras e Secretário só consultam (sem botão de cadastro).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.2</td><td><span class="perfil">Prefeito</span> → Novo documento → Ofício para a Secretaria de Saúde. Assine e clique em <b>Encaminhar</b> (SMS, com despacho).</td><td>Abre um processo "Comunicação oficial" com o assunto do ofício, na SMS.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.3</td><td><span class="perfil">Secretário</span> → Processos → abra o processo → <b>Receber</b> → <b>Fazer a DFD deste pedido</b>.</td><td>A DFD abre com "Documento de origem" preenchido.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.4</td><td>Na DFD, procure "computador" no catálogo, adicione e informe 30.</td><td>A especificação vem do catálogo; a prévia mostra a tabela e a estimativa (R$ 135.000,00 com valor de R$ 4.500).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.5</td><td>Tente enviar sem memória de cálculo ou sem item com quantidade.</td><td>O envio para assinatura fica bloqueado e a tela lista o que falta.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.6</td><td>Complete, envie para assinatura a você mesmo e assine.</td><td>Ao concluir, abre sozinho "Enviar a DFD ao Compras" com objeto, itens e total. Envie.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.7</td><td><span class="perfil">Compras</span>: tente fazer uma DFD em Novo documento.</td><td>O modelo DFD não aparece para o Compras (nem para Jurídico, Financeiro, Gestão).</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.8</td><td><span class="perfil">Compras</span> → DFDs recebidas → aceite (Pregão) → no roteiro, <b>Criar</b> o ETP.</td><td>O ETP abre com o objeto e a tabela de quantidades da DFD.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.9</td><td>No processo → Documentos do processo → <b>Enviar arquivo</b> (um PDF).</td><td>Vira documento ANX com o SHA-256; ao abrir aparece "O arquivo guardado confere". Pode ser enviado para assinatura.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.10</td><td>No roteiro, num item que se junta de fora (ex.: publicação do edital), clique em <b>Enviar arquivo</b>.</td><td>Depois do envio, o item fica marcado como "Juntado" com o número do documento.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.11</td><td><span class="perfil">Compras</span> devolve um pedido. <span class="perfil">Secretário</span> → <b>Refazer a DFD</b>, assina e envia escolhendo "responde a SOL-…".</td><td>O pedido volta a "Aguardando análise" com a DFD nova e a resposta no histórico.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.12</td><td><span class="perfil">Administrador</span> → Usuários → Novo usuário: veja a lista de perfis.</td><td>Aparecem Administrador, Presidente/Prefeito, Secretário(a), Compras, Jurídico, Financeiro, Gestão e Fiscal. Gabinete, Visualizador, RH, TI e Administrativo não aparecem.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.13</td><td><span class="perfil">Secretário</span> → Minha mesa → <b>Nova DFD</b>, sem ofício do Prefeito. Preencha, assine e envie.</td><td>A DFD é aceita sem "Documento de origem" e segue ao Compras normalmente.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.14</td><td><span class="perfil">Compras</span> aceita e envia o processo ao Jurídico. <span class="perfil">Secretário</span> → Compras → <b>Acompanhar meus pedidos</b>.</td><td>O pedido mostra a etapa, "Onde está agora: JUR — Jurídico… ainda não recebido", por onde passou, o último movimento com o despacho e o que está travando.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+<tr><td class="n">23.15</td><td>Ainda como Secretário, abra o processo.</td><td>O bloco "O que está travando" mostra o recebimento pendente, as assinaturas que faltam (com o nome) e o próximo documento do roteiro.</td><td class="ok">☐ OK<br>☐ Falhou</td><td class="obs"></td></tr>
+</table>
+
 <!-- ================= PARTE 3 ================= -->
 <div class="secao"></div>
 <h2>Usuários, permissões e segurança</h2>

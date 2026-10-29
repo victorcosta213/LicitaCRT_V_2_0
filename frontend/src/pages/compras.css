@@ -1,0 +1,69 @@
+/* Compras: solicitações dos setores, roteiro de documentos da Lei 14.133/2021 e processos de contratação */
+
+/* ---- roteiro ---- */
+.roteiro__etapa + .roteiro__etapa { margin-top: 1.1rem; }
+.roteiro__itens { list-style: none; margin: 0; padding: 0; counter-reset: item; }
+.roteiro__item {
+  counter-increment: item; position: relative; padding: .55rem 0 .55rem 2.1rem; border-bottom: 1px solid var(--traco);
+}
+.roteiro__item:last-child { border-bottom: 0; }
+.roteiro__item::before {
+  content: counter(item); position: absolute; left: 0; top: .6rem; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+  display: grid; place-items: center; font: 600 .75rem/1 var(--fonte-cond); background: var(--azul-lavado); color: var(--azul-tinta);
+}
+.roteiro__se { font-size: .85rem; color: var(--tinta-3); font-weight: 400; }
+.roteiro__meta { margin-top: .1rem; }
+.roteiro__como { margin-top: .2rem; color: var(--tinta-2); }
+.roteiro--compacto .roteiro__item { padding-top: .35rem; padding-bottom: .35rem; }
+.roteiro--compacto .roteiro__item::before { top: .4rem; }
+.roteiro__acoes { white-space: nowrap; }
+
+/* ---- solicitação ---- */
+.texto-livre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sol-historico { list-style: none; margin: 0; padding: 0; }
+.sol-historico li { padding: .5rem 0; border-bottom: 1px solid var(--traco); }
+.sol-historico li:last-child { border-bottom: 0; }
+.passos-curtos { padding-left: 1.1rem; }
+.passos-curtos li + li { margin-top: .4rem; }
+
+@media (max-width: 575.98px) {
+  .roteiro__acoes { white-space: normal; }
+}
+
+/* ---- acompanhamento dos pedidos ---- */
+.indicadores-pedidos { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .6rem; }
+.indicador-pedido {
+  display: grid; gap: .1rem; text-align: left; padding: .7rem .9rem; border: 1px solid var(--traco); border-left-width: 4px;
+  border-radius: 6px; background: var(--folha); color: inherit; cursor: pointer;
+}
+.indicador-pedido strong { font: 600 1.6rem/1 var(--fonte-cond); }
+.indicador-pedido span { font-size: .85rem; color: var(--tinta-2); }
+.indicador-pedido.ativo { box-shadow: 0 0 0 2px var(--azul); }
+.indicador-pedido--danger { border-left-color: #b02a37; }
+.indicador-pedido--warning { border-left-color: #c58a00; }
+.indicador-pedido--primary { border-left-color: var(--azul); }
+.indicador-pedido--success { border-left-color: #146c43; }
+.pedidos { display: grid; gap: .9rem; }
+.pedido { padding: 1rem 1.1rem; }
+.pedido--travado { border-left: 4px solid #b02a37; }
+.pedido__cab { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; }
+.pedido__objeto { font-weight: 600; margin-top: .15rem; overflow-wrap: anywhere; }
+.pedido__onde { margin: .6rem 0 .3rem; }
+.pedido__caminho { margin: 0 0 .4rem; color: var(--tinta-2); }
+.pedido__travas { list-style: none; margin: .3rem 0 .5rem; padding: 0; display: grid; gap: .3rem; }
+.trava { font-size: .92rem; }
+.trava--danger { color: #b02a37; font-weight: 600; }
+.trava--warning { color: #8a6100; }
+.trava--info { color: var(--tinta-2); }
+.trava--success { color: #146c43; }
+.regua-pedido { display: flex; list-style: none; margin: .7rem 0 0; padding: 0; gap: 2px; }
+.regua-pedido li { flex: 1; min-width: 0; padding: .3rem .4rem; font-size: .72rem; text-align: center; background: var(--traco); color: var(--tinta-3); }
+.regua-pedido li:first-child { border-radius: 4px 0 0 4px; }
+.regua-pedido li:last-child { border-radius: 0 4px 4px 0; }
+.regua-pedido li span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.regua-pedido li.feita { background: #cfe5d8; color: #0f5132; }
+.regua-pedido li.atual { background: var(--azul); color: #fff; font-weight: 600; }
+@media (max-width: 575.98px) {
+  .regua-pedido li:not(.atual) span { visibility: hidden; }
+  .regua-pedido li.atual { flex: 4; }
+}

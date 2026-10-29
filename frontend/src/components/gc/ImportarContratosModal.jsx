@@ -6,7 +6,7 @@ import { salvarVarios } from '../../services/gc'
 import { INSTRUMENTO } from '../../utils/contrato'
 import { lerPlanilhaContratos } from '../../utils/importContratos'
 import { baixarModeloContratos } from '../../utils/modeloContratos'
-import { normalizeRole } from '../../utils/permissions'
+import { isMaster, normalizeRole } from '../../utils/permissions'
 import { showError, showSuccess } from '../../utils/alerts'
 import { brl, fmtDate } from '../../utils/format'
 
@@ -14,7 +14,7 @@ import { brl, fmtDate } from '../../utils/format'
 export default function ImportarContratosModal({ onClose }) {
   const { raw, reload } = useGc()
   const { role, user } = useAuth()
-  const gestao = ['gestor', 'admin'].includes(normalizeRole(role))
+  const gestao = normalizeRole(role) === 'gestor' || isMaster(role)
   const [res, setRes] = useState(null)
   const [arquivo, setArquivo] = useState('')
   const [jaEmExecucao, setJaEmExecucao] = useState(false)

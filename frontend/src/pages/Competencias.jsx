@@ -9,6 +9,7 @@ import { ETAPAS_COMPETENCIA, SITUACOES_OPERACIONAIS, competenciasFaltantes, fisc
 import { fmtCompetencia, mesAtualISO } from '../utils/format'
 import { salvarVarios } from '../services/gc'
 import { showConfirm, showError, showSuccess } from '../utils/alerts'
+import { isMaster } from '../utils/permissions'
 
 const ROTULO_CURTO = {
   aguardando_nf: 'Aguardando NF', aguardando_fiscalizacao: 'Em fiscalização', aguardando_atesto: 'Aguardando atesto',
@@ -64,7 +65,7 @@ export default function Competencias() {
         if (etapa && comp.status.key !== etapa) return false
         if (mes && comp.competencia !== mes) return false
         if (q && !`${k.c.numero} ${k.c.contratada}`.toLowerCase().includes(q)) return false
-        if (soMinhaVez && role !== 'admin' && !minhaVez(k, comp, role, user?.id)) return false
+        if (soMinhaVez && !isMaster(role) && !minhaVez(k, comp, role, user?.id)) return false
         return true
       })
       .sort((a, b) => String(a.comp.competencia).localeCompare(String(b.comp.competencia))

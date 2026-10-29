@@ -7,7 +7,7 @@ import SemAcesso from './pages/SemAcesso'
 import TrocarSenha from './pages/TrocarSenha'
 import Carregando from './components/Carregando'
 import { useAuth } from './context/AuthContext'
-import { PERFIS_COM_MESA, landingFor, normalizeRole } from './utils/permissions'
+import { PERFIS_COM_MESA, isMaster, landingFor, normalizeRole } from './utils/permissions'
 
 // Cada tela vira um arquivo separado, baixado só quando é aberta.
 const Home = lazy(() => import('./pages/Home'))
@@ -27,6 +27,22 @@ const Usuarios = lazy(() => import('./pages/Usuarios'))
 const Gabinete = lazy(() => import('./pages/Gabinete'))
 const Mesa = lazy(() => import('./pages/Mesa'))
 const Ajuda = lazy(() => import('./pages/Ajuda'))
+const Painel = lazy(() => import('./pages/Painel'))
+const Documentos = lazy(() => import('./pages/Documentos'))
+const DocumentoNovo = lazy(() => import('./pages/DocumentoNovo'))
+const DocumentoDetalhe = lazy(() => import('./pages/DocumentoDetalhe'))
+const Verificar = lazy(() => import('./pages/Verificar'))
+const Processos = lazy(() => import('./pages/Processos'))
+const ProcessoDetalhe = lazy(() => import('./pages/ProcessoDetalhe'))
+const Acompanhamento = lazy(() => import('./pages/Acompanhamento'))
+const Unidades = lazy(() => import('./pages/Unidades'))
+const Solicitacoes = lazy(() => import('./pages/Solicitacoes'))
+const SolicitacaoNova = lazy(() => import('./pages/SolicitacaoNova'))
+const SolicitacaoDetalhe = lazy(() => import('./pages/SolicitacaoDetalhe'))
+const ProcessosContratacao = lazy(() => import('./pages/ProcessosContratacao'))
+const Roteiros = lazy(() => import('./pages/Roteiros'))
+const CatalogoItens = lazy(() => import('./pages/CatalogoItens'))
+const AcompanhamentoPedidos = lazy(() => import('./pages/AcompanhamentoPedidos'))
 
 // Logado e com perfil ativo (mesma regra do banco).
 function Private({ children }) {
@@ -42,7 +58,7 @@ function Private({ children }) {
 function RoleRoute({ allow, children }) {
   const { role } = useAuth()
   const r = normalizeRole(role)
-  if (r === 'admin' || !allow || allow.includes(r)) return children
+  if (isMaster(r) || !allow || allow.includes(r)) return children
   return <Navigate to={landingFor(role)} replace />
 }
 
@@ -52,6 +68,7 @@ function Landing() {
 }
 
 const LICITATORIO = ['compras', 'viewer']
+const CRIA_DOCUMENTOS = ['secretario', 'compras', 'gestor', 'fiscal', 'financeiro', 'gabinete', 'juridico', 'administrativo', 'rh', 'ti']
 
 export default function App() {
   return (
@@ -59,6 +76,9 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+        {/* conferência de autenticidade: aberta a quem não tem login */}
+        <Route path="/verificar" element={<Verificar publico />} />
+        <Route path="/verificar/:codigo" element={<Verificar publico />} />
 
         <Route element={<Private><AppLayout /></Private>}>
           <Route path="/" element={<Landing />} />
@@ -73,6 +93,23 @@ export default function App() {
           <Route path="/competencias" element={<RoleRoute allow={['gestor', 'fiscal', 'financeiro', 'viewer']}><Competencias /></RoleRoute>} />
           <Route path="/alertas" element={<Alertas />} />
           <Route path="/ajuda" element={<Ajuda />} />
+          <Route path="/painel" element={<RoleRoute allow={['presidente']}><Painel /></RoleRoute>} />
+          <Route path="/documentos" element={<Documentos />} />
+          <Route path="/documentos/novo" element={<RoleRoute allow={CRIA_DOCUMENTOS}><DocumentoNovo /></RoleRoute>} />
+          <Route path="/documentos/verificar" element={<Verificar />} />
+          <Route path="/documentos/verificar/:codigo" element={<Verificar />} />
+          <Route path="/documentos/:id" element={<DocumentoDetalhe />} />
+          <Route path="/solicitacoes" element={<Solicitacoes />} />
+          <Route path="/solicitacoes/acompanhamento" element={<RoleRoute allow={['secretario', 'compras', 'gestor', 'gabinete', 'viewer']}><AcompanhamentoPedidos /></RoleRoute>} />
+          <Route path="/solicitacoes/nova" element={<RoleRoute allow={['secretario']}><SolicitacaoNova /></RoleRoute>} />
+          <Route path="/solicitacoes/:id" element={<SolicitacaoDetalhe />} />
+          <Route path="/compras/processos" element={<RoleRoute allow={['compras', 'gestor', 'gabinete', 'viewer']}><ProcessosContratacao /></RoleRoute>} />
+          <Route path="/compras/roteiros" element={<Roteiros />} />
+          <Route path="/itens" element={<RoleRoute allow={['compras', 'secretario', 'gestor', 'gabinete', 'viewer']}><CatalogoItens /></RoleRoute>} />
+          <Route path="/processos" element={<Processos />} />
+          <Route path="/processos/:id" element={<ProcessoDetalhe />} />
+          <Route path="/acompanhamento" element={<RoleRoute allow={['gestor', 'gabinete', 'viewer']}><Acompanhamento /></RoleRoute>} />
+          <Route path="/unidades" element={<RoleRoute allow={[]}><Unidades /></RoleRoute>} />
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/gabinete" element={<RoleRoute allow={['gabinete', 'gestor']}><Gabinete /></RoleRoute>} />
 

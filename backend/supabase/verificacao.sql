@@ -104,6 +104,40 @@ with checks(ordem, ok, item, detalhe) as (
              and to_regprocedure('public.gc_marcar_senha_provisoria(uuid)') is not null
              and to_regclass('public.usuarios_senha_provisoria') is not null,
          'Migration 20261020_senha_provisoria aplicada (troca de senha no primeiro acesso)', ''
+
+  union all
+  select 17, to_regclass('public.tr_processos') is not null
+             and to_regprocedure('public.tr_tramitar(uuid,uuid,uuid,text,date)') is not null
+             and exists (select 1 from public.tr_unidades),
+         'Migration 20261021_tramitacao aplicada (tramitação de processos)', ''
+
+  union all
+  select 18, exists (select 1 from pg_constraint
+                      where conname = 'usuarios_role_valido' and pg_get_constraintdef(oid) like '%presidente%'),
+         'Migration 20261022_perfil_presidente aplicada (perfil Presidente / Prefeito)', ''
+
+  union all
+  select 19, exists (select 1 from pg_constraint
+                      where conname = 'usuarios_role_valido' and pg_get_constraintdef(oid) like '%juridico%'),
+         'Migration 20261023_perfis_setoriais aplicada (Jurídico, Administrativo, RH e TI)', ''
+
+  union all
+  select 20, to_regclass('public.doc_documentos') is not null
+             and to_regprocedure('public.doc_assinar(uuid)') is not null
+             and to_regprocedure('public.doc_verificar(text)') is not null,
+         'Migration 20261024_documentos_assinatura aplicada (documentos e assinatura eletrônica)', ''
+
+  union all
+  select 21, to_regclass('public.cp_solicitacoes') is not null
+             and to_regclass('public.cp_checklist') is not null
+             and to_regprocedure('public.cp_aceitar_solicitacao(uuid,text,text,text,text)') is not null,
+         'Migration 20261025_solicitacoes_compras aplicada (solicitações/DFD e processos de contratação)', ''
+
+  union all
+  select 22, to_regclass('public.cp_itens') is not null
+             and to_regprocedure('public.doc_criar_arquivo(text,text,uuid,text,text,text,bigint,text)') is not null
+             and to_regprocedure('public.doc_encaminhar(uuid,uuid,text)') is not null,
+         'Migration 20261026_fluxo_secretarias aplicada (secretário, catálogo de itens, arquivos e encaminhamento)', ''
 )
 select ordem, case when ok then '✅' else '⚠️' end as status, item, detalhe
   from checks

@@ -13,6 +13,7 @@ const PARAMS_PADRAO = {
   alerta_reajuste_dias: [60, 30],
   prazo_competencia_dias: 10,
   prazo_ocorrencia_aviso_dias: 5,
+  tr_dias_parado: 5,
   orgao_nome: '',
   orgao_cidade: '',
   presidente_nome: '',

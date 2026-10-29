@@ -28,6 +28,7 @@ export default function Parametros() {
       alerta_reajuste_dias: params.alerta_reajuste_dias.join(', '),
       prazo_competencia_dias: String(params.prazo_competencia_dias),
       prazo_ocorrencia_aviso_dias: String(params.prazo_ocorrencia_aviso_dias),
+      tr_dias_parado: String(params.tr_dias_parado),
       tipos_contrato: params.tipos_contrato.join('\n'),
       modalidades: params.modalidades.join('\n'),
       indices_reajuste: params.indices_reajuste.join('\n'),
@@ -48,6 +49,7 @@ export default function Parametros() {
       await salvarParametro('alerta_reajuste_dias', dias(v.alerta_reajuste_dias))
       await salvarParametro('prazo_competencia_dias', Number(v.prazo_competencia_dias) || 10)
       await salvarParametro('prazo_ocorrencia_aviso_dias', Number(v.prazo_ocorrencia_aviso_dias) || 5)
+      await salvarParametro('tr_dias_parado', Number(v.tr_dias_parado) || 5)
       await salvarParametro('tipos_contrato', linhas(v.tipos_contrato))
       await salvarParametro('modalidades', linhas(v.modalidades))
       await salvarParametro('indices_reajuste', linhas(v.indices_reajuste))
@@ -91,6 +93,12 @@ export default function Parametros() {
                 <label className="form-label fw-semibold">Ocorrência — avisar quando o prazo vence em até (dias)</label>
                 <input type="number" min="0" className="form-control" value={v.prazo_ocorrencia_aviso_dias}
                   onChange={(e) => set('prazo_ocorrencia_aviso_dias', e.target.value)} />
+              </div>
+              <div className="mt-3">
+                <label className="form-label fw-semibold">Processos — dias sem movimentação para considerar parado</label>
+                <input type="number" min="1" className="form-control" value={v.tr_dias_parado}
+                  onChange={(e) => set('tr_dias_parado', e.target.value)} />
+                <div className="form-text">Aparece em Acompanhamento e na Minha mesa. Padrão: 5.</div>
               </div>
             </Card>
           </div>

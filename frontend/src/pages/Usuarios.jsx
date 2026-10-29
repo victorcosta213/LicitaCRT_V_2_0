@@ -5,14 +5,17 @@ import {
 import Swal from 'sweetalert2'
 import Modal from 'bootstrap/js/dist/modal'
 import { useAuth } from '../context/AuthContext'
-import { ROLES, normalizeRole } from '../utils/permissions'
+import { PERFIS_EM_USO, ROLES, normalizeRole } from '../utils/permissions'
 import { Indicadores, PageHeader, Tabs } from '../components/gc/ui'
 import { fmtDate } from '../utils/format'
 import { useAtualizacaoAutomatica } from '../components/useAtualizacao'
+import { listarUnidades } from '../services/tramitacao'
 import './usuarios.css'
 
-const PERFIS = ['admin', 'gestor', 'compras', 'fiscal', 'financeiro', 'gabinete', 'viewer']
-  .map((value) => ({ value, ...ROLES[value] }))
+// perfis oferecidos no cadastro; os ocultos (em espera) só aparecem para quem já os tem
+const PERFIS = PERFIS_EM_USO.map((value) => ({ value, ...ROLES[value] }))
+const comOcultos = (roles) => [...PERFIS, ...[...new Set(roles)].filter((r) => r && ROLES[r] && !PERFIS_EM_USO.includes(r) && r !== 'editor')
+  .map((value) => ({ value, ...ROLES[value] }))]
 
 export default function Usuarios() {
   const { user: eu } = useAuth()
@@ -30,6 +33,8 @@ export default function Usuarios() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('viewer')
+  const [unidade, setUnidade] = useState('')
+  const [unidades, setUnidades] = useState([])
   const [submitting, setSubmitting] = useState(false)
 
   const loadData = async ({ silencioso = false } = {}) => {
@@ -48,6 +53,7 @@ export default function Usuarios() {
 
   useEffect(() => {
     loadData()
+    listarUnidades().then(setUnidades).catch(() => setUnidades([])) // antes da migration da tramitação não há unidades
     const el = document.getElementById('modalUsuario')
     if (el) modalRef.current = new Modal(el)
     return () => modalRef.current?.dispose()
@@ -63,10 +69,11 @@ export default function Usuarios() {
     })
   }, [users, query, status, perfil])
 
-  const porPerfil = useMemo(() => PERFIS.map((p) => ({
+  const perfisDaLista = useMemo(() => comOcultos(users.map((u) => normalizeRole(u.role))), [users])
+  const porPerfil = useMemo(() => perfisDaLista.map((p) => ({
     ...p,
     pessoas: users.filter((u) => normalizeRole(u.role) === p.value),
-  })), [users])
+  })).filter((p) => !p.oculto || p.pessoas.length), [users, perfisDaLista])
   const nAtivos = users.filter((u) => u.ativo).length
 
   const openNew = () => {
@@ -75,6 +82,7 @@ export default function Usuarios() {
     setEmail('')
     setPassword('')
     setRole('viewer')
+    setUnidade('')
     modalRef.current?.show()
   }
 
@@ -84,6 +92,7 @@ export default function Usuarios() {
     setEmail(u.email || '')
     setPassword('') // Não edita senha aqui
     setRole(normalizeRole(u.role)) // perfil legado "editor" passa a Compras ao salvar
+    setUnidade(u.unidade_id || '')
     modalRef.current?.show()
   }
 
@@ -158,10 +167,10 @@ export default function Usuarios() {
     try {
       if (editingId) {
         // Atualiza apenas nome e role (o email não muda, senha não muda aqui)
-        await atualizarUsuario(editingId, { nome, role })
+        await atualizarUsuario(editingId, { nome, role, unidade_id: unidades.length ? unidade : undefined })
         Swal.fire('Atualizado', 'Os dados do usuário foram atualizados.', 'success')
       } else {
-        const { precisaConfirmar, trocaObrigatoria } = await criarUsuario({ nome, email: email.trim().toLowerCase(), password, role })
+        const { precisaConfirmar, trocaObrigatoria } = await criarUsuario({ nome, email: email.trim().toLowerCase(), password, role, unidade_id: unidade })
         const trocar = trocaObrigatoria ? ' No primeiro acesso, ela será obrigada a criar a própria senha.' : ' Atenção: o sistema não conseguiu exigir a troca de senha no primeiro acesso.'
         Swal.fire('Criado', (precisaConfirmar
           ? `Enviamos um e-mail de confirmação para ${email}. O acesso funciona depois que a pessoa clicar no link.`
@@ -179,7 +188,7 @@ export default function Usuarios() {
 
   const stats = useMemo(() => {
     const admins = users.filter(u => u.role === 'admin').length
-    const operacionais = users.filter(u => ['compras', 'gestor', 'fiscal', 'financeiro', 'editor'].includes(u.role)).length
+    const operacionais = users.filter(u => ['compras', 'gestor', 'fiscal', 'financeiro', 'juridico', 'administrativo', 'rh', 'ti', 'editor'].includes(u.role)).length
     const viewers = users.filter(u => u.role === 'viewer').length
     return { total: users.length, admins, editors: operacionais, viewers }
   }, [users])
@@ -216,7 +225,7 @@ export default function Usuarios() {
               <div className="card h-100">
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <span className={`carimbo ${p.value === 'admin' ? 'carimbo--dark' : p.value === 'viewer' ? 'carimbo--secondary' : 'carimbo--primary'}`}>{p.label}</span>
+                    <span className={`carimbo ${['admin', 'presidente'].includes(p.value) ? 'carimbo--dark' : p.value === 'viewer' ? 'carimbo--secondary' : 'carimbo--primary'}`}>{p.label}</span>
                     <span className="mono small text-secondary">{p.pessoas.length} pessoa(s)</span>
                   </div>
                   <p className="small mb-3">{p.desc}</p>
@@ -255,7 +264,7 @@ export default function Usuarios() {
           </div>
           <select className="form-select w-auto" aria-label="Perfil" value={perfil} onChange={(e) => setPerfil(e.target.value)}>
             <option value="">Todos os perfis</option>
-            {PERFIS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            {perfisDaLista.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
           <div className="barra-lista__busca">
             <i className="bi bi-search" aria-hidden="true" />
@@ -275,6 +284,7 @@ export default function Usuarios() {
             <tr>
               <th>Usuário</th>
               <th>Perfil</th>
+              <th>Unidade</th>
               <th>Status</th>
               <th>Criado em</th>
               <th className="text-end">Ações</th>
@@ -282,12 +292,12 @@ export default function Usuarios() {
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan="5" className="text-center py-4">Carregando usuários...</td></tr>
+              <tr><td colSpan="6" className="text-center py-4">Carregando usuários...</td></tr>
             )}
             
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan="5">
+                <td colSpan="6">
                   <div className="usuarios-empty">
                     <i className="bi bi-people" />
                     Nenhum usuário encontrado.
@@ -312,10 +322,11 @@ export default function Usuarios() {
                     </div>
                   </td>
                   <td>
-                    <span className={`carimbo ${u.role === 'admin' ? 'carimbo--dark' : u.role === 'viewer' ? 'carimbo--secondary' : 'carimbo--primary'}`}>
+                    <span className={`carimbo ${['admin', 'presidente'].includes(u.role) ? 'carimbo--dark' : u.role === 'viewer' ? 'carimbo--secondary' : 'carimbo--primary'}`}>
                       {ROLES[u.role]?.label || u.role}
                     </span>
                   </td>
+                  <td className="small">{unidades.find((x) => x.id === u.unidade_id)?.sigla || <span className="text-secondary">—</span>}</td>
                   <td>
                     <span className={`carimbo ${u.ativo ? 'carimbo--success' : 'carimbo--danger'}`}>
                       {u.ativo ? 'Ativo' : 'Inativo'}
@@ -426,11 +437,22 @@ export default function Usuarios() {
                   onChange={e => setRole(e.target.value)}
                   disabled={submitting || (editingId !== null && editingId === eu?.id)}
                 >
-                  {PERFIS.map((p) => (
-                    <option key={p.value} value={p.value}>{p.label} — {p.desc}</option>
+                  {comOcultos([role]).map((p) => (
+                    <option key={p.value} value={p.value}>{p.label}{p.oculto ? ' (em espera)' : ''} — {p.desc}</option>
                   ))}
                 </select>
               </div>
+
+              {unidades.length > 0 && (
+                <div>
+                  <label className="form-label fw-semibold" htmlFor="usuario-unidade">Unidade (setor)</label>
+                  <select id="usuario-unidade" className="form-select" value={unidade} onChange={e => setUnidade(e.target.value)} disabled={submitting}>
+                    <option value="">Sem unidade</option>
+                    {unidades.filter((x) => x.ativa || x.id === unidade).map((x) => <option key={x.id} value={x.id}>{x.sigla} — {x.nome}</option>)}
+                  </select>
+                  <small className="text-muted">Define de onde a pessoa abre, recebe e envia processos.</small>
+                </div>
+              )}
             </div>
 
             <div className="modal-footer">

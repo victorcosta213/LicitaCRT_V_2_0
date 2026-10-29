@@ -8,6 +8,10 @@ import { alertasDoPerfil, minhaVez, painelGestao, painelFinanceiro, tarefaDoAler
 import { ROLES, can, normalizeRole } from '../utils/permissions'
 import PrimeirosPassos from '../components/gc/PrimeirosPassos'
 import { useProcessosComPrazo } from '../components/useProcessosComPrazo'
+import { useTarefasTramitacao } from '../components/useTarefasTramitacao'
+import { useAssinaturasPendentes } from '../components/useDocumentos'
+import { useSolicitacoes, useTarefasSolicitacoes } from '../components/useSolicitacoes'
+import { tarefaDeAssinatura } from '../utils/documentosPlataforma'
 import { brl } from '../utils/format'
 
 const GRUPOS = [
@@ -20,15 +24,26 @@ const POR_GRUPO = 8
 const saudacao = (h = new Date().getHours()) => (h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite')
 
 export default function Mesa() {
-  const { alertas, consolidados } = useGc()
+  const { alertas, consolidados, params } = useGc()
   const { role, user, profile, nome } = useAuth()
   const r = normalizeRole(role)
   const processos = useProcessosComPrazo(can(role, 'processo.editar'))
 
+  const tramites = useTarefasTramitacao({
+    ativo: r !== 'viewer', unidadeId: profile?.unidade_id, usuarioId: user?.id, diasParado: Number(params?.tr_dias_parado) || undefined,
+  })
+
+  const assinar = useAssinaturasPendentes({ ativo: r !== 'viewer', usuarioId: user?.id })
+  const { solicitacoes } = useSolicitacoes()
+  const pedidos = useTarefasSolicitacoes({ ativo: r !== 'viewer', ehCompras: can(role, 'compras.analisar'), usuarioId: user?.id, unidadeId: profile?.unidade_id })
+
   const tarefas = useMemo(() => [
     ...alertasDoPerfil(alertas, role, user?.id).map((a) => tarefaDoAlerta(a)),
     ...processos,
-  ], [alertas, role, user, processos])
+    ...tramites,
+    ...assinar.map(tarefaDeAssinatura),
+    ...pedidos,
+  ], [alertas, role, user, processos, tramites, assinar, pedidos])
 
   const grupos = GRUPOS.map(([sev, titulo]) => [sev, titulo, tarefas.filter((t) => t.severidade === sev)])
   const pendentes = tarefas.filter((t) => t.severidade !== 'info').length
@@ -69,14 +84,14 @@ export default function Mesa() {
         </div>
 
         <div className="col-xl-4">
-          <Atalhos r={r} consolidados={consolidados} alertas={alertas} role={role} usuarioId={user?.id} />
+          <Atalhos r={r} consolidados={consolidados} alertas={alertas} role={role} usuarioId={user?.id} nProcessos={tramites.length} nAssinar={assinar.length} solicitacoes={solicitacoes} />
         </div>
       </div>
     </GcGate>
   )
 }
 
-function Atalhos({ r, consolidados, alertas, role, usuarioId }) {
+function Atalhos({ r, consolidados, alertas, role, usuarioId, nProcessos, nAssinar, solicitacoes = [] }) {
   const comps = consolidados.flatMap((k) => k.competencias.map((comp) => ({ k, comp })))
   const naVez = comps.filter(({ k, comp }) => minhaVez(k, comp, role, usuarioId)).length
   const etapa = (e) => consolidados.filter((k) => k.etapa === e).length
@@ -85,7 +100,19 @@ function Atalhos({ r, consolidados, alertas, role, usuarioId }) {
   const aCaminho = consolidados.filter((k) => k.etapa !== 'em_execucao').length
   const ocorrencias = consolidados.reduce((s, k) => s + k.ocorrenciasAbertas.length, 0)
 
+  const nSol = (st) => solicitacoes.filter((s) => s.status === st).length
+
   const porPerfil = {
+    secretario: {
+      atalhos: [
+        ['bi-file-earmark-plus', 'Nova DFD', '/documentos/novo?modelo=dfd'],
+        ['bi-binoculars', 'Acompanhar meus pedidos', '/solicitacoes/acompanhamento', nSol('devolvida')],
+        ['bi-send', 'DFDs para enviar ao Compras', '/solicitacoes/nova'],
+        ['bi-inbox', 'Ofícios e processos recebidos', '/processos?vista=receber', nProcessos],
+        ['bi-pen', 'Documentos para assinar', '/documentos?vista=assinar', nAssinar],
+      ],
+      numeros: [['No Compras para análise', nSol('enviada')], ['Devolvidos para ajuste', nSol('devolvida')], ['Viraram processo', nSol('aceita')]],
+    },
     gestor: {
       atalhos: [
         ['bi-inbox', 'Recebidas de Compras', '/contratos?situacao=etapa:aguardando_gestao', g.recebidas.length],
@@ -120,6 +147,14 @@ function Atalhos({ r, consolidados, alertas, role, usuarioId }) {
       ],
       numeros: [['Em cadastro', etapa('em_cadastro')], ['Com a Gestão', etapa('aguardando_gestao')], ['Em execução', g.ativos]],
     },
+    ...Object.fromEntries(['juridico', 'administrativo', 'rh', 'ti'].map((perfil) => [perfil, {
+      atalhos: [
+        ['bi-diagram-3', 'Processos recebidos', '/processos?vista=receber', nProcessos],
+        ['bi-file-earmark-plus', 'Novo documento', '/documentos/novo'],
+        ['bi-pen', 'Documentos para assinar', '/documentos?vista=assinar', nAssinar],
+      ],
+      numeros: [['Processos na sua unidade', nProcessos], ['Documentos para assinar', nAssinar]],
+    }])),
     admin: {
       atalhos: [
         ['bi-people', 'Usuários e perfis', '/usuarios'],
@@ -130,7 +165,12 @@ function Atalhos({ r, consolidados, alertas, role, usuarioId }) {
       numeros: [['Contratações', consolidados.length], ['Em execução', g.ativos], ['A caminho da execução', aCaminho]],
     },
   }
-  const p = porPerfil[r] || porPerfil.admin
+  const base = porPerfil[r] || porPerfil.admin
+  const extras = r === 'secretario' ? [['bi-file-earmark-richtext', 'Documentos da secretaria', '/documentos']]
+    : ['juridico', 'administrativo', 'rh', 'ti'].includes(r)
+    ? [['bi-file-earmark-richtext', 'Todos os documentos', '/documentos']]
+    : [['bi-diagram-3', 'Processos e tramitação', '/processos', nProcessos], ['bi-file-earmark-richtext', 'Documentos', '/documentos', nAssinar]]
+  const p = { ...base, atalhos: [...base.atalhos, ...extras] }
 
   return (
     <>

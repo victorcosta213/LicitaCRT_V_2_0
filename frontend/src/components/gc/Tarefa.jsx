@@ -5,7 +5,7 @@ const ICONE = {
   'Competência': 'bi-calendar2-check', 'Vigência': 'bi-hourglass-split', 'Garantia': 'bi-shield-check',
   'Reajuste': 'bi-graph-up-arrow', 'Ocorrência': 'bi-exclamation-triangle', 'Pendência': 'bi-flag',
   'OS/OC': 'bi-clipboard-check', 'Fiscalização': 'bi-person-badge', 'Contratação': 'bi-inbox',
-  'Cadastro': 'bi-pencil-square', 'Financeiro': 'bi-cash-coin', 'Processo': 'bi-kanban',
+  'Cadastro': 'bi-pencil-square', 'Tramitação': 'bi-diagram-3', 'Documento': 'bi-file-earmark-richtext', 'Financeiro': 'bi-cash-coin', 'Processo': 'bi-kanban',
 }
 
 // Item de tarefa: { severidade, categoria, titulo, ref, sub, dias, to }

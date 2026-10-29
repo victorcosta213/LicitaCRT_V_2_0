@@ -38,14 +38,15 @@ function Trilho({ modulos, modulo, contagens, tema, alternarTema }) {
   )
 }
 
-function ItensDoModulo({ modulo, contagens, aoNavegar }) {
+// `atual`: a tela aberta (a mais específica). Sem ela, vale a regra do NavLink.
+function ItensDoModulo({ modulo, contagens, aoNavegar, atual }) {
   return modulo.itens.map((it) => {
     const n = contagens.porItem[it.to] || 0
     return (
       <NavLink
         key={it.to}
         to={it.to}
-        className={({ isActive }) => `navmod__item ${isActive ? 'active' : ''}`}
+        className={({ isActive }) => `navmod__item ${(atual ? atual.to === it.to : isActive) ? 'active' : ''}`}
         onClick={aoNavegar}
       >
         <i className={`bi ${it.icon}`} aria-hidden="true" />
@@ -57,7 +58,7 @@ function ItensDoModulo({ modulo, contagens, aoNavegar }) {
 }
 
 // Menu com as telas do módulo aberto
-function NavModulo({ modulo, contagens }) {
+function NavModulo({ modulo, contagens, atual }) {
   if (!modulo) return null
   return (
     <aside className="navmod" aria-label={`Telas de ${modulo.label}`}>
@@ -66,7 +67,7 @@ function NavModulo({ modulo, contagens }) {
         <span className="navmod__titulo">{modulo.label}</span>
       </div>
       <nav className="navmod__lista">
-        <ItensDoModulo modulo={modulo} contagens={contagens} />
+        <ItensDoModulo modulo={modulo} contagens={contagens} atual={atual} />
       </nav>
       <div className="navmod__rodape">
         <b>{NOME_APP}</b>
@@ -77,7 +78,7 @@ function NavModulo({ modulo, contagens }) {
 }
 
 // Celular: todos os módulos num painel lateral
-function MenuMovel({ modulos, contagens }) {
+function MenuMovel({ modulos, contagens, modulo, atual }) {
   const { pathname } = useLocation()
   useEffect(() => {
     const el = document.getElementById('menuMovel')
@@ -95,7 +96,7 @@ function MenuMovel({ modulos, contagens }) {
         {modulos.map((m) => (
           <div key={m.key} className="menu-movel__modulo">
             <div className="rotulo"><i className={`bi ${m.icon}`} />{m.label}</div>
-            <ItensDoModulo modulo={m} contagens={contagens} />
+            <ItensDoModulo modulo={m} contagens={contagens} atual={m.key === modulo?.key ? atual : null} />
           </div>
         ))}
       </div>
@@ -109,8 +110,8 @@ export default function Sidebar({ nav, tema, alternarTema }) {
   return (
     <>
       <Trilho modulos={modulos} modulo={modulo} contagens={contagens} tema={tema} alternarTema={alternarTema} />
-      {mostrarMenu && <NavModulo modulo={modulo} contagens={contagens} />}
-      <MenuMovel modulos={modulos} contagens={contagens} />
+      {mostrarMenu && <NavModulo modulo={modulo} contagens={contagens} atual={nav.item} />}
+      <MenuMovel modulos={modulos} contagens={contagens} modulo={modulo} atual={nav.item} />
     </>
   )
 }

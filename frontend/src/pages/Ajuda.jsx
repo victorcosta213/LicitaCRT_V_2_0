@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Card, PageHeader } from '../components/gc/ui'
-import { CAMINHO, GLOSSARIO, GUIA, GUIA_LICITACAO } from '../utils/guia'
+import { CAMINHO, GLOSSARIO, GUIA, GUIA_LICITACAO, GUIA_TRAMITACAO } from '../utils/guia'
 import { ROLES, normalizeRole } from '../utils/permissions'
 
 export default function Ajuda() {
@@ -9,6 +9,7 @@ export default function Ajuda() {
   const r = normalizeRole(role)
   const guia = GUIA[r]
   const guiaLic = GUIA_LICITACAO[r]
+  const guiaTr = GUIA_TRAMITACAO[r]
   const perfil = ROLES[r]?.label
 
   return (
@@ -22,6 +23,20 @@ export default function Ajuda() {
         <Card title={`O seu papel: ${perfil}`} subtitle={guia.resumo}>
           <ol className="guia__passos guia__passos--solto">
             {guia.passos.map((p) => (
+              <li key={p.titulo} className="guia__passo">
+                <span className="guia__num" aria-hidden="true" />
+                <div className="guia__texto"><strong>{p.titulo}</strong><span>{p.texto}</span></div>
+                <Link to={p.to} className="btn btn-sm btn-outline-primary guia__acao">{p.acao}</Link>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
+      {guiaTr && (
+        <Card title="Tramitação de processos" subtitle={guiaTr.resumo}>
+          <ol className="guia__passos guia__passos--solto">
+            {guiaTr.passos.map((p) => (
               <li key={p.titulo} className="guia__passo">
                 <span className="guia__num" aria-hidden="true" />
                 <div className="guia__texto"><strong>{p.titulo}</strong><span>{p.texto}</span></div>
